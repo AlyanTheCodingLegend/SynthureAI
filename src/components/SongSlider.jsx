@@ -15,7 +15,7 @@ async function loopSongs () {
     for (let i=0;i<count;i++) {
         songArray.push(data[i].song_path.split(",")[0])
     }
-    console.log(songArray)
+    
     return songArray
 }
 
@@ -25,6 +25,8 @@ export default function SongSlider () {
     const [duration, setDuration] = useState(0)
     const [progress, setProgress] = useState(0)
     const [volume, setVolume] = useState(1)
+    const [index, setIndex] = useState(0)
+    const [songs, setSongs] = useState([])
     const idRef = useRef(null)
     
     useEffect(() => {
@@ -32,39 +34,55 @@ export default function SongSlider () {
         async function fetchSong() {
 
             let songArray = await loopSongs()
-            
-            if (songArray) {
-                const newSong = new Howl({
-                    src: songArray,
-                    format: ["mp3"],
-                    volume: 1,
-                    onplay: () => {
-                        setIsPlaying(true);
-                    },
-                    onpause: () => {
-                        setIsPlaying(false);
-                    },
-                    onload: () => {
-                        setDuration(newSong.duration());
-                    },
-                    onend: () => {
-                        setIsPlaying(false);
-                        setProgress(0);
-                    }
-                })
-                setSong(newSong)
-            }
+            setSongs(songArray)
         }
-
         fetchSong()
-
-        return () => {
-            if (song) {
-                song.stop()
-            }
-        };
     // eslint-disable-next-line
     },[])
+
+    useEffect(() => {
+        if (songs.length>0) {
+            var newSong = new Howl({
+                src: [songs[index]],
+                format: ["mp3"],
+                volume: 1,
+                onplay: () => {
+                    setIsPlaying(true);
+                },
+                onpause: () => {
+                    setIsPlaying(false);
+                },
+                onload: () => {
+                    if (index>=1) {
+                        newSong.play()
+                        setIsPlaying(true)
+                    }
+                    setDuration(newSong.duration());
+                },
+                onend: () => {
+                    setIsPlaying(false);
+                    setProgress(0);
+                    if (index<songs.length-1) {
+                        setIndex(index+1)
+                    }
+                    else {
+                        setIndex(0)
+                    }
+                }
+            })
+            setSong(newSong)
+        }
+    // eslint-disable-next-line
+    }, [songs, index])
+
+    const playNext = () => {
+        if (index<songs.length-1) {
+            setIndex(index+1)
+        }
+        else {
+            setIndex(0)
+        }
+    }
 
     const handleClick = () => {
         if (!isPlaying) {
@@ -104,10 +122,10 @@ export default function SongSlider () {
             thumbClassName="absolute w-6 h-10 hover:cursor-pointer bg-green-700 hover:bg-green-400 rounded-full outline-none -top-1/3"
             trackClassName="h-full bg-red-700 hover:cursor-pointer rounded-full"
             />
-            <button type="button" className="bg-red-700 hover:bg-red-500 mx-64 my-16 rounded-full text-white text-xl text-center h-20 w-40" onClick={handleClick}>
+            <button id="play" type="button" className="bg-red-700 hover:bg-red-500 mx-64 my-16 rounded-full text-white text-xl text-center h-20 w-40" onClick={handleClick}>
                 {isPlaying ? "Pause Song" : "Play Song"}
             </button>
-            <ReactSlider id="2" className="h-6 bg-gray-200 rounded-md shadow-md my-32 mx-14"
+            <ReactSlider id="2" className="h-6 bg-gray-200 rounded-md shadow-md my-12 mx-14"
             value={volume}
             onChange={handleVolumeSeek} 
             min={0}
@@ -116,6 +134,9 @@ export default function SongSlider () {
             thumbClassName="absolute w-6 h-10 hover:cursor-pointer bg-green-700 hover:bg-green-400 rounded-full outline-none -top-1/3"
             trackClassName="h-full bg-red-700 hover:cursor-pointer rounded-full"
             />
+            <button id="forward" type="button" className="bg-red-700 hover:bg-red-500 mx-64 my-16 rounded-full text-white text-xl text-center h-20 w-40" onClick={playNext}>
+                {"Forward"}
+            </button>
         </>
     )
 }
