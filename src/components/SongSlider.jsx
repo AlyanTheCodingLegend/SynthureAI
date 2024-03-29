@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import ReactSlider from 'react-slider';
 
-const supabase = createClient("https://uddenmrxulkqkllfwxlp.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkZGVubXJ4dWxrcWtsbGZ3eGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDk3NTYyNTEsImV4cCI6MjAyNTMzMjI1MX0.GjFgG0vfES2dzl6s8YlFbTz8N06G0MbMo6Ornj39XAI")
+const supabase = createClient("https://uddenmrxulkqkllfwxlp.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkZGVubXJ4dWxrcWtsbGZ3eGxwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwOTc1NjI1MSwiZXhwIjoyMDI1MzMyMjUxfQ.npWelLJdthzXFsWbAiXnY0ZBjQ5OyZe8NrXtWyXquZw")
 
 async function loopSongs () {
     let songArray=[]
@@ -26,9 +26,7 @@ export default function SongSlider () {
     const [progress, setProgress] = useState(0)
     const [volume, setVolume] = useState(1)
     const [index, setIndex] = useState(0)
-    const [selectedFile, setSelectedFile] = useState(new File([""],""))
     const [songs, setSongs] = useState([])
-    const [filename, setFilename] = useState("")
     const idRef = useRef(null)
     
     useEffect(() => {
@@ -102,39 +100,6 @@ export default function SongSlider () {
         }
     }
 
-    const handleFileUpload = async () => {
-        if (!selectedFile) {
-            console.log("No file selected!");
-            return;
-        }
-    
-        console.log(selectedFile.name);
-        try {
-            const { data, error } = await supabase
-                .storage
-                .from("songs")
-                .upload(`${filename}.mp3`, selectedFile, {cacheControl: "3600", upsert: false});
-    
-            if (error) {
-                throw error;
-            } else {
-                console.log(data)
-            }
-    
-            console.log("File uploaded successfully:", data);
-        } catch (error) {
-            console.error("Error uploading file:", error.message);
-        }
-    };
-
-    const handleNameChange = (event) => {
-        setFilename(event.target.value.replace(/\s+/g, '').toLowerCase());
-    }
-
-    const handleFileChange = (event) => {
-        setSelectedFile(event.target.files[0])
-    }
-
     const handleVolumeSeek = (vol) => {
         song.volume(vol)
         setVolume(vol)
@@ -173,13 +138,6 @@ export default function SongSlider () {
             thumbClassName="absolute w-6 h-10 hover:cursor-pointer bg-green-700 hover:bg-green-400 rounded-full outline-none -top-1/3"
             trackClassName="h-full bg-red-700 hover:cursor-pointer rounded-full"
             />
-            <form>
-                <div className="form-group mx-5">
-                    <input onChange={handleNameChange} type="name" className="form-control" id="songname" aria-describedby="songName" placeholder="Enter song name"/>
-                    <input onChange={handleFileChange} type="file" name="upload" accept=".mp3" multiple={false}/>
-                    <button className="bg-red-700 rounded-full h-20 w-40 text-xl text-white hover:bg-red-500" onClick={handleFileUpload}>Upload Song</button>
-                </div>
-            </form>
         </>
     )
 }
