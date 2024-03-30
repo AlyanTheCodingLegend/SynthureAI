@@ -3,7 +3,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { useState } from 'react';
 
-const supabase = createClient("https://uddenmrxulkqkllfwxlp.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkZGVubXJ4dWxrcWtsbGZ3eGxwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwOTc1NjI1MSwiZXhwIjoyMDI1MzMyMjUxfQ.npWelLJdthzXFsWbAiXnY0ZBjQ5OyZe8NrXtWyXquZw")
+const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY)
 
 export default function SongUploadModel () {
     const [selectedFile, setSelectedFile] = useState(new File([""],""))

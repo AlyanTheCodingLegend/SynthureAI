@@ -5,18 +5,20 @@ import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import ReactSlider from 'react-slider';
 
-const supabase = createClient("https://uddenmrxulkqkllfwxlp.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkZGVubXJ4dWxrcWtsbGZ3eGxwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwOTc1NjI1MSwiZXhwIjoyMDI1MzMyMjUxfQ.npWelLJdthzXFsWbAiXnY0ZBjQ5OyZe8NrXtWyXquZw")
+const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY)
 
 async function loopSongs () {
     let songArray=[]
+    let songNameArray=[]
     const { count } = await supabase.from("song_information").select("*",{count: "exact", head: true})
-    const { data } = await supabase.from("song_information").select("song_path")
+    const { data } = await supabase.from("song_information").select("song_name,song_path")
     
     for (let i=0;i<count;i++) {
         songArray.push(data[i].song_path.split(",")[0])
+        songNameArray.push(data[i].song_name.split(",")[0])
     }
     
-    return songArray
+    return [songArray, songNameArray]
 }
 
 export default function SongSlider () {
@@ -27,14 +29,16 @@ export default function SongSlider () {
     const [volume, setVolume] = useState(1)
     const [index, setIndex] = useState(0)
     const [songs, setSongs] = useState([])
+    const [songNames, setSongNames] = useState([])
     const idRef = useRef(null)
     
     useEffect(() => {
 
         async function fetchSong() {
 
-            let songArray = await loopSongs()
+            let [songArray, songNameArray] = await loopSongs()
             setSongs(songArray)
+            setSongNames(songNameArray)
         }
         fetchSong()
     // eslint-disable-next-line
@@ -73,7 +77,7 @@ export default function SongSlider () {
             }
         }
     // eslint-disable-next-line
-    }, [songs, index])
+    }, [songs, index, songNames])
 
     const handleClick = () => {
         if (!isPlaying) {
@@ -115,6 +119,7 @@ export default function SongSlider () {
     
     return (
         <>
+        <div>Playing {songNames[index]}</div>
         <div className="progress-slider-container">
             <ReactSlider id="1" className="progress-slider h-6 bg-gray-200 rounded-md shadow-md my-6 mx-14"
             value={progress}
