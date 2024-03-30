@@ -109,6 +109,15 @@ export default function SongSlider () {
         setVolume(vol)
     }
 
+    const handlePlayNextSong = () => {
+        song.pause()
+        if (index<songs.length-1) {
+            setIndex(index+1)
+        } else{
+            setIndex(0)
+        }
+    }
+
     if (!song) {
         return (
             <div>
@@ -121,20 +130,21 @@ export default function SongSlider () {
         <>
         <div>Playing {songNames[index]}</div>
         <div className="progress-slider-container">
-            <ReactSlider id="1" className="progress-slider h-6 bg-gray-200 rounded-md shadow-md my-6 mx-14"
+            <ReactSlider id="1" className="progress-slider h-6 bg-white rounded-md shadow-md my-6 mx-14"
             value={progress}
             onChange={handleSeek} 
             min={0}
             max={duration}
             thumbClassName="progress-thumb absolute w-6 h-10 hover:cursor-pointer bg-green-700 hover:bg-green-400 rounded-full outline-none -top-1/3"
-            trackClassName="h-full bg-red-700 hover:cursor-pointer rounded-full"
+            trackClassName="h-full bg-red-700 hover:cursor-pointer rounded-full bg-gradient-to-r from-red-400 to-red-700"
             />
             <div className="progress-bar ease-in-out duration-75" style={{ width: `${(progress / duration) * 100}%` }} />
         </div>
             <button id="play" type="button" className="bg-red-700 hover:bg-red-500 mx-64 my-6 rounded-full text-white text-xl text-center h-20 w-40" onClick={handleClick}>
                 {isPlaying ? "Pause Song" : "Play Song"}
             </button>
-            <ReactSlider id="2" className="h-6 bg-gray-200 rounded-md shadow-md my-6 mx-14"
+            <button className='bg-red-800 hover:bg-red-400 rounded-full mr-5' onClick={handlePlayNextSong}>Next Song</button>
+            <ReactSlider id="2" className="h-6 bg-white rounded-md shadow-md my-6 mx-14"
             value={volume}
             onChange={handleVolumeSeek} 
             min={0}
@@ -143,6 +153,11 @@ export default function SongSlider () {
             thumbClassName="absolute w-6 h-10 hover:cursor-pointer bg-green-700 hover:bg-green-400 rounded-full outline-none -top-1/3"
             trackClassName="h-full bg-red-700 hover:cursor-pointer rounded-full"
             />
+            <div className="justify-center bg-slate-300">
+                {songNames.map((songName, index) => (
+                    <button key={index} className='mr-10 bg-red-300 rounded-full justify-center hover:bg-gradient-to-r from-white to-green-600' onClick={() => setIndex(index)}>{songName}</button>
+                ))}
+            </div>
         </>
     )
 }
