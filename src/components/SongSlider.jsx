@@ -149,7 +149,7 @@ export default function SongSlider () {
             onChange={handleVolumeSeek} 
             min={0}
             max={1}
-            step={0.1}
+            step={0.001}
             thumbClassName="absolute w-6 h-10 hover:cursor-pointer bg-green-700 hover:bg-green-400 rounded-full outline-none -top-1/3"
             trackClassName="h-full bg-red-700 hover:cursor-pointer rounded-full"
             />
