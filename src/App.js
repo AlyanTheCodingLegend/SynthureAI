@@ -1,12 +1,12 @@
 import './App.css';
-import SongSlider from './components/SongSlider';
+import Player from './components/Player';
 import SongUploadModel from './components/SongUploadModel';
 
 function App() {
   return (
     <>
-      <SongSlider/>
       <SongUploadModel/>
+      <Player/>
     </>
   );
 }

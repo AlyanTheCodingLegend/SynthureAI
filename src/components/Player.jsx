@@ -21,7 +21,7 @@ async function loopSongs () {
     return [songArray, songNameArray]
 }
 
-export default function SongSlider () {
+export default function Player () {
     const [isPlaying, setIsPlaying] = useState(false)
     const [song, setSong] = useState(null)
     const [duration, setDuration] = useState(0)
@@ -44,9 +44,11 @@ export default function SongSlider () {
         if (isPlaying) {
             setMins(Math.trunc(progress/60))
             setSecs(Math.trunc(progress-(mins*60)))
+            setTMins(Math.trunc(duration/60))
+            setTSecs(Math.trunc(duration-(Tmins*60)))
         }
     // eslint-disable-next-line    
-    }, [progress, isPlaying])    
+    }, [progress, isPlaying, duration])    
 
     useEffect(() => {
 
@@ -75,8 +77,6 @@ export default function SongSlider () {
                 },
                 onload: () => {
                     setDuration(newSong.duration());
-                    setTMins(Math.trunc(duration/60))
-                    setTSecs(Math.trunc(duration-(Tmins*60)))
                 },
                 onend: () => {
                     setIsPlaying(false);
@@ -169,6 +169,13 @@ export default function SongSlider () {
         setIndex(Math.floor(Math.random()*(max-min+1)) + min)
     }
 
+    useEffect(() => {
+        if (isMuted) {
+            setIsMuted(false)
+        }
+    // eslint-disable-next-line    
+    }, [volume])
+
     // TODO: repeat song button (partially done)
     // TODO: song autoplay switch
     // TODO: front-end styling
@@ -182,44 +189,57 @@ export default function SongSlider () {
     }
     
     return (
-        <>
-        <div>Playing {songNames[index]}</div>
-        <div className="progress-slider-container flex flex-col justify-end h-30">
-            <ReactSlider id="1" className="progress-slider h-3 bg-white rounded-md shadow-md"
-            onAfterChange={handleSeek}
-            value={progress}
-            min={0}
-            max={duration}
-            thumbClassName="progress-thumb absolute w-5 h-5 hover:cursor-pointer bg-green-700 hover:bg-green-400 rounded-full outline-none -top-1/3"
-            trackClassName="h-full bg-red-700 hover:cursor-pointer rounded-full bg-gradient-to-r from-red-400 to-red-700"
-            />
-            <div className="progress-bar ease-in-out duration-75" style={{ width: `${(progress / duration) * 100}%` }} />
-        </div>
-            <button id="play" type="button" className="bg-red-700 hover:bg-red-500 mx-64 my-6 rounded-full text-white text-xl text-center h-20 w-40" onClick={handleClick}>
+        <div className="flex flex-col h-screen relative">
+
+            <div>Playing {songNames[index]}</div>
+
+            <button id="play" type="button" className="bg-red-700 hover:bg-red-500 rounded-full text-white text-xl text-center h-20 w-40" onClick={handleClick}>
                 {isPlaying ? "Pause Song" : "Play Song"}
             </button>
-            <button className='bg-red-800 hover:bg-red-400 rounded-full mr-5' onClick={handlePlayNextSong}>Next Song</button>
-            <button className='bg-green-800 hover:bg-green-400 rounded-full mr-5' onClick={handlePlayPrevSong}>Prev Song</button>
-            <button className="bg-red-600 rounded-full h-8 w-35 text-white ml-4" onClick={() => setRepeat(!repeat)}>{repeat ? "Repeat: On" : "Repeat: Off"}</button>
+
+            <button className='bg-red-800 hover:bg-red-400 rounded-full' onClick={handlePlayNextSong}>Next Song</button>
+            <button className='bg-green-800 hover:bg-green-400 rounded-full' onClick={handlePlayPrevSong}>Prev Song</button>
+            <button className="bg-red-600 rounded-full h-8 w-35 text-white" onClick={() => setRepeat(!repeat)}>{repeat ? "Repeat: On" : "Repeat: Off"}</button>
             <button className="bg-black text-white rounded-full h-8 w-35" onClick={handleVolumeMute}>{isMuted ? "Muted" : "Unmuted"}</button>
             <button onClick={() => setRandomize(!randomize)}>{randomize ? "Un-randomize" : "Randomize"}</button>
-            <div>
-                {mins} : {secs} / {Tmins} : {Tsecs}
-            </div>
-            <ReactSlider id="2" className="h-6 bg-white rounded-md shadow-md my-6 mx-14"
-            value={volume}
-            onChange={handleVolumeSeek} 
-            min={0}
-            max={1}
-            step={0.001}
-            thumbClassName="absolute w-6 h-10 hover:cursor-pointer bg-green-700 hover:bg-green-400 rounded-full outline-none -top-1/3"
-            trackClassName="h-full bg-red-700 hover:cursor-pointer rounded-full"
-            />
+            
             <div className="justify-center bg-slate-300">
                 {songNames.map((songName, index) => (
                     <button key={index} className='mr-10 bg-red-300 rounded-full justify-center hover:bg-gradient-to-r from-white to-green-600' onClick={() => {song.pause(); setIndex(index)}}>{songName}</button>
                 ))}
             </div>
-        </>
+            
+            <div className='fixed bottom-7 flex flex-col w-full ml-44'>    
+                <div className="w-full">
+                    <ReactSlider
+                    id="song-slider"
+                    className="h-3 bg-white rounded-md shadow-md w-1/2"
+                    onAfterChange={handleSeek}
+                    value={progress}
+                    min={0}
+                    max={duration}
+                    thumbClassName="progress-thumb absolute w-5 h-5 hover:cursor-pointer bg-blue-700 hover:bg-blue-500 rounded-full -top-1/3 outline-none"
+                    trackClassName="h-full hover:cursor-pointer rounded-full bg-gradient-to-r from-blue-300 to-green-200"
+                    />
+                    <div className="progress-bar ease-in-out duration-75" style={{ width: `${(progress / duration) * 100}%` }} />
+                </div>  
+                <div id="timer" className='font-mono text-base w-1/2 text-blue-600 text-center ml-40'>
+                        {mins}:{secs} / {Tmins}:{Tsecs}
+                </div>
+            </div> 
+
+            <div className='fixed right-0 h-full w-1/4 bg-gray-800 opacity-0 hover:opacity-100 transition-opacity duration-300'>
+                <ReactSlider id="volume-slider" className="w-6 bg-white rounded-md shadow-md h-40 transform rotate-90"
+                value={volume}
+                onChange={handleVolumeSeek} 
+                min={0}
+                max={1}
+                step={0.001}
+                thumbClassName="absolute w-6 h-10 hover:cursor-pointer bg-green-700 hover:bg-green-400 rounded-full outline-none -right-1/3"
+                trackClassName="w-full bg-red-700 hover:cursor-pointer rounded-full"
+                />
+            </div>
+            
+        </div>
     )
 }

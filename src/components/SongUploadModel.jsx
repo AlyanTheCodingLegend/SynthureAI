@@ -63,7 +63,7 @@ export default function SongUploadModel () {
 
     return (
         <form>
-            <div className="form-group mx-5">
+            <div className="form-group">
                 <input onChange={handleNameChange} type="name" className="form-control" id="songname" aria-describedby="songName" placeholder="Enter song name"/>
                 <input onChange={handleFileChange} type="file" name="upload" accept=".mp3" multiple={false}/>
                 <button disabled={filename==="" || selectedFile===null || isProcessing} className={(!(filename!=="" && selectedFile!==null) || isProcessing)? "rounded-full h-20 w-40 text-xl text-white bg-slate-600": "bg-red-700 rounded-full h-20 w-40 text-xl text-white hover:bg-red-500"} onClick={handleFileUpload}>{isProcessing ? "Uploading..." : "Upload Song"}</button>
