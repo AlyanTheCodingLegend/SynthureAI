@@ -3,6 +3,7 @@
 import { Howl } from 'howler';
 import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { SlControlPlay, SlControlPause } from "react-icons/sl";
 import ReactSlider from 'react-slider';
 
 const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY)
@@ -38,6 +39,7 @@ export default function Player () {
     const [Tmins, setTMins] = useState(0)
     const [Tsecs, setTSecs] = useState(0)
     const [randomize, setRandomize] = useState(false)
+    const [showVolumeSlider, setShowVolumeSlider] = useState(false)
     const idRef = useRef(null)
 
     useEffect(() => {
@@ -145,6 +147,13 @@ export default function Player () {
         setIsMuted(!isMuted)
     }
 
+    useEffect(() => {
+        if (index!==0) {
+            song.play()
+        }
+    // eslint-disable-next-line   
+    }, [duration])
+
     const handlePlayNextSong = () => {
         song.pause()
         if (index<songs.length-1) {
@@ -170,8 +179,11 @@ export default function Player () {
     }
 
     useEffect(() => {
-        if (isMuted) {
+        if (isMuted && volume!==0) {
             setIsMuted(false)
+        }
+        if (volume===0) {
+            setIsMuted(true)
         }
     // eslint-disable-next-line    
     }, [volume])
@@ -179,6 +191,14 @@ export default function Player () {
     // TODO: repeat song button (partially done)
     // TODO: song autoplay switch
     // TODO: front-end styling
+
+    function PlayPauseButton () {
+        return (
+            <button size={70} onClick={handleClick}>
+                {isPlaying ? <SlControlPause/> : <SlControlPlay/>}
+            </button>
+        )
+    }
 
     if (!song) {
         return (
@@ -193,9 +213,7 @@ export default function Player () {
 
             <div>Playing {songNames[index]}</div>
 
-            <button id="play" type="button" className="bg-red-700 hover:bg-red-500 rounded-full text-white text-xl text-center h-20 w-40" onClick={handleClick}>
-                {isPlaying ? "Pause Song" : "Play Song"}
-            </button>
+            <PlayPauseButton/>
 
             <button className='bg-red-800 hover:bg-red-400 rounded-full' onClick={handlePlayNextSong}>Next Song</button>
             <button className='bg-green-800 hover:bg-green-400 rounded-full' onClick={handlePlayPrevSong}>Prev Song</button>
@@ -209,8 +227,8 @@ export default function Player () {
                 ))}
             </div>
             
-            <div className='fixed bottom-7 flex flex-col w-full ml-44'>    
-                <div className="w-full">
+            <div className='fixed bottom-7 flex flex-col w-full items-center'>    
+                
                     <ReactSlider
                     id="song-slider"
                     className="h-3 bg-white rounded-md shadow-md w-1/2"
@@ -218,26 +236,32 @@ export default function Player () {
                     value={progress}
                     min={0}
                     max={duration}
-                    thumbClassName="progress-thumb absolute w-5 h-5 hover:cursor-pointer bg-blue-700 hover:bg-blue-500 rounded-full -top-1/3 outline-none"
+                    thumbClassName="absolute w-5 h-5 hover:cursor-pointer bg-blue-700 hover:bg-blue-500 rounded-full -top-1/3 outline-none"
                     trackClassName="h-full hover:cursor-pointer rounded-full bg-gradient-to-r from-blue-300 to-green-200"
                     />
                     <div className="progress-bar ease-in-out duration-75" style={{ width: `${(progress / duration) * 100}%` }} />
-                </div>  
+                  
                 <div id="timer" className='font-mono text-base w-1/2 text-blue-600 text-center ml-40'>
                         {mins}:{secs} / {Tmins}:{Tsecs}
                 </div>
             </div> 
 
-            <div className='fixed right-0 h-full w-1/4 bg-gray-800 opacity-0 hover:opacity-100 transition-opacity duration-300'>
-                <ReactSlider id="volume-slider" className="w-6 bg-white rounded-md shadow-md h-40 transform rotate-90"
-                value={volume}
-                onChange={handleVolumeSeek} 
-                min={0}
-                max={1}
-                step={0.001}
-                thumbClassName="absolute w-6 h-10 hover:cursor-pointer bg-green-700 hover:bg-green-400 rounded-full outline-none -right-1/3"
-                trackClassName="w-full bg-red-700 hover:cursor-pointer rounded-full"
-                />
+            <div className='fixed bottom-2 w-full mb-auto right-0' onMouseEnter={() => setShowVolumeSlider(true)} onMouseLeave={() => setShowVolumeSlider(false)}>
+                {showVolumeSlider && 
+                    (
+                        <ReactSlider
+                        id="volume-slider"
+                        className="h-3 bg-white rounded-md shadow-md w-1/2 mt-auto"
+                        value={volume}
+                        onChange={handleVolumeSeek} 
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        thumbClassName="absolute h-5 w-5 hover:cursor-pointer bg-green-700 hover:bg-green-400 rounded-full outline-none -top-1/3"
+                        trackClassName="h-full bg-red-700 hover:cursor-pointer rounded-full"
+                        />
+                    )
+                }
             </div>
             
         </div>
