@@ -39,7 +39,9 @@ export default function Player () {
     const [Tmins, setTMins] = useState(0)
     const [Tsecs, setTSecs] = useState(0)
     const [randomize, setRandomize] = useState(false)
-    const [showVolumeSlider, setShowVolumeSlider] = useState(false)
+    // eslint-disable-next-line
+    const [showVolumeSlider, setShowVolumeSlider] = useState(true)
+    const [autoplay, setAutoplay] = useState(true)
     const idRef = useRef(null)
 
     useEffect(() => {
@@ -83,17 +85,18 @@ export default function Player () {
                 onend: () => {
                     setIsPlaying(false);
                     setProgress(0);
-
-                    if (randomize) {
-                        randomizeSong(0,songs.length-1)
-                    } else {
-                        if (index<songs.length-1) {
-                            setIndex(index+1)
+                    if (autoplay) {
+                        if (randomize) {
+                            randomizeSong(0,songs.length-1)
+                        } else {
+                            if (index<songs.length-1) {
+                                setIndex(index+1)
+                            }
+                            else {
+                                setIndex(0)
+                            }
                         }
-                        else {
-                            setIndex(0)
-                        }
-                    }
+                    }  
                 }
             })
             setSong(newSong)
@@ -148,9 +151,11 @@ export default function Player () {
     }
 
     useEffect(() => {
-        if (index!==0) {
-            song.play()
-        }
+        if (autoplay) {
+            if (index!==0) {
+                song.play()
+            }
+        }    
     // eslint-disable-next-line   
     }, [duration])
 
@@ -188,14 +193,12 @@ export default function Player () {
     // eslint-disable-next-line    
     }, [volume])
 
-    // TODO: repeat song button (partially done)
-    // TODO: song autoplay switch
     // TODO: front-end styling
 
     function PlayPauseButton () {
         return (
-            <button size={70} onClick={handleClick}>
-                {isPlaying ? <SlControlPause/> : <SlControlPlay/>}
+            <button size={30} onClick={handleClick} className='hover:cursor-pointer'>
+                {isPlaying ? <SlControlPause size={30} onClick={handleClick} color='lightblue' className='hover:cursor-pointer'/> : <SlControlPlay size={30} onClick={handleClick} color='lightblue' className='hover:cursor-pointer'/>}
             </button>
         )
     }
@@ -213,12 +216,11 @@ export default function Player () {
 
             <div>Playing {songNames[index]}</div>
 
-            <PlayPauseButton/>
-
             <button className='bg-red-800 hover:bg-red-400 rounded-full' onClick={handlePlayNextSong}>Next Song</button>
             <button className='bg-green-800 hover:bg-green-400 rounded-full' onClick={handlePlayPrevSong}>Prev Song</button>
             <button className="bg-red-600 rounded-full h-8 w-35 text-white" onClick={() => setRepeat(!repeat)}>{repeat ? "Repeat: On" : "Repeat: Off"}</button>
             <button className="bg-black text-white rounded-full h-8 w-35" onClick={handleVolumeMute}>{isMuted ? "Muted" : "Unmuted"}</button>
+            <button className="bg-yellow-600 text-white rounded-full h-8 w-35" onClick={() => setAutoplay(!autoplay)}>{autoplay ? "Disable autoplay" : "Enable autoplay"}</button>
             <button onClick={() => setRandomize(!randomize)}>{randomize ? "Un-randomize" : "Randomize"}</button>
             
             <div className="justify-center bg-slate-300">
@@ -244,26 +246,30 @@ export default function Player () {
                 <div id="timer" className='font-mono text-base w-1/2 text-blue-600 text-center ml-40'>
                         {mins}:{secs} / {Tmins}:{Tsecs}
                 </div>
+                <div className=''>
+                    <PlayPauseButton/>
+                </div>
             </div> 
-
-            <div className='fixed bottom-2 w-full mb-auto right-0' onMouseEnter={() => setShowVolumeSlider(true)} onMouseLeave={() => setShowVolumeSlider(false)}>
-                {showVolumeSlider && 
-                    (
-                        <ReactSlider
-                        id="volume-slider"
-                        className="h-3 bg-white rounded-md shadow-md w-1/2 mt-auto"
-                        value={volume}
-                        onChange={handleVolumeSeek} 
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        thumbClassName="absolute h-5 w-5 hover:cursor-pointer bg-green-700 hover:bg-green-400 rounded-full outline-none -top-1/3"
-                        trackClassName="h-full bg-red-700 hover:cursor-pointer rounded-full"
-                        />
-                    )
-                }
-            </div>
             
+            <div className='mt-20'>
+                <div className='w-full'>
+                    {showVolumeSlider && 
+                        (
+                            <ReactSlider
+                            id="volume-slider"
+                            className="h-3 bg-white rounded-md shadow-md w-1/2"
+                            value={volume}
+                            onChange={handleVolumeSeek} 
+                            min={0}
+                            max={1}
+                            step={0.01}
+                            thumbClassName="absolute h-5 w-5 hover:cursor-pointer bg-green-700 hover:bg-green-400 rounded-full outline-none -top-1/3"
+                            trackClassName="h-full bg-red-700 hover:cursor-pointer rounded-full"
+                            />
+                        )
+                    }
+                </div>
+            </div>
         </div>
     )
 }
