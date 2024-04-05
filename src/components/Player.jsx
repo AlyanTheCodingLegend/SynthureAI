@@ -69,7 +69,7 @@ export default function Player () {
     },[])
 
     const fetchAndSetupMediaRecorder = async () => {
-        if (songs && index!==undefined && index!==null) {
+        if (songs && index!==undefined && index!==null && songs[index]) {
             try {
                 const response = await fetch(songs[index]);
                 const blob = await response.blob();
@@ -85,10 +85,13 @@ export default function Player () {
             } catch (error) {
                 console.error('Error fetching audio:', error);
             }
-            fetchAndSetupMediaRecorder();
         }    
     }
     
+    useEffect(() => {
+        fetchAndSetupMediaRecorder();
+
+    }, [index])
     
 
     useEffect(() => {
@@ -266,7 +269,7 @@ export default function Player () {
                         <button className='bg-red-600 hover:bg-red-400 rounded-full py-2 px-4 mr-4' onClick={handlePlayNextSong}>Next Song</button>
                         <button className="bg-blue-600 hover:bg-blue-400 rounded-full py-2 px-4 mr-4" onClick={() => setRepeat(!repeat)}>{repeat ? "Repeat: On" : "Repeat: Off"}</button>
                         <button className="bg-purple-600 hover:bg-purple-400 rounded-full py-2 px-4 mr-4" onClick={() => setAutoplay(!autoplay)}>{autoplay ? "Disable autoplay" : "Enable autoplay"}</button>
-                        <button className='bg-pink-600 hover:bg-pink-400 rounded-full py-2 px-4' onClick={()=>setRandomize(!randomize)}>{randomize ? "Randomize: On" : "Randomize: Off"}</button>
+                        <button className='bg-pink-600 hover:bg-pink-400 rounded-full py-2 px-4' onClick={()=>setRandomize(!randomize)}>{randomize ? "Randomize: On" : "Randomize: Nigga"}</button>
                     </div>
                 </div>
             </div>
