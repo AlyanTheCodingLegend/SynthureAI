@@ -1,14 +1,16 @@
 "use client";
 
 import { Howl } from 'howler';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { SlControlPlay, SlControlPause } from "react-icons/sl";
+import { SlControlPlay, SlControlPause, SlVolume2, SlVolumeOff } from "react-icons/sl";
+import { BeatLoader } from 'react-spinners';
+import { LiveAudioVisualizer } from 'react-audio-visualize';
 import ReactSlider from 'react-slider';
 
 const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY)
 
-async function loopSongs () {
+async function loadSongs () {
     let songArray=[]
     let songNameArray=[]
     const { count } = await supabase.from("song_information").select("*",{count: "exact", head: true})
@@ -39,9 +41,8 @@ export default function Player () {
     const [Tmins, setTMins] = useState(0)
     const [Tsecs, setTSecs] = useState(0)
     const [randomize, setRandomize] = useState(false)
-    // eslint-disable-next-line
-    const [showVolumeSlider, setShowVolumeSlider] = useState(true)
     const [autoplay, setAutoplay] = useState(true)
+    const [mediaRecorder, setMediaRecorder] = useState()
     const idRef = useRef(null)
 
     useEffect(() => {
@@ -58,13 +59,37 @@ export default function Player () {
 
         async function fetchSong() {
 
-            let [songArray, songNameArray] = await loopSongs()
+            let [songArray, songNameArray] = await loadSongs()
             setSongs(songArray)
             setSongNames(songNameArray)
+            
         }
         fetchSong()
     // eslint-disable-next-line
     },[])
+
+    const fetchAndSetupMediaRecorder = async () => {
+        if (songs && index!==undefined && index!==null) {
+            try {
+                const response = await fetch(songs[index]);
+                const blob = await response.blob();
+                
+                const audio = new Audio();
+                audio.src = URL.createObjectURL(blob);
+                audio.controls = true;
+                document.body.appendChild(audio)
+                
+                const stream = audio.captureStream();
+                const recorder = new MediaRecorder(stream);
+                setMediaRecorder(recorder);
+            } catch (error) {
+                console.error('Error fetching audio:', error);
+            }
+            fetchAndSetupMediaRecorder();
+        }    
+    }
+    
+    
 
     useEffect(() => {
         if (songs.length>0) {
@@ -109,12 +134,25 @@ export default function Player () {
     }, [songs, index, songNames])
 
     const handleClick = () => {
+        if (!song) return;
+    
         if (!isPlaying) {
-            idRef.current = song.play()
+            
+            if (!idRef.current) {
+                
+                idRef.current = song.play();
+            } else {
+                
+                song.play(idRef.current);
+            }
         } else {
-            song.pause(idRef.current)
-        }    
+            
+            song.pause(idRef.current);
+        }
+    
+        setIsPlaying(!isPlaying);
     }
+    
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -193,81 +231,91 @@ export default function Player () {
     // eslint-disable-next-line    
     }, [volume])
 
-    // TODO: front-end styling
-
     function PlayPauseButton () {
         return (
             <button size={30} onClick={handleClick} className='hover:cursor-pointer'>
-                {isPlaying ? <SlControlPause size={30} onClick={handleClick} color='lightblue' className='hover:cursor-pointer'/> : <SlControlPlay size={30} onClick={handleClick} color='lightblue' className='hover:cursor-pointer'/>}
+                {isPlaying ? <SlControlPause size={30} onClick={handleClick} color='blue' className='hover:cursor-pointer'/> : <SlControlPlay size={30} onClick={handleClick} color='blue' className='hover:cursor-pointer'/>}
+            </button>
+        )
+    }
+
+    function MuteButton () {
+        return (
+            <button  size={30} onClick={handleVolumeMute} className='hover:cursor-pointer'>
+                {isMuted ? <SlVolumeOff size={30} onClick={handleVolumeMute}/> : <SlVolume2 size={30} onClick={handleVolumeMute}/>}
             </button>
         )
     }
 
     if (!song) {
         return (
-            <div>
-                Loading...
+            <div className='flex w-full h-full justify-center items-center my-auto'>
+                <BeatLoader size={30} color="lightblue"/>
             </div>
         )
     }
     
     return (
-        <div className="flex flex-col h-screen relative">
+        <div className="flex flex-col h-screen w-screen bg-gray-900 text-white relative">
 
-            <div>Playing {songNames[index]}</div>
-
-            <button className='bg-red-800 hover:bg-red-400 rounded-full' onClick={handlePlayNextSong}>Next Song</button>
-            <button className='bg-green-800 hover:bg-green-400 rounded-full' onClick={handlePlayPrevSong}>Prev Song</button>
-            <button className="bg-red-600 rounded-full h-8 w-35 text-white" onClick={() => setRepeat(!repeat)}>{repeat ? "Repeat: On" : "Repeat: Off"}</button>
-            <button className="bg-black text-white rounded-full h-8 w-35" onClick={handleVolumeMute}>{isMuted ? "Muted" : "Unmuted"}</button>
-            <button className="bg-yellow-600 text-white rounded-full h-8 w-35" onClick={() => setAutoplay(!autoplay)}>{autoplay ? "Disable autoplay" : "Enable autoplay"}</button>
-            <button onClick={() => setRandomize(!randomize)}>{randomize ? "Un-randomize" : "Randomize"}</button>
-            
-            <div className="justify-center bg-slate-300">
-                {songNames.map((songName, index) => (
-                    <button key={index} className='mr-10 bg-red-300 rounded-full justify-center hover:bg-gradient-to-r from-white to-green-600' onClick={() => {song.pause(); setIndex(index)}}>{songName}</button>
-                ))}
+            <div className="flex justify-center items-center h-1/6">
+                <div className="text-center">
+                    <h1 className="text-3xl">Now Playing: {songNames[index]}</h1>
+                    <div className="flex justify-center mt-4">
+                        <button className='bg-green-600 hover:bg-green-400 rounded-full py-2 px-4 mr-4' onClick={handlePlayPrevSong}>Prev Song</button>
+                        <button className='bg-red-600 hover:bg-red-400 rounded-full py-2 px-4 mr-4' onClick={handlePlayNextSong}>Next Song</button>
+                        <button className="bg-blue-600 hover:bg-blue-400 rounded-full py-2 px-4 mr-4" onClick={() => setRepeat(!repeat)}>{repeat ? "Repeat: On" : "Repeat: Off"}</button>
+                        <button className="bg-purple-600 hover:bg-purple-400 rounded-full py-2 px-4 mr-4" onClick={() => setAutoplay(!autoplay)}>{autoplay ? "Disable autoplay" : "Enable autoplay"}</button>
+                        <button className='bg-pink-600 hover:bg-pink-400 rounded-full py-2 px-4' onClick={()=>setRandomize(!randomize)}>{randomize ? "Randomize: On" : "Randomize: Off"}</button>
+                    </div>
+                </div>
             </div>
-            
-            <div className='fixed bottom-7 flex flex-col w-full items-center'>    
-                
-                    <ReactSlider
+
+            <div className="flex-grow flex justify-center items-center bg-gray-800">
+                <div className="flex flex-col justify-center items-center">
+                    <div className="flex justify-center items-center w-80 h-80 bg-gray-700 rounded-full mb-8">
+                        <div className="w-64 h-64 bg-gray-600 rounded-full relative">
+                            {/*<LiveAudioVisualizer mediaRecorder={mediaRecorder} width={160} height={160}/>*/}
+                        </div>
+                    </div>
+                    <h2 className="text-2xl">{songNames[index]}</h2>
+                </div>
+            </div>
+
+            <div className='fixed bg-gray-800 bottom-0 flex flex-row w-full justify-between items-center p-4'>
+                <div className="flex items-center">
+                    <button className="text-white mr-2">
+                        <PlayPauseButton/>
+                    </button>
+                    <div id="timer" className='font-mono text-base text-blue-600'>
+                        {mins}:{secs} / {Tmins}:{Tsecs}
+                    </div>
+                </div>
+                <ReactSlider
                     id="song-slider"
-                    className="h-3 bg-white rounded-md shadow-md w-1/2"
+                    className="flex-grow h-3 bg-gray-700 rounded-md mx-4 cursor-pointer"
                     onAfterChange={handleSeek}
                     value={progress}
                     min={0}
                     max={duration}
-                    thumbClassName="absolute w-5 h-5 hover:cursor-pointer bg-blue-700 hover:bg-blue-500 rounded-full -top-1/3 outline-none"
-                    trackClassName="h-full hover:cursor-pointer rounded-full bg-gradient-to-r from-blue-300 to-green-200"
+                    thumbClassName="w-4 h-4 bg-blue-600 hover:bg-blue-800 rounded-full -mt-1 outline-none focus:outline-none top-px cursor-pointer"
+                    trackClassName="h-full rounded-full bg-gradient-to-r from-blue-400 to-green-400"
+                />
+                <div className="flex items-center">
+                    <button className="text-white mr-2">
+                        <MuteButton/>
+                    </button>
+                    <ReactSlider
+                        id="volume-slider"
+                        className="h-3 rounded-md mx-4"
+                        value={volume}
+                        onChange={handleVolumeSeek} 
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        thumbClassName="w-4 h-4 bg-green-600 rounded-full -mt-1 outline-none focus:outline-none"
+                        trackClassName="h-full rounded-full bg-gradient-to-r from-green-400 to-yellow-400"
                     />
-                    <div className="progress-bar ease-in-out duration-75" style={{ width: `${(progress / duration) * 100}%` }} />
-                  
-                <div id="timer" className='font-mono text-base w-1/2 text-blue-600 text-center ml-40'>
-                        {mins}:{secs} / {Tmins}:{Tsecs}
-                </div>
-                <div className=''>
-                    <PlayPauseButton/>
-                </div>
-            </div> 
-            
-            <div className='mt-20'>
-                <div className='w-full'>
-                    {showVolumeSlider && 
-                        (
-                            <ReactSlider
-                            id="volume-slider"
-                            className="h-3 bg-white rounded-md shadow-md w-1/2"
-                            value={volume}
-                            onChange={handleVolumeSeek} 
-                            min={0}
-                            max={1}
-                            step={0.01}
-                            thumbClassName="absolute h-5 w-5 hover:cursor-pointer bg-green-700 hover:bg-green-400 rounded-full outline-none -top-1/3"
-                            trackClassName="h-full bg-red-700 hover:cursor-pointer rounded-full"
-                            />
-                        )
-                    }
                 </div>
             </div>
         </div>
