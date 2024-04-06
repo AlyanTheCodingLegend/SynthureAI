@@ -3,7 +3,6 @@
 import { Howl } from 'howler';
 import React, { useEffect, useRef, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { SlControlPlay, SlControlPause, SlVolume2, SlVolumeOff } from "react-icons/sl";
 import { BeatLoader } from 'react-spinners';
 import { LiveAudioVisualizer } from 'react-audio-visualize';
 import ReactSlider from 'react-slider';
@@ -68,31 +67,32 @@ export default function Player () {
     // eslint-disable-next-line
     },[])
 
-    const fetchAndSetupMediaRecorder = async () => {
-        if (songs && index!==undefined && index!==null && songs[index]) {
-            try {
-                const response = await fetch(songs[index]);
-                const blob = await response.blob();
-                
-                const audio = new Audio();
-                audio.src = URL.createObjectURL(blob);
-                audio.controls = true;
-                document.body.appendChild(audio)
-                
-                const stream = audio.captureStream();
-                const recorder = new MediaRecorder(stream);
-                setMediaRecorder(recorder);
-            } catch (error) {
-                console.error('Error fetching audio:', error);
-            }
-        }    
-    }
-    
     useEffect(() => {
-        fetchAndSetupMediaRecorder();
-
-    }, [index])
-    
+        if (songs && songs.length > 0 && index !== null && index !== undefined) {
+            fetch(songs[index])
+                .then(response => response.blob())
+                .then(blob => {
+                    
+                    return blob.arrayBuffer();
+                })
+                .then(arrayBuffer => {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+                    audioContext.decodeAudioData(arrayBuffer, audioBuffer => {
+                        const audioTrack = audioContext.createMediaStreamDestination().stream.getAudioTracks()[0];
+                        const mediaStream = new MediaStream([audioTrack]);
+                        const mediaRecorderRef = new MediaRecorder(mediaStream);
+                        setMediaRecorder(mediaRecorderRef)
+                        
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching audio:', error);
+                });
+        }
+        
+    }, [songs, index]);
+       
 
     useEffect(() => {
         if (songs.length>0) {
@@ -234,22 +234,6 @@ export default function Player () {
     // eslint-disable-next-line    
     }, [volume])
 
-    function PlayPauseButton () {
-        return (
-            <button size={30} onClick={handleClick} className='hover:cursor-pointer'>
-                {isPlaying ? <SlControlPause size={30} onClick={handleClick} color='blue' className='hover:cursor-pointer'/> : <SlControlPlay size={30} onClick={handleClick} color='blue' className='hover:cursor-pointer'/>}
-            </button>
-        )
-    }
-
-    function MuteButton () {
-        return (
-            <button  size={30} onClick={handleVolumeMute} className='hover:cursor-pointer'>
-                {isMuted ? <SlVolumeOff size={30} onClick={handleVolumeMute}/> : <SlVolume2 size={30} onClick={handleVolumeMute}/>}
-            </button>
-        )
-    }
-
     if (!song) {
         return (
             <div className='flex w-full h-full justify-center items-center my-auto'>
@@ -269,7 +253,7 @@ export default function Player () {
                         <button className='bg-red-600 hover:bg-red-400 rounded-full py-2 px-4 mr-4' onClick={handlePlayNextSong}>Next Song</button>
                         <button className="bg-blue-600 hover:bg-blue-400 rounded-full py-2 px-4 mr-4" onClick={() => setRepeat(!repeat)}>{repeat ? "Repeat: On" : "Repeat: Off"}</button>
                         <button className="bg-purple-600 hover:bg-purple-400 rounded-full py-2 px-4 mr-4" onClick={() => setAutoplay(!autoplay)}>{autoplay ? "Disable autoplay" : "Enable autoplay"}</button>
-                        <button className='bg-pink-600 hover:bg-pink-400 rounded-full py-2 px-4' onClick={()=>setRandomize(!randomize)}>{randomize ? "Randomize: On" : "Randomize: Nigga"}</button>
+                        <button className='bg-pink-600 hover:bg-pink-400 rounded-full py-2 px-4' onClick={()=>setRandomize(!randomize)}>{randomize ? "Randomize: On" : "Randomize: Off"}</button>
                     </div>
                 </div>
             </div>
@@ -278,7 +262,7 @@ export default function Player () {
                 <div className="flex flex-col justify-center items-center">
                     <div className="flex justify-center items-center w-80 h-80 bg-gray-700 rounded-full mb-8">
                         <div className="w-64 h-64 bg-gray-600 rounded-full relative">
-                            {/*<LiveAudioVisualizer mediaRecorder={mediaRecorder} width={160} height={160}/>*/}
+                            {mediaRecorder && (<LiveAudioVisualizer mediaRecorder={mediaRecorder} width={150} height={75} backgroundColor='blue'/>)}
                         </div>
                     </div>
                     <h2 className="text-2xl">{songNames[index]}</h2>
@@ -287,8 +271,8 @@ export default function Player () {
 
             <div className='fixed bg-gray-800 bottom-0 flex flex-row w-full justify-between items-center p-4'>
                 <div className="flex items-center">
-                    <button className="text-white mr-2">
-                        <PlayPauseButton/>
+                    <button disabled={!duration} onClick={handleClick} className="text-white mr-2 rounded-full h-8 w-8 bg-green-900 hover:bg-green-800 text-xs text-center">
+                        {isPlaying ? "Pause" : "Play"}
                     </button>
                     <div id="timer" className='font-mono text-base text-blue-600'>
                         {mins}:{secs} / {Tmins}:{Tsecs}
@@ -301,23 +285,23 @@ export default function Player () {
                     value={progress}
                     min={0}
                     max={duration}
-                    thumbClassName="w-4 h-4 bg-blue-600 hover:bg-blue-800 rounded-full -mt-1 outline-none focus:outline-none top-px cursor-pointer"
+                    thumbClassName="w-5 h-5 bg-blue-600 hover:bg-blue-800 rounded-full -mt-1 outline-none focus:outline-none top-px cursor-pointer"
                     trackClassName="h-full rounded-full bg-gradient-to-r from-blue-400 to-green-400"
                 />
-                <div className="flex items-center">
-                    <button className="text-white mr-2">
-                        <MuteButton/>
+                <div className="flex items-center w-1/5">
+                    <button className="text-white mr-2 rounded-full bg-blue-900 hover:bg-blue-800 w-20 h-8 text-xs text-center" onClick={handleVolumeMute}>
+                        {isMuted ? "Unmute" : "Mute"}
                     </button>
                     <ReactSlider
                         id="volume-slider"
-                        className="h-3 rounded-md mx-4"
+                        className="h-3 rounded-md mx-4 w-full"
                         value={volume}
-                        onChange={handleVolumeSeek} 
+                        onChange={handleVolumeSeek}
                         min={0}
                         max={1}
                         step={0.01}
-                        thumbClassName="w-4 h-4 bg-green-600 rounded-full -mt-1 outline-none focus:outline-none"
-                        trackClassName="h-full rounded-full bg-gradient-to-r from-green-400 to-yellow-400"
+                        thumbClassName="w-5 h-5 bg-green-400 rounded-full -mt-1 outline-none focus:outline-none hover:bg-blue-400"
+                        trackClassName="h-full rounded-full bg-gradient-to-l from-blue-400 to-green-400"
                     />
                 </div>
             </div>
