@@ -2,12 +2,10 @@
 
 import { Howl } from 'howler';
 import React, { useEffect, useRef, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { BeatLoader } from 'react-spinners';
 import { LiveAudioVisualizer } from 'react-audio-visualize';
 import ReactSlider from 'react-slider';
-
-const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY)
+import supabase from "./ClientInstance"
 
 async function loadSongs () {
     let songArray=[]

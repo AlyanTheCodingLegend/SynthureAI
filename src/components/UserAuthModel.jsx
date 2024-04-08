@@ -1,11 +1,11 @@
-import { createClient } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-const bcrypt = require('bcryptjs');
+import { Link } from "react-router-dom";
+import bcrypt from 'bcryptjs';
 
-const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY)
+import supabase from "./ClientInstance";
 
-function CreateUser() {
+export function CreateUser() {
 
     const [email, setEmail] = useState("")
     const [pass, setPass] = useState("")
@@ -31,9 +31,16 @@ function CreateUser() {
     }
 
     useEffect(()=> {
-        if (pass===confpass) {
-            setPassEqual(true)
-        }
+        if (pass!=="" && confpass!=="") {
+            if (pass===confpass) {
+                setPassEqual(true)
+            }
+            else {
+                setPassEqual(false)
+            }
+        } else {
+            setPassEqual(false)
+        }    
     }, [pass, confpass])
 
 
@@ -61,8 +68,6 @@ function CreateUser() {
                 return;
             }
         })
-
-
     }
 
     if (login) {
@@ -95,22 +100,26 @@ function CreateUser() {
                     id="password" 
                     type="password" 
                     placeholder="Enter your password"
+                    minLength={6}
+                    maxLength={15}
                 />
+                {(!passEqual && pass!=="" && confpass!=="") && (<div className="-mt-3">{"Passwords do not match! :("}</div>)}
                 <input 
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
                     onChange={handleConfPassChange} 
                     id="confirmpassword" 
                     type="password" 
-                    placeholder="Re-enter your password to confirm your registration"
+                    placeholder="Re-enter the password to confirm your registration"
                 />
                 <button 
-                    disabled={!passEqual} 
+                    disabled={!passEqual || !username || !email || !pass || !confpass} 
                     onClick={handleClick} 
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    className={(!passEqual || !username || !email || !pass || !confpass)? "w-full bg-slate-500 hover:cursor-not-allowed text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline":"w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
                 >
                     Sign Up
                 </button>
                 <button
+                    
                     onClick={()=>setLogin(true)}
                     className="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                 >
@@ -121,7 +130,7 @@ function CreateUser() {
     )
 }
 
-export default function AuthUser() {
+export function AuthUser() {
     const [email, setEmail] = useState("")
     const [pass, setPass] = useState("")
     const [create, setCreate] = useState(false)
