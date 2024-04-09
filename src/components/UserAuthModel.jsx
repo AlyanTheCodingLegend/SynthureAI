@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { ProfilePage } from "./ProfilePage";
 import bcrypt from 'bcryptjs';
-
+import toast_style from "./ToastStyle"
 import supabase from "./ClientInstance";
 
 export function CreateUser() {
@@ -13,7 +13,7 @@ export function CreateUser() {
     const [passEqual, setPassEqual] = useState(false)
     const [username, setUsername] = useState("")
     const [login, setLogin] = useState(false)
-    
+
     const handleUsernameChange = (event) => {
         setUsername(event.target.value)
     }
@@ -52,22 +52,25 @@ export function CreateUser() {
         })
 
         if (errorOne) {
-            toast(errorOne.message)
+            toast(errorOne.message, toast_style)
             return;
         }
-        console.log(data)
-
+        
         bcrypt.hash(pass, 10, async function(err, hash) {
             if (err) {
-              toast(err.message);
+              toast(err.message, toast_style);
               return;
             }
             const {error} = await supabase.from("user_information").insert({email: email, hashpass: hash, username: username})
             if (error) {
-                toast(error.message);
+                toast(error.message, toast_style);
                 return;
             }
         })
+
+        return (
+            <div>Page to show url to redirect</div>
+        )
     }
 
     if (login) {
@@ -136,6 +139,8 @@ export function AuthUser() {
     const [create, setCreate] = useState(false)
     const [gotoprof, setGotoprof] = useState(false)
     const [username, setUsername] = useState("")
+    const [verEmail, setVerEmail] = useState("")
+    const [disabled, setDisabled] = useState(true)
 
     const handleEmailChange = (event) => {
         setEmail(event.target.value)
@@ -145,6 +150,15 @@ export function AuthUser() {
         setPass(event.target.value)
     }
 
+    useEffect(()=> {
+        if (email==="" || pass==="") {
+            setDisabled(true)
+        }
+        else {
+            setDisabled(false)
+        }
+    }, [email, pass])
+
     const handleClick = async () => {
         const {data,error} = await supabase.auth.signInWithPassword({
             email: email,
@@ -153,18 +167,23 @@ export function AuthUser() {
         if (data) {
             const {user,session} = data
             if (user && session && user.role==="authenticated") {
-                const {dataTwo, errorTwo} = await supabase.from('user_information').select('username').eq('email', user.email)
-                if (dataTwo) {
-                    setUsername(dataTwo.username)
-                    setGotoprof(true)
-                }
-                if (errorTwo) {
-                    toast(errorTwo.message)
-                }
+                setVerEmail(user.email)
+                getUsername()
             }
         }
         else if (error) {
-            toast(error.message)
+            toast(error.message, toast_style)
+        }
+    }
+
+    const getUsername = async () => {
+        const {data,error} = await supabase.from('user_information').select('username').eq('email',verEmail)
+        if (data[0] && data) {
+            setUsername(data[0].username)
+            setGotoprof(true)
+        }
+        if (error) {
+            toast(error.message, toast_style)
         }
     }
 
@@ -199,8 +218,9 @@ export function AuthUser() {
                     placeholder="Enter your password"
                 />
                 <button 
-                    onClick={handleClick} 
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    onClick={handleClick}
+                    disabled={disabled} 
+                    className={disabled ? "w-full bg-slate-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-not-allowed" : "w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
                 >
                     Log In
                 </button>

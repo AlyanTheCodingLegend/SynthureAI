@@ -1,10 +1,17 @@
 import { AuthUser } from "./UserAuthModel"
 import { useState } from "react"
+import { toast } from "react-toastify";
+import toast_style from "./ToastStyle";
+import supabase from "./ClientInstance"
 
 export function ProfilePage({ username }) {
     const [login, setLogin] = useState(false)
 
-    const handleClick = () => {
+    const handleClick = async () => {
+        const {error} = await supabase.auth.signOut()
+        if (error) {
+          toast(error.message, toast_style)
+        }
         setLogin(true)
     }
 
