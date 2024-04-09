@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { Link } from "react-router-dom";
+import { ProfilePage } from "./ProfilePage";
 import bcrypt from 'bcryptjs';
 
 import supabase from "./ClientInstance";
@@ -134,6 +134,8 @@ export function AuthUser() {
     const [email, setEmail] = useState("")
     const [pass, setPass] = useState("")
     const [create, setCreate] = useState(false)
+    const [gotoprof, setGotoprof] = useState(false)
+    const [username, setUsername] = useState("")
 
     const handleEmailChange = (event) => {
         setEmail(event.target.value)
@@ -149,15 +151,31 @@ export function AuthUser() {
             password: pass
         })
         if (data) {
-            console.log(data)
+            const {user,session} = data
+            if (user && session && user.role==="authenticated") {
+                const {dataTwo, errorTwo} = await supabase.from("user_information").select("username").eq("email", user.email)
+                if (dataTwo) {
+                    setUsername(dataTwo.username)
+                    setGotoprof(true)
+                }
+                if (errorTwo) {
+                    toast(errorTwo.message)
+                }
+            }
         }
         else if (error) {
             toast(error.message)
         }
     }
 
+    if (gotoprof) {
+        return (
+            <ProfilePage username={username}/>
+        )
+    }
+
     if (create) {
-        return(
+        return (
             <CreateUser/>
         )
     }
