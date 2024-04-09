@@ -153,7 +153,7 @@ export function AuthUser() {
         if (data) {
             const {user,session} = data
             if (user && session && user.role==="authenticated") {
-                const {dataTwo, errorTwo} = await supabase.from("user_information").select("username").eq("email", user.email)
+                const {dataTwo, errorTwo} = await supabase.from('user_information').select('username').eq('email', user.email)
                 if (dataTwo) {
                     setUsername(dataTwo.username)
                     setGotoprof(true)
