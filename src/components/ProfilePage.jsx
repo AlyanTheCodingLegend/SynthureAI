@@ -1,8 +1,9 @@
 import { AuthUser } from "./UserAuthModel"
 import { useState } from "react"
-import { toast } from "react-toastify";
-import toast_style from "./ToastStyle";
+import { ToastContainer, toast } from "react-toastify"
+import toast_style from "./ToastStyle"
 import supabase from "./ClientInstance"
+import 'react-toastify/dist/ReactToastify.css'
 
 export function ProfilePage({ username }) {
     const [login, setLogin] = useState(false)
@@ -10,7 +11,7 @@ export function ProfilePage({ username }) {
     const handleClick = async () => {
         const {error} = await supabase.auth.signOut()
         if (error) {
-          toast(error.message, toast_style)
+          toast.error(error.message, toast_style)
         }
         setLogin(true)
     }
@@ -37,6 +38,7 @@ export function ProfilePage({ username }) {
             {/* Add additional profile information here */}
           </div>
         </div>
+        <ToastContainer position="top-right" autoClose={5000}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
       </div>
     );
 }

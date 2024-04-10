@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import { ProfilePage } from "./ProfilePage";
 import bcrypt from 'bcryptjs';
 import toast_style from "./ToastStyle"
 import supabase from "./ClientInstance";
+import 'react-toastify/dist/ReactToastify.css';
 
 export function CreateUser() {
 
@@ -52,25 +53,32 @@ export function CreateUser() {
         })
 
         if (errorOne) {
-            toast(errorOne.message, toast_style)
+            toast.error(errorOne.message, toast_style)
             return;
         }
-        
-        bcrypt.hash(pass, 10, async function(err, hash) {
-            if (err) {
-              toast(err.message, toast_style);
-              return;
-            }
-            const {error} = await supabase.from("user_information").insert({email: email, hashpass: hash, username: username})
-            if (error) {
-                toast(error.message, toast_style);
-                return;
-            }
-        })
 
-        return (
-            <div>Page to show url to redirect</div>
-        )
+        if (data) {
+        
+            bcrypt.hash(pass, 10, async function(err, hash) {
+                if (err) {
+                toast.error(err.message, toast_style);
+                return;
+                }
+                const {error} = await supabase.from("user_information").insert({email: email, hashpass: hash, username: username})
+                if (error) {
+                    toast.error(error.message, toast_style);
+                    return;
+                }
+            })
+
+            return (
+                <div className="min-h-screen bg-black text-white flex justify-center items-center">
+                    <div className="max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
+                        {'A confirmation link has been sent to your email, please head to your email to confirm your registration :) '}
+                    </div>
+                </div>
+            )
+        }    
     }
 
     if (login) {
@@ -129,6 +137,7 @@ export function CreateUser() {
                     Log In Instead
                 </button>
             </div>
+            <ToastContainer position="top-right" autoClose={5000}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
         </div>
     )
 }
@@ -150,7 +159,7 @@ export function AuthUser() {
         setPass(event.target.value)
     }
 
-    useEffect(()=> {
+    useEffect(() => {
         if (email==="" || pass==="") {
             setDisabled(true)
         }
@@ -172,7 +181,7 @@ export function AuthUser() {
             }
         }
         else if (error) {
-            toast(error.message, toast_style)
+            toast.error(error.message, toast_style)
         }
     }
 
@@ -183,7 +192,7 @@ export function AuthUser() {
             setGotoprof(true)
         }
         if (error) {
-            toast(error.message, toast_style)
+            toast.error(error.message, toast_style)
         }
     }
 
@@ -231,6 +240,7 @@ export function AuthUser() {
                     Sign Up Instead
                 </button>
             </div>
+            <ToastContainer position="top-right" autoClose={5000}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
         </div>
     )
 }

@@ -4,8 +4,11 @@ import { Howl } from 'howler';
 import React, { useEffect, useRef, useState } from 'react';
 import { BeatLoader } from 'react-spinners';
 import { LiveAudioVisualizer } from 'react-audio-visualize';
+import { ToastContainer, toast } from "react-toastify";
 import ReactSlider from 'react-slider';
 import supabase from "./ClientInstance"
+import 'react-toastify/dist/ReactToastify.css';
+import toast_style from './ToastStyle';
 
 async function loadSongs () {
     let songArray=[]
@@ -85,7 +88,7 @@ export default function Player () {
                     });
                 })
                 .catch(error => {
-                    console.error('Error fetching audio:', error);
+                    toast.error('Error fetching audio',toast_style);
                 });
         }
         
@@ -242,7 +245,6 @@ export default function Player () {
     
     return (
         <div className="flex flex-col h-screen w-screen bg-gray-900 text-white relative">
-
             <div className="flex justify-center items-center h-1/6">
                 <div className="text-center">
                     <h1 className="text-3xl">Now Playing: {songNames[index]}</h1>
@@ -303,6 +305,7 @@ export default function Player () {
                     />
                 </div>
             </div>
+            <ToastContainer position="top-right" autoClose={5000}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
         </div>
     )
 }

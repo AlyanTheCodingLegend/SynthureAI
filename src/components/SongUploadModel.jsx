@@ -2,6 +2,8 @@
 
 import supabase from './ClientInstance';
 import { useState } from 'react';
+import { ToastContainer, toast} from "react-toastify";
+import toast_style from './ToastStyle';
 
 export default function SongUploadModel () {
     const [selectedFile, setSelectedFile] = useState(null)
@@ -15,7 +17,7 @@ export default function SongUploadModel () {
         event.preventDefault()
 
         if (!selectedFile) {
-            console.log("No file selected!");
+            toast.error("No file selected!", toast_style);
             return;
         }
         
@@ -32,16 +34,16 @@ export default function SongUploadModel () {
                 .upload(`${filename}.mp3`, selectedFile, {cacheControl: '3600', upsert: true, contentType: 'audio/mpeg'})
             )
 
-            console.log("File uploaded successfully:", suparesp);
+            toast.success("File uploaded successfully", toast_style);
 
             const { errortwo } = await supabase.from('song_information').insert({song_name: initialFilename, song_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/songs/${filename}.mp3`})
             
             if (errortwo) {
-                console.error("Error adding song row to the table:", errortwo.message)
+                toast.error(errortwo.message, toast_style)
             }
 
         } catch (error) {
-            console.error("Error uploading file:", error.message);
+            toast.error(error.message, toast_style);
         } finally {
             setFilename("")
             setInitialFilename("")
@@ -66,6 +68,7 @@ export default function SongUploadModel () {
                 <input onChange={handleFileChange} type="file" name="upload" accept=".mp3" multiple={false}/>
                 <button disabled={filename==="" || selectedFile===null || isProcessing} className={(!(filename!=="" && selectedFile!==null) || isProcessing)? "rounded-full h-20 w-40 text-xl text-white bg-slate-600": "bg-red-700 rounded-full h-20 w-40 text-xl text-white hover:bg-red-500"} onClick={handleFileUpload}>{isProcessing ? "Uploading..." : "Upload Song"}</button>
             </div>
+            <ToastContainer position="top-right" autoClose={5000}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
         </form>
     )
 }
