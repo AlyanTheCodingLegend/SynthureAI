@@ -150,6 +150,8 @@ export function AuthUser() {
     const [username, setUsername] = useState("")
     const [verEmail, setVerEmail] = useState("")
     const [disabled, setDisabled] = useState(true)
+    const [userAuth, setUserAuth] = useState(null)
+    const [sessionAuth, setSessionAuth] = useState(null)
 
     const handleEmailChange = (event) => {
         setEmail(event.target.value)
@@ -176,6 +178,8 @@ export function AuthUser() {
         if (data) {
             const {user,session} = data
             if (user && session && user.role==="authenticated") {
+                setUserAuth(user)
+                setSessionAuth(session)
                 setVerEmail(user.email)
                 getUsername()
             }
@@ -198,7 +202,7 @@ export function AuthUser() {
 
     if (gotoprof) {
         return (
-            <ProfilePage username={username}/>
+            <ProfilePage username={username} userAuth={userAuth} sessionAuth={sessionAuth}/>
         )
     }
 

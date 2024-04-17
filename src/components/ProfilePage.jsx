@@ -4,9 +4,11 @@ import { ToastContainer, toast } from "react-toastify"
 import toast_style from "./ToastStyle"
 import supabase from "./ClientInstance"
 import 'react-toastify/dist/ReactToastify.css'
+import SongUploadModel from "./SongUploadModel"
 
-export function ProfilePage({ username }) {
+export function ProfilePage({ username, userAuth, sessionAuth }) {
     const [login, setLogin] = useState(false)
+    const [upload, setUpload] = useState(false)
 
     const handleClick = async () => {
         const {error} = await supabase.auth.signOut()
@@ -16,10 +18,20 @@ export function ProfilePage({ username }) {
         setLogin(true)
     }
 
+    const handleClickTwo = () => {
+      setUpload(true)
+    }
+
     if (login) {
         return (
             <AuthUser/>
         )
+    }
+
+    if (upload) {
+      return (
+        <SongUploadModel username={username} userAuth={userAuth} sessionAuth={sessionAuth}/>
+      )
     }
 
     return (
@@ -29,6 +41,9 @@ export function ProfilePage({ username }) {
           <div className="flex justify-between items-center mb-4">
             <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
               Home
+            </button>
+            <button onClick={handleClickTwo} className="bg-purple-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+              Upload Songs
             </button>
             <button onClick={handleClick} className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
               Sign Out
