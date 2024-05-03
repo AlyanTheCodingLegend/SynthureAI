@@ -62,7 +62,7 @@ export default function SongUploadModel ({username, userAuth, sessionAuth, onClo
             const { errorThree } = await supabase.from('image_information').insert({ uploaded_by: username, size: `${imageFile.size / (1024 * 1024)}`, format: `${imageFile.type}`, image_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` })
             if (errorThree) throw errorThree;
 
-            const { errorTwo } = await supabase.from('song_information').insert({ song_name: initialFilename, song_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.mp3`, uploaded_by: username, artist_name: artistName, image_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` })
+            const { errorTwo } = await supabase.from('song_information').insert({ song_name: initialFilename, song_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/songs/${username}/${filename}.mp3`, uploaded_by: username, artist_name: artistName, image_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` })
             if (errorTwo) throw errorTwo;
 
             await handleArtistRowUpdate();

@@ -1,27 +1,30 @@
 "use client";
 
 import { Howl } from 'howler';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BeatLoader } from 'react-spinners';
-import { LiveAudioVisualizer } from 'react-audio-visualize';
-import { ToastContainer, toast } from "react-toastify";
+//import { LiveAudioVisualizer } from 'react-audio-visualize';
+import { ToastContainer } from "react-toastify";
 import ReactSlider from 'react-slider';
 import supabase from "./ClientInstance";
-import toast_style from './ToastStyle';
+//import toast_style from './ToastStyle';
 import 'react-toastify/dist/ReactToastify.css';
 
 async function loadSongs () {
     let songArray=[]
     let songNameArray=[]
+    let imageArray=[]
     const { count } = await supabase.from("song_information").select("*",{count: "exact", head: true})
-    const { data } = await supabase.from("song_information").select("song_name,song_path")
+    const { data } = await supabase.from("song_information").select("song_name,song_path,image_path")
     
+    console.log(data[40].image_path)
     for (let i=0;i<count;i++) {
         songArray.push(data[i].song_path.split(",")[0])
         songNameArray.push(data[i].song_name.split(",")[0])
+        imageArray.push(data[i].image_path)
     }
     
-    return [songArray, songNameArray]
+    return [songArray, songNameArray, imageArray]
 }
 
 export default function Player () {
@@ -42,20 +45,11 @@ export default function Player () {
     const [Tsecs, setTSecs] = useState(0)
     const [randomize, setRandomize] = useState(false)
     const [autoplay, setAutoplay] = useState(true)
-    const [mediaRecorder, setMediaRecorder] = useState(null)
+    // const [mediaRecorder, setMediaRecorder] = useState(null)
     const [disabled, setDisabled] = useState(false)
+    const [images, setImages] = useState(null)
 
     useEffect(() => {
-        if (mediaRecorder) {
-            console.log(mediaRecorder.state)
-            console.log(mediaRecorder.state); // Log the current state
-console.log(mediaRecorder.stream); // Log the media stream
-console.log(mediaRecorder.mimeType); // Log the MIME type
-console.log(mediaRecorder.audioBitsPerSecond); // Log the audio bits per second
-console.log(mediaRecorder.videoBitsPerSecond); // Log the video bits per second
-console.log(mediaRecorder.bitsPerSecond); // Log the combined bits per second
-
-        }    
         if (isPlaying) {
             setMins(Math.trunc(progress/60))
             setSecs(Math.trunc(progress-(mins*60)))
@@ -69,40 +63,41 @@ console.log(mediaRecorder.bitsPerSecond); // Log the combined bits per second
 
         async function fetchSong() {
 
-            let [songArray, songNameArray] = await loadSongs()
+            let [songArray, songNameArray, imageArray] = await loadSongs()
             setSongs(songArray)
             setSongNames(songNameArray)
+            setImages(imageArray)
             
         }
         fetchSong()
     // eslint-disable-next-line
     },[])
 
-    useEffect(() => {
+    // useEffect(() => {
         
-        if (songs && songs.length > 0 && index !== null && index !== undefined) {
-            fetch(songs[index])
-                .then(response => response.blob())
-                .then(blob => {
+    //     if (songs && songs.length > 0 && index !== null && index !== undefined) {
+    //         fetch(songs[index])
+    //             .then(response => response.blob())
+    //             .then(blob => {
                     
-                    return blob.arrayBuffer();
-                })
-                .then(arrayBuffer => {
-                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    //                 return blob.arrayBuffer();
+    //             })
+    //             .then(arrayBuffer => {
+    //                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
-                    audioContext.decodeAudioData(arrayBuffer, audioBuffer => {
-                        const audioTrack = audioContext.createMediaStreamDestination().stream.getAudioTracks()[0];
-                        const mediaStream = new MediaStream([audioTrack]);
-                        const mediaRecorderRef = new MediaRecorder(mediaStream);
-                        setMediaRecorder(mediaRecorderRef)
-                    });
-                })
-                .catch(error => {
-                    toast.error('Error fetching audio',toast_style);
-                });
-        }
+    //                 audioContext.decodeAudioData(arrayBuffer, audioBuffer => {
+    //                     const audioTrack = audioContext.createMediaStreamDestination().stream.getAudioTracks()[0];
+    //                     const mediaStream = new MediaStream([audioTrack]);
+    //                     const mediaRecorderRef = new MediaRecorder(mediaStream);
+    //                     setMediaRecorder(mediaRecorderRef)
+    //                 });
+    //             })
+    //             .catch(error => {
+    //                 toast.error('Error fetching audio',toast_style);
+    //             });
+    //     }
         
-    }, [songs, index]);
+    // }, [songs, index]);
        
 
     useEffect(() => {
@@ -153,27 +148,27 @@ console.log(mediaRecorder.bitsPerSecond); // Log the combined bits per second
             if (song) {
                 song.pause()
             }
-            if (mediaRecorder) {    
-                if (mediaRecorder.state=="inactive") {
-                    mediaRecorder.stop()
-                }
-                else {
-                    mediaRecorder.pause()
-                }
-            }    
+            // if (mediaRecorder) {    
+            //     if (mediaRecorder.state==="inactive") {
+            //         mediaRecorder.stop()
+            //     }
+            //     else {
+            //         mediaRecorder.pause()
+            //     }
+            // }    
         }
         else {
             if (song) {
                 song.play()
             }
-            if (mediaRecorder) {
-                if (mediaRecorder.state=="inactive") {    
-                    mediaRecorder.start()
-                }
-                else {
-                    mediaRecorder.resume()
-                }    
-            }    
+            // if (mediaRecorder) {
+            //     if (mediaRecorder.state==="inactive") {    
+            //         mediaRecorder.start()
+            //     }
+            //     else {
+            //         mediaRecorder.resume()
+            //     }    
+            // }    
         }
     }
 
@@ -289,7 +284,9 @@ console.log(mediaRecorder.bitsPerSecond); // Log the combined bits per second
                 <div className="flex flex-col justify-center items-center">
                     <div className="flex justify-center items-center w-80 h-80 bg-gray-700 rounded-full mb-8">
                         <div className="w-64 h-64 bg-gray-600 rounded-full relative">
-                            {mediaRecorder && (<LiveAudioVisualizer mediaRecorder={mediaRecorder} width={250} height={150}/>)}
+                            {images && images[index] && (
+                                <img src={images[index]} alt="Song graphic" className="w-full h-full object-cover" style={{ borderRadius: '50%' }}/>
+                            )} 
                         </div>
                     </div>
                     <h2 className="text-2xl">{songNames[index]}</h2>
