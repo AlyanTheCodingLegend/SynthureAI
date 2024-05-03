@@ -6,9 +6,9 @@ import { BeatLoader } from 'react-spinners';
 import { LiveAudioVisualizer } from 'react-audio-visualize';
 import { ToastContainer, toast } from "react-toastify";
 import ReactSlider from 'react-slider';
-import supabase from "./ClientInstance"
-import 'react-toastify/dist/ReactToastify.css';
+import supabase from "./ClientInstance";
 import toast_style from './ToastStyle';
+import 'react-toastify/dist/ReactToastify.css';
 
 async function loadSongs () {
     let songArray=[]
@@ -42,10 +42,20 @@ export default function Player () {
     const [Tsecs, setTSecs] = useState(0)
     const [randomize, setRandomize] = useState(false)
     const [autoplay, setAutoplay] = useState(true)
-    const [mediaRecorder, setMediaRecorder] = useState()
-    const idRef = useRef(null)
+    const [mediaRecorder, setMediaRecorder] = useState(null)
+    const [disabled, setDisabled] = useState(false)
 
     useEffect(() => {
+        if (mediaRecorder) {
+            console.log(mediaRecorder.state)
+            console.log(mediaRecorder.state); // Log the current state
+console.log(mediaRecorder.stream); // Log the media stream
+console.log(mediaRecorder.mimeType); // Log the MIME type
+console.log(mediaRecorder.audioBitsPerSecond); // Log the audio bits per second
+console.log(mediaRecorder.videoBitsPerSecond); // Log the video bits per second
+console.log(mediaRecorder.bitsPerSecond); // Log the combined bits per second
+
+        }    
         if (isPlaying) {
             setMins(Math.trunc(progress/60))
             setSecs(Math.trunc(progress-(mins*60)))
@@ -69,6 +79,7 @@ export default function Player () {
     },[])
 
     useEffect(() => {
+        
         if (songs && songs.length > 0 && index !== null && index !== undefined) {
             fetch(songs[index])
                 .then(response => response.blob())
@@ -84,7 +95,6 @@ export default function Player () {
                         const mediaStream = new MediaStream([audioTrack]);
                         const mediaRecorderRef = new MediaRecorder(mediaStream);
                         setMediaRecorder(mediaRecorderRef)
-                        
                     });
                 })
                 .catch(error => {
@@ -110,6 +120,7 @@ export default function Player () {
                 },
                 onload: () => {
                     setDuration(newSong.duration());
+                    setDisabled(false);
                 },
                 onend: () => {
                     setIsPlaying(false);
@@ -138,25 +149,33 @@ export default function Player () {
     }, [songs, index, songNames])
 
     const handleClick = () => {
-        if (!song) return;
-    
-        if (!isPlaying) {
-            
-            if (!idRef.current) {
-                
-                idRef.current = song.play();
-            } else {
-                
-                song.play(idRef.current);
+        if (isPlaying) {
+            if (song) {
+                song.pause()
             }
-        } else {
-            
-            song.pause(idRef.current);
+            if (mediaRecorder) {    
+                if (mediaRecorder.state=="inactive") {
+                    mediaRecorder.stop()
+                }
+                else {
+                    mediaRecorder.pause()
+                }
+            }    
         }
-    
-        setIsPlaying(!isPlaying);
+        else {
+            if (song) {
+                song.play()
+            }
+            if (mediaRecorder) {
+                if (mediaRecorder.state=="inactive") {    
+                    mediaRecorder.start()
+                }
+                else {
+                    mediaRecorder.resume()
+                }    
+            }    
+        }
     }
-    
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -202,7 +221,11 @@ export default function Player () {
     }, [duration])
 
     const handlePlayNextSong = () => {
-        song.pause()
+        setDisabled(true)
+        if (song) {
+            song.pause()
+            song.unload()
+        }
         if (index<songs.length-1) {
             setIndex(index+1)
         } else{
@@ -211,7 +234,11 @@ export default function Player () {
     }
 
     const handlePlayPrevSong = () => {
-        song.pause()
+        setDisabled(true)
+        if (song) {
+            song.pause()
+            song.unload()
+        }
         if (index>=1) {
             setIndex(index-1)
         } else {
@@ -262,7 +289,7 @@ export default function Player () {
                 <div className="flex flex-col justify-center items-center">
                     <div className="flex justify-center items-center w-80 h-80 bg-gray-700 rounded-full mb-8">
                         <div className="w-64 h-64 bg-gray-600 rounded-full relative">
-                            {mediaRecorder && (<LiveAudioVisualizer mediaRecorder={mediaRecorder} width={150} height={75} backgroundColor='blue'/>)}
+                            {mediaRecorder && (<LiveAudioVisualizer mediaRecorder={mediaRecorder} width={250} height={150}/>)}
                         </div>
                     </div>
                     <h2 className="text-2xl">{songNames[index]}</h2>
@@ -271,11 +298,11 @@ export default function Player () {
 
             <div className='fixed bg-gray-800 bottom-0 flex flex-row w-full justify-between items-center p-4'>
                 <div className="flex items-center">
-                    <button disabled={!duration} onClick={handleClick} className="text-white mr-2 rounded-full h-8 w-8 bg-green-900 hover:bg-green-800 text-xs text-center">
+                    <button disabled={disabled} onClick={handleClick} className={disabled ? "text-white mr-2 rounded-full h-8 w-8 bg-slate-600 text-xs text-center cursor-not-allowed" : "text-white mr-2 rounded-full h-8 w-8 bg-green-900 hover:bg-green-800 text-xs text-center"}>
                         {isPlaying ? "Pause" : "Play"}
                     </button>
                     <div id="timer" className='font-mono text-base text-blue-600'>
-                        {mins}:{secs} / {Tmins}:{Tsecs}
+                        {mins}:{secs<10 ? "0"+secs : secs} / {Tmins}:{Tsecs<10 ? "0"+Tsecs : Tsecs}
                     </div>
                 </div>
                 <ReactSlider

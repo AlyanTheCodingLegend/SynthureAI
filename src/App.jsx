@@ -1,22 +1,14 @@
 import './App.css';
+import React from "react";
 import Player from './components/Player';
-import { CreateUser,AuthUser } from './components/UserAuthModel';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-
+import SongUploadModel from './components/SongUploadModel';
+import { AuthUser } from './components/UserAuthModel';
+import Tester from './components/Tester';
 
 function App() {
-
   return (
-    <div>
-      <Router>
-        <Routes>
-          <Route path="/Songs-App" element={<Player />}/>
-          <Route path="/Songs-App/login" element={<AuthUser/>}/>
-          <Route path="/Songs-App/signup" element={<CreateUser/>}/>
-        </Routes>  
-      </Router>
-    </div>
-  );
+    <AuthUser />
+  )
 }
 
 export default App;

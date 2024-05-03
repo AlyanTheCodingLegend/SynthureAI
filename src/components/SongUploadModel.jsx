@@ -5,52 +5,83 @@ import { useState } from 'react';
 import { ToastContainer, toast} from "react-toastify";
 import toast_style from './ToastStyle';
 
-export default function SongUploadModel ({username, userAuth, sessionAuth}) {
+export default function SongUploadModel ({username, userAuth, sessionAuth, onClose}) {
     const [selectedFile, setSelectedFile] = useState(null)
     const [filename, setFilename] = useState("")
     const [initialFilename, setInitialFilename] = useState("")
-    // eslint-disable-next-line
-    const [suparesp, setSuparesp] = useState(null)
     const [isProcessing, setIsProcessing] = useState(false)
+    const [artistName, setArtistName] = useState("")
+    const [imageFile, setImageFile] = useState(null)
 
-    console.log(username)
-    console.log(userAuth)
-    console.log(sessionAuth.access_token)
+    const handleArtistRowUpdate = async () => {
+        try {
+            const { data, error } = await supabase.from('artist_information').select('songs_released').eq('name', artistName)
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+
+                const { data: dataSix, error: errorSix } = await supabase.from('song_information').select('id').eq('song_name', initialFilename)
+                if (errorSix) throw errorSix;
+
+                const { error: errorTwo } = await supabase.from('artist_information').insert({ name: artistName, songs_released: [dataSix[0].id] })
+                if (errorTwo) throw errorTwo;
+
+            } else {
+
+                const { data: dataThree, error: errorThree } = await supabase.from('song_information').select('id').eq('song_name', initialFilename)
+                if (errorThree) throw errorThree;
+
+                const songs = data[0].songs_released || [];
+                songs.push(dataThree[0].id);
+
+                const { error: errorFive } = await supabase.from('artist_information').update({ songs_released: songs }).eq("name", artistName)
+                if (errorFive) throw errorFive;
+            }
+        } catch (error) {
+            toast.error(error.message, toast_style);
+        }
+    }
 
     const handleFileUpload = async (event) => {
         event.preventDefault()
 
-        if (!selectedFile) {
-            toast.error("No file selected!", toast_style);
+        if (!selectedFile || !imageFile) {
+            toast.error("Please select both audio and image files!", toast_style);
             return;
         }
-        
+
         setIsProcessing(true)
-        setFilename("")
 
         try {
-            setSuparesp(await supabase
-                .storage
-                .from("songs")
-                .upload(`${username}/${filename}.mp3`, selectedFile, {cacheControl: '3600', upsert: true, contentType: 'audio/mpeg'})
-            )
+            const { error } = await supabase.storage.from("songs").upload(`${username}/${filename}.mp3`, selectedFile, { cacheControl: '3600', upsert: true, contentType: 'audio/mpeg' })
+            if (error) throw error;
 
-            toast.success("File uploaded successfully", toast_style);
+            const { errorOne } = await supabase.storage.from("images").upload(`${username}/${filename}.${imageFile.type.replace('image/', '')}`, imageFile, { cacheControl: '3600', upsert: true, contentType: imageFile.type })
+            if (errorOne) throw errorOne;
 
-            const { errortwo } = await supabase.from('song_information').insert({song_name: initialFilename, song_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/songs/${username}/${filename}.mp3`, uploaded_by: username})
-            
-            if (errortwo) {
-                toast.error(errortwo.message, toast_style)
-            }
+            const { errorThree } = await supabase.from('image_information').insert({ uploaded_by: username, size: `${imageFile.size / (1024 * 1024)}`, format: `${imageFile.type}`, image_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` })
+            if (errorThree) throw errorThree;
 
+            const { errorTwo } = await supabase.from('song_information').insert({ song_name: initialFilename, song_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.mp3`, uploaded_by: username, artist_name: artistName, image_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` })
+            if (errorTwo) throw errorTwo;
+
+            await handleArtistRowUpdate();
+
+            toast.success("Song has been uploaded successfully!", toast_style)
         } catch (error) {
             toast.error(error.message, toast_style);
         } finally {
-            setFilename("")
-            setInitialFilename("")
-            setSelectedFile(null)
             setIsProcessing(false)
+            resetForm();
         }
+    };
+
+    const resetForm = () => {
+        setFilename("")
+        setInitialFilename("")
+        setArtistName("")
+        setSelectedFile(null)
+        setImageFile(null)
     };
 
     const handleNameChange = (event) => {
@@ -59,38 +90,73 @@ export default function SongUploadModel ({username, userAuth, sessionAuth}) {
     }
 
     const handleFileChange = (event) => {
-        setSelectedFile(event.target.files[0])
+        if (event.target.files) {
+            setSelectedFile(event.target.files[0])
+        }    
+    }
+
+    const handleArtistChange = (event) => {
+        setArtistName(event.target.value)
+    }
+
+    const handleImageChange = (event) => {
+        if (event.target.files) {
+            setImageFile(event.target.files[0])
+        }    
     }
 
     return (
         <form>
-    <div className="max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
-        <input 
-            onChange={handleNameChange} 
-            type="name" 
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
-            id="songname" 
-            aria-describedby="songName" 
-            placeholder="Enter song name"
-        />
-        <input 
-            onChange={handleFileChange} 
-            type="file" 
-            name="upload" 
-            accept=".mp3" 
-            multiple={false} 
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
-        />
-        <button 
-            disabled={filename==="" || selectedFile===null || isProcessing} 
-            className={(!(filename!=="" && selectedFile!==null) || isProcessing)? "w-full bg-slate-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-not-allowed": "w-full bg-red-700 hover:bg-red-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
-            onClick={handleFileUpload}
-        >
-            {isProcessing ? "Uploading..." : "Upload Song"}
-        </button>
-    </div>
-    <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
-</form>
+            <div className="relative max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
+                <div className="absolute top-0 right-0 m-2 text-red-700 text-lg font-bold focus:outline-none">
+                    <button onClick={onClose}>
+                        X
+                    </button>
+                </div>
+                <input 
+                    onChange={handleNameChange} 
+                    type="name" 
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
+                    id="songname" 
+                    aria-describedby="songName" 
+                    placeholder="Enter song name"
+                />
+                <input 
+                    onChange={handleArtistChange} 
+                    type="name" 
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
+                    id="artistname" 
+                    aria-describedby="artistName" 
+                    placeholder="Enter artist name"
+                />
+                <input 
+                    onChange={handleFileChange} 
+                    type="file" 
+                    name="upload" 
+                    accept=".mp3" 
+                    multiple={false}
+                    alt="Upload mp3 track"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
+                />
+                <input 
+                    onChange={handleImageChange} 
+                    type="file" 
+                    name="upload" 
+                    accept=".jpeg, .png, .jpg"
+                    multiple={false} 
+                    alt="Upload Image"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
+                />
+                <button 
+                    disabled={filename==="" || selectedFile===null || isProcessing || imageFile===null} 
+                    className={(!(filename!=="" && selectedFile!==null && imageFile!==null) || isProcessing)? "w-full bg-slate-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-not-allowed": "w-full bg-red-700 hover:bg-red-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
+                    onClick={handleFileUpload}
+                >
+                    {isProcessing ? "Uploading..." : "Upload Song"}
+                </button>
+            </div>
+            <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
+        </form>
 
     )
 }

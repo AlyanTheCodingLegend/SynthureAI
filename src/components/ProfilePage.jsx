@@ -28,12 +28,6 @@ export function ProfilePage({ username, userAuth, sessionAuth }) {
         )
     }
 
-    if (upload) {
-      return (
-        <SongUploadModel username={username} userAuth={userAuth} sessionAuth={sessionAuth}/>
-      )
-    }
-
     return (
       <div className="min-h-screen bg-black text-white flex flex-col justify-center items-center">
         <div className="max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
@@ -42,9 +36,16 @@ export function ProfilePage({ username, userAuth, sessionAuth }) {
             <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
               Home
             </button>
-            <button onClick={handleClickTwo} className="bg-purple-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            <button onClick={handleClickTwo} className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
               Upload Songs
             </button>
+            {upload && (
+              <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
+                <div className="bg-white p-8 rounded-lg relative">
+                  <SongUploadModel username={username} userAuth={userAuth} sessionAuth={sessionAuth} onClose={()=>{setUpload(false)}}/>
+                </div>
+              </div>
+            )}
             <button onClick={handleClick} className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
               Sign Out
             </button>
