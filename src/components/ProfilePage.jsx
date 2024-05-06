@@ -5,10 +5,12 @@ import toast_style from "./ToastStyle"
 import supabase from "./ClientInstance"
 import 'react-toastify/dist/ReactToastify.css'
 import SongUploadModel from "./SongUploadModel"
+import PlaylistModel from "./PlaylistModel"
 
 export function ProfilePage({ username, userAuth, sessionAuth }) {
     const [login, setLogin] = useState(false)
     const [upload, setUpload] = useState(false)
+    const [createpl, setCreatepl] = useState(false)
 
     const handleClick = async () => {
         const {error} = await supabase.auth.signOut()
@@ -20,6 +22,10 @@ export function ProfilePage({ username, userAuth, sessionAuth }) {
 
     const handleClickTwo = () => {
       setUpload(true)
+    }
+
+    const handleClickThree = () => {
+      setCreatepl(true)
     }
 
     if (login) {
@@ -39,6 +45,16 @@ export function ProfilePage({ username, userAuth, sessionAuth }) {
             <button onClick={handleClickTwo} className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
               Upload Songs
             </button>
+            <button onClick={handleClickThree} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+              Create Playlist
+            </button>
+            {createpl && (
+              <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
+                <div className="bg-white p-8 rounded-lg relative">
+                  <PlaylistModel username={username} onClose={()=>{setCreatepl(false)}}/>
+                </div>
+              </div>
+            )}
             {upload && (
               <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
                 <div className="bg-white p-8 rounded-lg relative">

@@ -4,30 +4,31 @@ import { Howl } from 'howler';
 import React, { useEffect, useState } from 'react';
 import { BeatLoader } from 'react-spinners';
 //import { LiveAudioVisualizer } from 'react-audio-visualize';
-import { ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import ReactSlider from 'react-slider';
 import supabase from "./ClientInstance";
-//import toast_style from './ToastStyle';
+import toast_style from './ToastStyle';
 import 'react-toastify/dist/ReactToastify.css';
 
-async function loadSongs () {
+async function loadSongs (username) {
     let songArray=[]
     let songNameArray=[]
     let imageArray=[]
-    const { count } = await supabase.from("song_information").select("*",{count: "exact", head: true})
-    const { data } = await supabase.from("song_information").select("song_name,song_path,image_path")
+    let indexArray=[]
+    const { count } = await supabase.from("song_information").select("*",{count: "exact", head: true}).eq('uploaded_by', username)
+    const { data } = await supabase.from("song_information").select("*").eq('uploaded_by', username)
     
-    console.log(data[40].image_path)
     for (let i=0;i<count;i++) {
         songArray.push(data[i].song_path.split(",")[0])
         songNameArray.push(data[i].song_name.split(",")[0])
         imageArray.push(data[i].image_path)
+        indexArray.push(data[i].id)
     }
     
-    return [songArray, songNameArray, imageArray]
+    return [songArray, songNameArray, imageArray, indexArray]
 }
 
-export default function Player () {
+export default function Player ({username}) {
     const [isPlaying, setIsPlaying] = useState(false)
     const [song, setSong] = useState(null)
     const [duration, setDuration] = useState(0)
@@ -48,6 +49,8 @@ export default function Player () {
     // const [mediaRecorder, setMediaRecorder] = useState(null)
     const [disabled, setDisabled] = useState(false)
     const [images, setImages] = useState(null)
+    const [indexes, setIndexes] = useState(null)
+    const [playcount, setPlaycount] = useState(0)
 
     useEffect(() => {
         if (isPlaying) {
@@ -61,15 +64,15 @@ export default function Player () {
 
     useEffect(() => {
 
-        async function fetchSong() {
+        async function fetchSong(username) {
 
-            let [songArray, songNameArray, imageArray] = await loadSongs()
+            let [songArray, songNameArray, imageArray, indexArray] = await loadSongs(username)
             setSongs(songArray)
             setSongNames(songNameArray)
             setImages(imageArray)
-            
+            setIndexes(indexArray)
         }
-        fetchSong()
+        fetchSong(username)
     // eslint-disable-next-line
     },[])
 
@@ -116,6 +119,8 @@ export default function Player () {
                 onload: () => {
                     setDuration(newSong.duration());
                     setDisabled(false);
+                    updateCounter();
+                    showPlayCount();
                 },
                 onend: () => {
                     setIsPlaying(false);
@@ -181,6 +186,36 @@ export default function Player () {
 
         return () => clearInterval(interval);
     }, [song, isPlaying]);
+
+    
+    async function updateCounter() {
+        try {
+            const {data, error} = await supabase.from('playcount_information').select("*").eq('song_id',indexes[index])
+            if (error) throw error
+            if (data.length===0) { // no row
+                const {error: errorTwo} = await supabase.from('playcount_information').insert({song_id: indexes[index], dailycount: 1, monthlycount: 1, alltimecount: 1})
+
+                if (errorTwo) throw errorTwo
+            } else { // song has row
+                const {error: errorThree} = await supabase.from('playcount_information').update({dailycount: data[0].dailycount+1, monthlycount: data[0].monthlycount+1, alltimecount: data[0].alltimecount+1}).eq('song_id',indexes[index])
+
+                if (errorThree) throw errorThree
+            }
+        } catch (error) {
+            toast.error(error.message, toast_style)
+        }
+    }
+    
+    async function showPlayCount() {
+        const {data, error} = await supabase.from('playcount_information').select('alltimecount').eq('song_id',indexes[index])
+        if (error) { 
+            toast.error(error.message, toast_style)
+        } else {
+            if (data.length!==0) {
+                setPlaycount(data[0].alltimecount)
+            }    
+        }    
+    }
 
     const handleSeek = (position) => {
         if (position<=duration) {
@@ -289,7 +324,7 @@ export default function Player () {
                             )} 
                         </div>
                     </div>
-                    <h2 className="text-2xl">{songNames[index]}</h2>
+                    <h2 className="text-2xl">Played {playcount} times</h2>
                 </div>
             </div>
 
