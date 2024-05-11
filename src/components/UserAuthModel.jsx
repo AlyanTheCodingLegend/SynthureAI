@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import toast_style from "./ToastStyle"
 import supabase from "./ClientInstance";
 import 'react-toastify/dist/ReactToastify.css';
+import { Link } from "react-router-dom";
 
 export function CreateUser() {
 
@@ -13,7 +14,8 @@ export function CreateUser() {
     const [confpass, setConfpass] = useState("")
     const [passEqual, setPassEqual] = useState(false)
     const [username, setUsername] = useState("")
-    const [login, setLogin] = useState(false)
+    // const [login, setLogin] = useState(false)
+    const [msg, setMsg] = useState(false)
 
     const handleUsernameChange = (event) => {
         setUsername(event.target.value)
@@ -61,8 +63,8 @@ export function CreateUser() {
         
             bcrypt.hash(pass, 10, async function(err, hash) {
                 if (err) {
-                toast.error(err.message, toast_style);
-                return;
+                    toast.error(err.message, toast_style);
+                    return;
                 }
                 const {error} = await supabase.from("user_information").insert({email: email, hashpass: hash, username: username})
                 if (error) {
@@ -70,25 +72,32 @@ export function CreateUser() {
                     return;
                 }
             })
-
-            return (
-                <div className="min-h-screen bg-black text-white flex justify-center items-center">
-                    <div className="max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
-                        {'A confirmation link has been sent to your email, please head to your email to confirm your registration :) '}
-                    </div>
-                </div>
-            )
+            
+            setMsg(true)
         }    
     }
 
-    if (login) {
+    // if (login) {
+    //     return (
+    //         <Link to='/login'>
+    //             <AuthUser/>
+    //         </Link>
+    //     )
+    // }
+
+    if (msg) {
+        toast.success('Account successfully created!', toast_style)
         return (
-            <AuthUser/>
+            <div className="min-h-screen bg-black text-white flex justify-center items-center">
+                <div className="max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
+                    {'A confirmation link has been sent to your email, please head there to confirm your registration 😊'}
+                </div>
+            </div>
         )
     }
     
     return (
-        <div className="min-h-screen bg-black text-white flex justify-center items-center">
+        <div className="min-h-screen flex justify-center items-center bg-gradient-to-b from-black via-gray-900 to-gray-800 bg-opacity-80 backdrop-blur-md">
             <div className="max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
                 <h2 className="text-2xl font-bold mb-4">Create Account</h2>
                 <input 
@@ -114,7 +123,7 @@ export function CreateUser() {
                     minLength={6}
                     maxLength={15}
                 />
-                {(!passEqual && pass!=="" && confpass!=="") && (<div className="-mt-3">{"Passwords do not match! :("}</div>)}
+                {(!passEqual && pass!=="" && confpass!=="") && (<div className="-mt-3">{"Passwords do not match! 😞"}</div>)}
                 <input 
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
                     onChange={handleConfPassChange} 
@@ -129,13 +138,14 @@ export function CreateUser() {
                 >
                     Sign Up
                 </button>
-                <button
-                    
-                    onClick={()=>setLogin(true)}
-                    className="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                >
-                    Log In Instead
-                </button>
+                <Link to='/login'>
+                    <button
+                        
+                        className="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    >
+                        Log In Instead
+                    </button>
+                </Link>
             </div>
             <ToastContainer position="top-right" autoClose={5000}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
         </div>
@@ -145,13 +155,12 @@ export function CreateUser() {
 export function AuthUser() {
     const [email, setEmail] = useState("")
     const [pass, setPass] = useState("")
-    const [create, setCreate] = useState(false)
+    // const [create, setCreate] = useState(false)
     const [gotoprof, setGotoprof] = useState(false)
-    const [username, setUsername] = useState("")
+    const [username, setUsername] = useState(null)
     const [verEmail, setVerEmail] = useState("")
     const [disabled, setDisabled] = useState(true)
-    const [userAuth, setUserAuth] = useState(null)
-    const [sessionAuth, setSessionAuth] = useState(null)
+    const [userID, setUserID] = useState(null)
 
     const handleEmailChange = (event) => {
         setEmail(event.target.value)
@@ -178,10 +187,10 @@ export function AuthUser() {
         if (data) {
             const {user,session} = data
             if (user && session && user.role==="authenticated") {
-                setUserAuth(user)
-                setSessionAuth(session)
+                toast.success('Logging u in')
+                setUserID(user.id)
                 setVerEmail(user.email)
-                getUsername()
+                await getUsername()
             }
         }
         else if (error) {
@@ -192,6 +201,7 @@ export function AuthUser() {
     const getUsername = async () => {
         const {data,error} = await supabase.from('user_information').select('username').eq('email',verEmail)
         if (data[0] && data) {
+            toast.success('Logging u in....')
             setUsername(data[0].username)
             setGotoprof(true)
         }
@@ -200,17 +210,19 @@ export function AuthUser() {
         }
     }
 
-    if (gotoprof) {
+    if (gotoprof && username) {
         return (
-            <ProfilePage username={username} userAuth={userAuth} sessionAuth={sessionAuth}/>
+            
+            <ProfilePage username={username} userID={userID}/>
+             
         )
     }
 
-    if (create) {
-        return (
-            <CreateUser/>
-        )
-    }
+    // if (create) {
+    //     return (
+    //         <CreateUser/>
+    //     )
+    // }
 
     return (
         <div className="min-h-screen bg-black text-white flex justify-center items-center">
@@ -237,12 +249,14 @@ export function AuthUser() {
                 >
                     Log In
                 </button>
-                <button 
-                    onClick={()=>setCreate(true)} 
-                    className="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                >
-                    Sign Up Instead
-                </button>
+                <Link to='/signup'>
+                    <button 
+                        className="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    >
+                        Sign Up Instead
+                        
+                    </button>
+                </Link>
             </div>
             <ToastContainer position="top-right" autoClose={5000}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
         </div>

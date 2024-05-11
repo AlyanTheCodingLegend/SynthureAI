@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { ToastContainer, toast} from "react-toastify";
 import toast_style from './ToastStyle';
 
-export default function SongUploadModel ({username, userAuth, sessionAuth, onClose}) {
+export default function SongUploadModel ({username, onClose}) {
     const [selectedFile, setSelectedFile] = useState(null)
     const [filename, setFilename] = useState("")
     const [initialFilename, setInitialFilename] = useState("")
@@ -157,6 +157,5 @@ export default function SongUploadModel ({username, userAuth, sessionAuth, onClo
             </div>
             <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
         </form>
-
     )
 }
