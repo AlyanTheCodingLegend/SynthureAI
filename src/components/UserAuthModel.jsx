@@ -1,21 +1,25 @@
 import { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import { ProfilePage } from "./ProfilePage";
+import { Link } from "react-router-dom";
+import { BounceLoader } from "react-spinners";
+import { SlEye } from "react-icons/sl";
 import bcrypt from 'bcryptjs';
 import toast_style from "./ToastStyle"
 import supabase from "./ClientInstance";
 import 'react-toastify/dist/ReactToastify.css';
-import { Link } from "react-router-dom";
 
 export function CreateUser() {
 
     const [email, setEmail] = useState("")
     const [pass, setPass] = useState("")
     const [confpass, setConfpass] = useState("")
-    const [passEqual, setPassEqual] = useState(false)
     const [username, setUsername] = useState("")
-    // const [login, setLogin] = useState(false)
+    const [passEqual, setPassEqual] = useState(false)
     const [msg, setMsg] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
+    const [showPass, setShowPass] = useState(false)
+    const [showConfPass, setShowConfPass] = useState(false)
 
     const handleUsernameChange = (event) => {
         setUsername(event.target.value)
@@ -33,7 +37,7 @@ export function CreateUser() {
         setConfpass(event.target.value)
     }
 
-    useEffect(()=> {
+    useEffect(() => {
         if (pass!=="" && confpass!=="") {
             if (pass===confpass) {
                 setPassEqual(true)
@@ -49,6 +53,15 @@ export function CreateUser() {
 
 
     const handleClick = async () => {
+        if (!passEqual && pass!=="" && confpass!=="") {
+            toast.error("Passwords do not match! 😞")
+            return
+        }
+        if (pass.length<6 && confpass.length<6 && pass.length>0) {
+            toast.error("The password should be a minimum of 6 characters long! 😞")
+            return
+        }
+        setIsLoading(true)
         const {data, errorOne} = await supabase.auth.signUp({
             email: email,
             password: pass
@@ -72,21 +85,23 @@ export function CreateUser() {
                     return;
                 }
             })
-            
+            setIsLoading(false)
             setMsg(true)
         }    
     }
 
-    // if (login) {
-    //     return (
-    //         <Link to='/login'>
-    //             <AuthUser/>
-    //         </Link>
-    //     )
-    // }
+    if (isLoading) {
+        return (
+            <div className="w-screen h-screen flex flex-col items-center justify-center bg-gradient-to-b from-black to-slate-700">
+                <div className="text-center">
+                    <BounceLoader color="#36d7b7" />
+                </div>
+                <div className='mt-5 text-xl text-white'>Just a moment...</div>
+            </div>
+        )
+    }
 
     if (msg) {
-        toast.success('Account successfully created!', toast_style)
         return (
             <div className="min-h-screen bg-black text-white flex justify-center items-center">
                 <div className="max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
@@ -114,27 +129,36 @@ export function CreateUser() {
                     type="email" 
                     placeholder="Enter your email address"
                 />
-                <input 
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
-                    onChange={handlePassChange} 
-                    id="password" 
-                    type="password" 
-                    placeholder="Enter your password"
-                    minLength={6}
-                    maxLength={15}
-                />
-                {(!passEqual && pass!=="" && confpass!=="") && (<div className="-mt-3">{"Passwords do not match! 😞"}</div>)}
-                <input 
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
-                    onChange={handleConfPassChange} 
-                    id="confirmpassword" 
-                    type="password" 
-                    placeholder="Re-enter the password to confirm your registration"
-                />
+                <div className="relative w-full">
+                    <input 
+                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
+                        onChange={handlePassChange} 
+                        id="password" 
+                        type={showPass ? "text" : "password"} 
+                        placeholder="Enter your password"
+                        minLength={6}
+                        maxLength={15}
+                    />
+                    <button className="absolute top-0 right-0 mt-2 mr-2" onClick={() => setShowPass(!showPass)}><SlEye size={25} className="mb-4 mr-2 ml-2" color="white"/></button>
+                </div>
+                
+                <div className="relative w-full">
+                    <input 
+                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
+                        onChange={handleConfPassChange} 
+                        id="confirmpassword" 
+                        type={showConfPass ? "text" : "password"} 
+                        placeholder="Confirm your password"
+                        minLength={6}
+                        maxLength={15}
+                    />
+                    <button className="absolute top-0 right-0 mt-2 mr-2" onClick={() => setShowConfPass(!showConfPass)}><SlEye size={25} className="mb-4 mr-2 ml-2" color="white"/></button>
+                </div>
+                
                 <button 
-                    disabled={!passEqual || !username || !email || !pass || !confpass} 
+                    disabled={!username || !email || !pass || !confpass} 
                     onClick={handleClick} 
-                    className={(!passEqual || !username || !email || !pass || !confpass)? "w-full bg-slate-500 hover:cursor-not-allowed text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline":"w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
+                    className={(!username || !email || !pass || !confpass)? "w-full bg-slate-500 hover:cursor-not-allowed text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline":"w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
                 >
                     Sign Up
                 </button>
@@ -147,7 +171,7 @@ export function CreateUser() {
                     </button>
                 </Link>
             </div>
-            <ToastContainer position="top-right" autoClose={5000}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
+            <ToastContainer position="top-right" autoClose={1500}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
         </div>
     )
 }
@@ -155,12 +179,12 @@ export function CreateUser() {
 export function AuthUser() {
     const [email, setEmail] = useState("")
     const [pass, setPass] = useState("")
-    // const [create, setCreate] = useState(false)
-    const [gotoprof, setGotoprof] = useState(false)
-    const [username, setUsername] = useState(null)
     const [verEmail, setVerEmail] = useState("")
+    const [gotoprof, setGotoprof] = useState(false)
     const [disabled, setDisabled] = useState(true)
+    const [showPass, setShowPass] = useState(false)
     const [userID, setUserID] = useState(null)
+    const [username, setUsername] = useState(null)
 
     const handleEmailChange = (event) => {
         setEmail(event.target.value)
@@ -186,11 +210,15 @@ export function AuthUser() {
         })
         if (data) {
             const {user,session} = data
-            if (user && session && user.role==="authenticated") {
-                toast.success('Logging u in')
-                setUserID(user.id)
-                setVerEmail(user.email)
-                await getUsername()
+            if (user && session) {
+                if (user.role==="authenticated") {
+                    toast.success('Logging u in')
+                    setUserID(user.id)
+                    setVerEmail(user.email)
+                    await getUsername()
+                } else {
+                    toast.error("Please verify your account via email first!")
+                }
             }
         }
         else if (error) {
@@ -218,12 +246,6 @@ export function AuthUser() {
         )
     }
 
-    // if (create) {
-    //     return (
-    //         <CreateUser/>
-    //     )
-    // }
-
     return (
         <div className="min-h-screen bg-black text-white flex justify-center items-center">
             <div className="max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
@@ -235,13 +257,16 @@ export function AuthUser() {
                     type="email" 
                     placeholder="Enter your email address"
                 />
-                <input 
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
-                    onChange={handlePassChange} 
-                    id="password" 
-                    type="password" 
-                    placeholder="Enter your password"
-                />
+                <div className="relative w-full">
+                    <input 
+                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
+                        onChange={handlePassChange} 
+                        id="password" 
+                        type={showPass ? "text" : "password"}
+                        placeholder="Enter your password"
+                    />
+                    <button className="absolute top-0 right-0 mt-2 mr-2" onClick={() => setShowPass(!showPass)}><SlEye size={25} className="mb-4 mr-2 ml-2" color="white"/></button>
+                </div>
                 <button 
                     onClick={handleClick}
                     disabled={disabled} 
@@ -258,7 +283,7 @@ export function AuthUser() {
                     </button>
                 </Link>
             </div>
-            <ToastContainer position="top-right" autoClose={5000}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
+            <ToastContainer position="top-right" autoClose={1500}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
         </div>
     )
 }
