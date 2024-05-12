@@ -25,9 +25,9 @@ First, start by creating your own profile on the app \(don't forget to add your 
 
 Next, click on Add songs if you want to upload your local mp3 files to our app!
 
-If you want to import your spotify playlists, you can also do that!
+If you want to import your spotify playlists, you can also do that by clicking on the `Login with Spotify` button in the sidebar and logging in!
 
-Finally, if you want to create AI-generated songs, you can do so by clicking on Login with Spotify in the sidebar and logging in!
+Finally, if you want to create AI-generated songs, you can do so by clicking on the `Create AI-generated Songs` button in the sidebar!
 
 That's it!
 
