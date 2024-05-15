@@ -3,10 +3,13 @@ import supabase from "./ClientInstance";
 import React, { useState, useEffect } from "react";
 import toast_style from "./ToastStyle";
 import { BeatLoader } from "react-spinners";
+import { Link, useParams } from "react-router-dom";
 
-export default function AddSongModel ({username, playlistid, onClose}) {
+export default function AddSongModel () {
     const [isLoading, setIsLoading] = useState(true)
     const [songs, setSongs] = useState(null)
+
+    const {username, playlistid} = useParams()
     
     useEffect(() => {
         const loadSongs = async () => {
@@ -47,9 +50,11 @@ export default function AddSongModel ({username, playlistid, onClose}) {
     return (
         <div className="min-h-screen bg-black text-white flex flex-col justify-center items-center">
             <div className="absolute top-0 right-0 m-2 text-red-700 text-lg font-bold focus:outline-none">
-                    <button onClick={onClose}>
-                        X
-                    </button>
+                    <Link to={`/${username}`}>
+                        <button>
+                            X
+                        </button>
+                    </Link>    
                 </div>
             <div className="max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
                 {songs && songs.map((song, index) => (

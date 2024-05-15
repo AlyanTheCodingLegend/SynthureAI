@@ -9,6 +9,7 @@ import ReactSlider from 'react-slider';
 import supabase from "./ClientInstance";
 import toast_style from './ToastStyle';
 import 'react-toastify/dist/ReactToastify.css';
+import { useParams } from 'react-router-dom';
 
 async function loadSongs (username) {
     let songArray=[]
@@ -28,7 +29,7 @@ async function loadSongs (username) {
     return [songArray, songNameArray, imageArray, indexArray]
 }
 
-export default function Player ({username}) {
+export default function Player () {
     const [isPlaying, setIsPlaying] = useState(false)
     const [song, setSong] = useState(null)
     const [duration, setDuration] = useState(0)
@@ -51,6 +52,8 @@ export default function Player ({username}) {
     const [images, setImages] = useState(null)
     const [indexes, setIndexes] = useState(null)
     const [playcount, setPlaycount] = useState(0)
+
+    const {username} = useParams();
 
     useEffect(() => {
         if (isPlaying) {

@@ -3,10 +3,13 @@ import supabase from "./ClientInstance"
 import { ToastContainer, toast } from "react-toastify"
 import toast_style from "./ToastStyle"
 import AddSongModel from "./AddSongModel"
+import { Link, redirect, useParams } from "react-router-dom"
 
-export default function PlaylistModel ({username, onClose}) {
+export default function PlaylistModel () {
     const [playlistname, setPlaylistname] = useState('')
     const [playid, setPlayid] = useState(null)
+
+    const {username} = useParams()
 
     const handleNameChange = (event) => {
         setPlaylistname(event.target.value)
@@ -26,20 +29,21 @@ export default function PlaylistModel ({username, onClose}) {
                 setPlayid(data[0].playlist_id)
             }
         }
-
     }
 
     if (playid) {
-        return (
-            <AddSongModel username={username} playlistid={playid} onClose={()=>setPlayid(null)}/>
-        )
+        redirect(`/songuploader/${username}/${playid}`)
     }
 
     return (
         <div>
             <div className="relative max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
                 <div className="absolute top-0 right-0 m-2 text-red-700 text-lg font-bold focus:outline-none">
-                    <button onClick={onClose}>X</button>
+                    <Link to={`/${username}`}>   
+                        <button>
+                            X
+                        </button>
+                    </Link>     
                 </div>
                 <input 
                     type="text" 

@@ -1,0 +1,72 @@
+.sidebar {
+    height: 100%;
+    width: 250px;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #111;
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 5px;
+    position: fixed;
+  }
+  
+  .sidebar.collapsed {
+    width: 50px;
+    position: fixed;
+  }
+  
+  .sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    color: white;
+  }
+  
+  .sidebar-header .pfp {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  
+  .sidebar-content {
+    margin-top: 20px;
+  }
+  
+  .sidebar-button {
+    padding: 10px;
+    color: #818181;
+    background-color: #1a1a1a;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .spotify-button {
+    padding: 10px;
+    color: #ffffff;
+    background-color: #08c045;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  
+  .spotify-button:hover {
+    color: #ffffff;
+    background-color: #147335;
+  }
+
+  .sidebar-button:hover {
+    color: #f1f1f1;
+    background-color: #000;
+  }
+  
+  .toggle-btn {
+    background-color: #000;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+  }

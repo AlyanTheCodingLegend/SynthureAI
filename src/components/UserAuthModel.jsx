@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
-import { ProfilePage } from "./ProfilePage";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { BounceLoader } from "react-spinners";
 import { SlEye } from "react-icons/sl";
 import bcrypt from 'bcryptjs';
@@ -79,7 +78,7 @@ export function CreateUser() {
                     toast.error(err.message, toast_style);
                     return;
                 }
-                const {error} = await supabase.from("user_information").insert({email: email, hashpass: hash, username: username})
+                const {error} = await supabase.from("user_information").insert({userid: data.user.id, email: email, hashpass: hash, username: username})
                 if (error) {
                     toast.error(error.message, toast_style);
                     return;
@@ -179,12 +178,14 @@ export function CreateUser() {
 export function AuthUser() {
     const [email, setEmail] = useState("")
     const [pass, setPass] = useState("")
-    const [verEmail, setVerEmail] = useState("")
+    const [verEmail, setVerEmail] = useState(null)
     const [gotoprof, setGotoprof] = useState(false)
     const [disabled, setDisabled] = useState(true)
     const [showPass, setShowPass] = useState(false)
-    const [userID, setUserID] = useState(null)
     const [username, setUsername] = useState(null)
+    const [isLoading, setIsLoading] = useState(false)
+
+    const navigate = useNavigate()
 
     const handleEmailChange = (event) => {
         setEmail(event.target.value)
@@ -204,47 +205,71 @@ export function AuthUser() {
     }, [email, pass])
 
     const handleClick = async () => {
+        setIsLoading(true)
+
         const {data,error} = await supabase.auth.signInWithPassword({
             email: email,
             password: pass
         })
-        if (data) {
+
+        if (error) {
+            toast.error(error.message, toast_style)
+            setIsLoading(false)
+            return
+        } 
+        else {
             const {user,session} = data
             if (user && session) {
                 if (user.role==="authenticated") {
-                    toast.success('Logging u in')
-                    setUserID(user.id)
                     setVerEmail(user.email)
-                    await getUsername()
                 } else {
                     toast.error("Please verify your account via email first!")
+                    setIsLoading(false)
                 }
+            } else {
+                toast.error("An error occurred, please try again later!", toast_style)
+                setIsLoading(false)
             }
-        }
-        else if (error) {
-            toast.error(error.message, toast_style)
         }
     }
 
-    const getUsername = async () => {
-        const {data,error} = await supabase.from('user_information').select('username').eq('email',verEmail)
-        if (data[0] && data) {
-            toast.success('Logging u in....')
-            setUsername(data[0].username)
-            setGotoprof(true)
+    useEffect(() => {
+        if (verEmail) {
+            getUsername()
         }
+    // eslint-disable-next-line    
+    }, [verEmail])
+
+    const getUsername = async () => {
+        const {data,error} = await supabase.from('user_information').select('username').eq('email',email)
         if (error) {
+            setIsLoading(false)
             toast.error(error.message, toast_style)
         }
+        else if (data.length!==0) {
+            setUsername(data[0].username)
+            setIsLoading(false)
+            setGotoprof(true)
+        } else {
+            setIsLoading(false)
+            toast.error("An error occurred, please try again later!", toast_style)
+        }
+    }
+
+    if (isLoading) {
+        return (
+          <div className="w-screen h-screen flex flex-col items-center justify-center bg-gradient-to-b from-black to-slate-700">
+              <div className="text-center">
+                  <BounceLoader color="#36d7b7" />
+              </div>
+              <div className='mt-5 text-xl text-white'>Just a moment...</div>
+          </div>
+        )
     }
 
     if (gotoprof && username) {
-        return (
-            
-            <ProfilePage username={username} userID={userID}/>
-             
-        )
-    }
+        navigate(`/profile/${username}`)
+    } else {
 
     return (
         <div className="min-h-screen bg-black text-white flex justify-center items-center">
@@ -286,4 +311,5 @@ export function AuthUser() {
             <ToastContainer position="top-right" autoClose={1500}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
         </div>
     )
+    }
 }

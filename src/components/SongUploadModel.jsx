@@ -4,38 +4,33 @@ import supabase from './ClientInstance';
 import { useState } from 'react';
 import { ToastContainer, toast} from "react-toastify";
 import toast_style from './ToastStyle';
+import { Link, useParams } from 'react-router-dom';
 
-export default function SongUploadModel ({username, onClose}) {
+export default function SongUploadModel () {
     const [selectedFile, setSelectedFile] = useState(null)
     const [filename, setFilename] = useState("")
     const [initialFilename, setInitialFilename] = useState("")
     const [isProcessing, setIsProcessing] = useState(false)
     const [artistName, setArtistName] = useState("")
     const [imageFile, setImageFile] = useState(null)
+    const [songID, setSongID] = useState(null)
+
+    const {username} = useParams()
 
     const handleArtistRowUpdate = async () => {
         try {
-            const { data, error } = await supabase.from('artist_information').select('songs_released').eq('name', artistName)
+            const { data, error } = await supabase.from('artist_information').select('artist_id').eq('name', artistName)
             if (error) throw error;
 
-            if (!data || data.length === 0) {
+            if (data.length === 0) {
+                const { data: dataOne, error: errorOne } = await supabase.from('artist_information').insert({ name: artistName }).select()
+                if (errorOne) throw errorOne;
 
-                const { data: dataSix, error: errorSix } = await supabase.from('song_information').select('id').eq('song_name', initialFilename)
-                if (errorSix) throw errorSix;
-
-                const { error: errorTwo } = await supabase.from('artist_information').insert({ name: artistName, songs_released: [dataSix[0].id] })
+                const { error: errorTwo } = await supabase.from('artistsong_information').insert({artist_id: dataOne[0].artist_id, song_id: songID})
                 if (errorTwo) throw errorTwo;
-
             } else {
-
-                const { data: dataThree, error: errorThree } = await supabase.from('song_information').select('id').eq('song_name', initialFilename)
+                const { error: errorThree } = await supabase.from('artistsong_information').insert({artist_id: data[0].artist_id, song_id: songID})
                 if (errorThree) throw errorThree;
-
-                const songs = data[0].songs_released || [];
-                songs.push(dataThree[0].id);
-
-                const { error: errorFive } = await supabase.from('artist_information').update({ songs_released: songs }).eq("name", artistName)
-                if (errorFive) throw errorFive;
             }
         } catch (error) {
             toast.error(error.message, toast_style);
@@ -56,14 +51,16 @@ export default function SongUploadModel ({username, onClose}) {
             const { error } = await supabase.storage.from("songs").upload(`${username}/${filename}.mp3`, selectedFile, { cacheControl: '3600', upsert: true, contentType: 'audio/mpeg' })
             if (error) throw error;
 
-            const { errorOne } = await supabase.storage.from("images").upload(`${username}/${filename}.${imageFile.type.replace('image/', '')}`, imageFile, { cacheControl: '3600', upsert: true, contentType: imageFile.type })
+            const { error: errorOne } = await supabase.storage.from("images").upload(`${username}/${filename}.${imageFile.type.replace('image/', '')}`, imageFile, { cacheControl: '3600', upsert: true, contentType: imageFile.type })
             if (errorOne) throw errorOne;
 
-            const { errorThree } = await supabase.from('image_information').insert({ uploaded_by: username, size: `${imageFile.size / (1024 * 1024)}`, format: `${imageFile.type}`, image_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` })
+            const { error: errorThree } = await supabase.from('image_information').insert({ uploaded_by: username, size: `${imageFile.size / (1024 * 1024)}`, format: `${imageFile.type}`, image_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` })
             if (errorThree) throw errorThree;
 
-            const { errorTwo } = await supabase.from('song_information').insert({ song_name: initialFilename, song_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/songs/${username}/${filename}.mp3`, uploaded_by: username, artist_name: artistName, image_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` })
+            const { data, error: errorTwo } = await supabase.from('song_information').insert({ song_name: initialFilename, song_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/songs/${username}/${filename}.mp3`, uploaded_by: username, artist_name: artistName, image_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` }).select()
             if (errorTwo) throw errorTwo;
+
+            setSongID(data[0].id)
 
             await handleArtistRowUpdate();
 
@@ -82,6 +79,7 @@ export default function SongUploadModel ({username, onClose}) {
         setArtistName("")
         setSelectedFile(null)
         setImageFile(null)
+        setSongID(null)
     };
 
     const handleNameChange = (event) => {
@@ -109,9 +107,11 @@ export default function SongUploadModel ({username, onClose}) {
         <form>
             <div className="relative max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
                 <div className="absolute top-0 right-0 m-2 text-red-700 text-lg font-bold focus:outline-none">
-                    <button onClick={onClose}>
-                        X
-                    </button>
+                    <Link to={`/${username}`}>
+                        <button >
+                            X
+                        </button>
+                    </Link>    
                 </div>
                 <input 
                     onChange={handleNameChange} 

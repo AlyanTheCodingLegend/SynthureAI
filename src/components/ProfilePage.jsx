@@ -1,20 +1,25 @@
-import { AuthUser } from "./UserAuthModel"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ToastContainer, toast } from "react-toastify"
 import toast_style from "./ToastStyle"
 import supabase from "./ClientInstance"
 import 'react-toastify/dist/ReactToastify.css'
-import SongUploadModel from "./SongUploadModel"
-import PlaylistModel from "./PlaylistModel"
 import bcrypt from 'bcryptjs'
+import { Link, useNavigate, useParams } from "react-router-dom"
+import { SlEye } from "react-icons/sl"
+import { BounceLoader } from "react-spinners"
 
-export function ProfilePage({ username, userID }) {
+export function ProfilePage() {
     const [login, setLogin] = useState(false)
-    const [upload, setUpload] = useState(false)
-    const [createpl, setCreatepl] = useState(false)
     const [pfp, setPfp] = useState(null)
     const [popup, setPopup] = useState(false)
     const [pass, setPass] = useState('')
+    const [userID, setUserID] = useState(null)
+    const [showPass, setShowPass]= useState(false)
+    const [isLoading, setIsLoading] = useState(false)
+
+    const navigate = useNavigate()
+
+    const { username } = useParams()
 
     const handleClick = async () => {
         const {error} = await supabase.auth.signOut()
@@ -22,14 +27,6 @@ export function ProfilePage({ username, userID }) {
           toast.error(error.message, toast_style)
         }
         setLogin(true)
-    }
-
-    const handleClickTwo = () => {
-      setUpload(true)
-    }
-
-    const handleClickThree = () => {
-      setCreatepl(true)
     }
 
     const handleProfilePicChange = (event) => {
@@ -57,83 +54,74 @@ export function ProfilePage({ username, userID }) {
     }
 
     const handlePassSubmit = async () => {
-      bcrypt.hash(pass, 10, async function(err, hash) {
-          if (err) {
-              toast.error(err.message, toast_style);
-          } else {
-              const { data, error } = await supabase
-                  .from('user_information')
-                  .select('email, hashpass')
-                  .eq('username', username);
-                  
-              if (error) {
-                  toast.error(error.message, toast_style);
-              } else {
-                  if (data.length !== 0) {
-                      const storedHash = data[0].hashpass;
-  
-                      // Compare hashed passwords
-                      bcrypt.compare(pass, storedHash, async function(compareErr, result) {
-                          if (compareErr) {
-                              toast.error(compareErr.message, toast_style);
-                          } else {
-                              if (result) {
-                                  const { error: deleteError } = await supabase
-                                      .from('user_information')
-                                      .delete()
-                                      .eq('username', username);
-  
-                                  if (deleteError) {
-                                      toast.error(deleteError.message, toast_style);
-                                  } else {
-                                    const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userID);
-                                    if (deleteUserError) {
-                                        toast.error(deleteUserError.message, toast_style);
-                                    } else {
-                                        toast.success('Account has been successfully deleted', toast_style);
-                                        setLogin(true);
-                                    }
-                                  }
-                              } else {
-                                  toast.error('Wrong password!', toast_style);
-                              }
-                          }
-                      });
+      setIsLoading(true)
+      
+      const { data, error } = await supabase
+          .from('user_information')
+          .select('userid, email, hashpass')
+          .eq('username', username);
+          
+      if (error) {
+        setIsLoading(false);
+        toast.error(error.message, toast_style);
+      } else {
+          if (data.length !== 0) {
+              setUserID(data[0].userid);
+              const storedHash = data[0].hashpass;
+
+              // Compare hashed passwords
+              bcrypt.compare(pass, storedHash, async function(compareErr, result) {
+                  if (compareErr) {
+                    setIsLoading(false);
+                    toast.error(compareErr.message, toast_style);
                   } else {
-                      toast.error('User not found', toast_style);
+                      if (result) {
+                          const { error: deleteError } = await supabase
+                              .from('user_information')
+                              .delete()
+                              .eq('username', username);
+
+                          if (deleteError) {
+                            setIsLoading(false);
+                            toast.error(deleteError.message, toast_style);
+                          } else {
+                            const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userID);
+                            if (deleteUserError) {
+                              setIsLoading(false);
+                              toast.error(deleteUserError.message, toast_style);
+                            } else {
+                                toast.success('Account has been successfully deleted', toast_style);
+                                setLogin(true);
+                            }
+                          }
+                      } else {
+                        setIsLoading(false);
+                        toast.error('Wrong password!', toast_style);
+                      }
                   }
-              }
+              });
+          } else {
+            setIsLoading(false);
+            toast.error('User not found', toast_style);
           }
-      });
-  };
-  
+      }
+    }
+
+    if (isLoading) {
+      return (
+        <div className="w-screen h-screen flex flex-col items-center justify-center bg-gradient-to-b from-black to-slate-700">
+            <div className="text-center">
+                <BounceLoader color="#36d7b7" />
+            </div>
+            <div className='mt-5 text-xl text-white'>Just a moment...</div>
+        </div>
+      )
+    }
 
     if (login) {
-        return (
-            <AuthUser/>
-        )
-    }
-
-    if (createpl) {
-      return (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
-          <div className="bg-white p-8 rounded-lg relative">
-            <PlaylistModel username={username} onClose={()=>{setCreatepl(false)}}/>
-          </div>
-        </div>
-      )
-    }
-
-    if (upload) {
-      return (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
-          <div className="bg-white p-8 rounded-lg relative">
-            <SongUploadModel username={username} onClose={()=>{setUpload(false)}}/>
-          </div>
-        </div>
-      )
-    }
-
+      navigate('/login')
+    }  
+  
     return (
       <div className="min-h-screen bg-black text-white flex flex-col justify-center items-center">
         {/* <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
@@ -144,10 +132,11 @@ export function ProfilePage({ username, userID }) {
         </div> */}
         {popup && (
           <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
-              <div className="text-black p-8 rounded-lg relative">
-                  <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} />
-                  <button onClick={handlePassSubmit}>Submit</button>
-                  <button onClick={() => setPopup(false)}>Cancel</button>
+              <div className="text-black p-8 rounded-lg relative w-7/12">
+                  <input placeholder="Enter your password to confirm account deletion" type={showPass ? "text" : "password"}  value={pass} onChange={(e) => setPass(e.target.value)} className="text-white w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 focus:outline-none"/>
+                  <button className="absolute top-0 right-0 mt-2 mr-2" onClick={() => setShowPass(!showPass)}><SlEye size={25} className="mb-4 mr-2 ml-2" color="white"/></button>
+                  <button onClick={handlePassSubmit} className="bg-red-400">Submit</button>
+                  <button onClick={() => {setPopup(false); setPass(""); setShowPass(false)}}>Cancel</button>
               </div>
           </div>
         )}
@@ -157,12 +146,16 @@ export function ProfilePage({ username, userID }) {
             <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
               Home
             </button>
-            <button onClick={handleClickTwo} className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-              Upload Songs
-            </button>
-            <button onClick={handleClickThree} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-              Create Playlist
-            </button>
+            <Link to={`/songuploader/${username}`}>
+              <button className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Upload Songs
+              </button>
+            </Link>
+            <Link to={`/playlists/${username}`}>
+              <button className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Create Playlist
+              </button>
+            </Link>
             <button onClick={handleClick} className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
               Sign Out
             </button>

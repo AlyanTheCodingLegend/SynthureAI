@@ -1,17 +1,18 @@
 import React from "react";
-import Sidebar from './components/Sidebar';
 import Player from './components/Player';
 import { AuthUser, CreateUser } from "./components/UserAuthModel";
-import Tester from "./components/Tester";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import AddSongModel from "./components/AddSongModel";
 import PlaylistModel from "./components/PlaylistModel";
+import { ProfilePage } from "./components/ProfilePage";
+import SongUploadModel from "./components/SongUploadModel";
+import Sidebar from "./components/Sidebar";
 
 function App() {
   const router=createBrowserRouter([
     {
-      path: '/',
-      element: <Tester />
+      path: '/:username',
+      element: <Sidebar><Player /></Sidebar>
     },
     {
       path: '/login',
@@ -22,12 +23,24 @@ function App() {
       element: <CreateUser />
     },
     {
-      path: '/songuploader',
+      path: '/addsong/:username/:playlistid',
       element: <AddSongModel />
     },
     {
-      path: '/createplaylist',
+      path: '/playlists/:username',
       element: <PlaylistModel />
+    },
+    {
+      path: '/profile/:username',
+      element: <ProfilePage />
+    },
+    {
+      path: '/songuploader/:username',
+      element: <SongUploadModel />
+    },
+    {
+      path: '/sidebar/:username',
+      element: <Sidebar />
     }
   ])
   return (
