@@ -27,7 +27,8 @@ export default function PlaylistModel ({username, onClick}) {
     useEffect(() => {
         if (playid) {
             navigate(`/${username}/${playid}/addsongs`)
-        }    
+        }
+    // eslint-disable-next-line    
     }, [playid])    
 
     return (

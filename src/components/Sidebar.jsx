@@ -64,7 +64,7 @@ export default function Sidebar ({isOpen, toggleSidebar}) {
         } 
       }
       loadPfp()  
-    },[])
+    },[username])
 
     if (signout) {
       return (
@@ -134,7 +134,7 @@ export default function Sidebar ({isOpen, toggleSidebar}) {
           <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-700 to-purple-700 rounded-xl blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>  
             <div
               className="relative flex items-center justify-center p-4 text-gray-400 cursor-pointer transition duration-300 rounded-xl bg-black hover:text-white text-center text-xl"
-              onClick={() => {}}
+              onClick={() => navigate(`/${username}/aigen`)}
             >
               <RiRobot2Line size={30} className="mr-2" />
               Create AI-Generated Songs

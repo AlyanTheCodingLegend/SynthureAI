@@ -68,22 +68,30 @@ export function CreateUser() {
 
         if (errorOne) {
             toast.error("Email is already registered!", toast_style)
+            setIsLoading(false)
             return;
         } else if (data) {
-            bcrypt.hash(pass, 10, async function(err, hash) {
-                if (err) {
-                    toast.error(err.message, toast_style);
-                    return;
-                }
-                const {error} = await supabase.from("user_information").insert({userid: data.user.id, email: email, hashpass: hash, username: username})
-                if (error) {
-                    toast.error(error.message, toast_style);
-                    return;
-                }
-            })
+            if (data.user && data.session) {
+                bcrypt.hash(pass, 10, async function(err, hash) {
+                    if (err) {
+                        toast.error(err.message, toast_style);
+                        setIsLoading(false)
+                        return;
+                    }
+                    const {error} = await supabase.from("user_information").insert({userid: data.user.id, email: email, hashpass: hash, username: username})
+                    if (error) {
+                        toast.error(error.message, toast_style);
+                        setIsLoading(false)
+                        return;
+                    }
+                }    
+                )
+            } else {
+                toast.error("An error occurred, please try again later!", toast_style)
+            }    
+            setIsLoading(false)
             setMsg(true)
-        }
-        setIsLoading(false)    
+        }   
     }
 
     if (isLoading) {

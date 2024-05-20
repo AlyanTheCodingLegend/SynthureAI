@@ -5,9 +5,15 @@ import AddSongModel from "./components/AddSongModel";
 import { ProfilePage } from "./components/ProfilePage";
 import Home from "./components/Home";
 import ShowPlaylistModel from "./components/ShowPlaylistModel";
+import AIGeneration from "./components/AIGeneration";
+import Navigator from "./components/Navigator";
 
 function App() {
   const router=createBrowserRouter([
+    {
+      path: '/',
+      element: <Navigator />
+    },
     {
       path: '/:username',
       element: <Home />
@@ -32,6 +38,10 @@ function App() {
       path: '/profile/:username',
       element: <ProfilePage />
     },
+    {
+      path: '/:username/aigen',
+      element: <AIGeneration />
+    }
   ])
   return (
     <RouterProvider router={router}/>

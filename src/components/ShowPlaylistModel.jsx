@@ -3,19 +3,18 @@ import supabase from "./ClientInstance";
 import { toast } from "react-toastify";
 import toast_style from "./ToastStyle";
 import { IoMdArrowBack } from "react-icons/io";
-import { FaRegCirclePlay } from "react-icons/fa6";
+import { FaRegCirclePlay, FaRegCirclePause } from "react-icons/fa6";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { FaPlus } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
-export default function ShowPlaylistModel({isOpen, playlistid, setOpenPlaylist, setSongArray, setSongNameArray, setImageArray, setIndexArray, setIndex, username}) {
+export default function ShowPlaylistModel({isOpen, playlistid, setOpenPlaylist, setSongArray, setSongNameArray, setImageArray, setIndexArray, setIndex, username, index}) {
     const [name, setName] = useState(null)
     const [songnames, setSongnames] = useState([])
     const [images, setImages] = useState([])
     const [artists, setArtists] = useState([])
     const [indexes, setIndexes] = useState([])
-    const [isLoading, setIsLoading] = useState(false)
 
     const navigate = useNavigate()
 
@@ -72,17 +71,21 @@ export default function ShowPlaylistModel({isOpen, playlistid, setOpenPlaylist, 
         }
 
         loadSongsFromPlaylist(playlistid)
+    // eslint-disable-next-line
     }, [])
     
-    const removeFromPlaylist = async (songid) => {
-        setIsLoading(true)
-        const {error} = await supabase.from("playlistsong_information").delete().eq('playlist_id', playlistid).eq('song_id', songid)
+    const removeFromPlaylist = async (songindex) => {
+        const {error} = await supabase.from("playlistsong_information").delete().eq('playlist_id', playlistid).eq('song_id', indexes[songindex])
         if (error) {
             toast.error(error.message, toast_style)
         } else {
-            toast.success('Song removed from playlist!', toast_style)
+            toast.success('Song removed from playlist!')
+            setSongnames(prevSongs => prevSongs.filter(s => s !== songnames[songindex]))
+            setImages(prevImages => prevImages.filter(s => s !== images[songindex]))
+            setArtists(prevArtists => prevArtists.filter(s => s !== artists[songindex]))
+            setIndexes(prevIndexes => prevIndexes.filter(s => s !== indexes[songindex]))
         }
-        setIsLoading(false)
+        
     }
 
     const deletePlaylist = async () => {
@@ -109,22 +112,31 @@ export default function ShowPlaylistModel({isOpen, playlistid, setOpenPlaylist, 
                 </div>
             </div>  
             <div className="text-white text-2xl h-full -mt-1.5">
-                <div className="mt-0.5 border-gray-400 border-t-2 mb-16"></div>
-            {songnames && songnames.length!==0 ? songnames.map((songname, songindex)=> (
-                <div className="ml-4 rounded-lg w-5/6 h-1/6 flex flex-row items-center text-gray-400 hover:text-white hover:cursor-pointer">
-                    <div className="flex flex-row justify-start items-center h-4/5 w-4/5">
-                    <img src={images[songindex]} className="h-full w-1/4 rounded-lg ml-2"/>
-                        <div className="flex flex-col flex-wrap ml-4">
-                            <div className="text-xl">{songname}</div>
-                            <div className="text-sm">By: {artists[songindex]}</div>
+                <div className="mt-1 border-gray-400 border-t-2 mb-16"></div>
+                <div  className="flex flex-col justify-center items-center">
+                {songnames && songnames.length!==0 ? songnames.map((songname, songindex)=> (
+                    <div key={songindex} className="relative group ml-4 mb-10 w-5/6">
+                    <div className={index===songindex ? "absolute -inset-0.5 bg-gradient-to-r from-green-700 to-green-400 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" : "absolute -inset-0.5 bg-gradient-to-r from-blue-700 to-purple-700 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"}></div>
+                    <div className="relative bg-black rounded-lg flex flex-row items-center text-gray-400 hover:text-white hover:cursor-pointer">
+                        <div className="flex flex-row justify-start items-center h-24 w-4/5">
+                            <img src={images[songindex]} className="h-full w-1/4 rounded-lg ml-2" alt="song cover" />
+                            <div className="flex flex-col flex-wrap ml-4">
+                                <div className="text-xl">{songname}</div>
+                                <div className="text-sm">By: {artists[songindex]}</div>
+                            </div>
+                        </div>
+                        <div className={index===songindex ? "flex flex-row justify-end text-white mr-4" : "flex flex-row justify-end text-green-500 hover:text-white mr-4"} onClick={() => setIndex(songindex)}>
+                            {index===songindex ? <FaRegCirclePause size={30}/> : <FaRegCirclePlay size={30} />}
+                        </div>
+                        <div className="flex flex-row justify-end text-green-500 hover:text-white" onClick={() => removeFromPlaylist(songindex)}>
+                            <RiDeleteBin6Line size={30} />
                         </div>
                     </div>
-                    <div className="flex flex-row justify-end text-green-500 hover:text-white mr-4" onClick={()=>setIndex(songindex)}><FaRegCirclePlay size={30}/></div>
-                    <div className="flex flex-row justify-end text-green-500 hover:text-white" onClick={()=>removeFromPlaylist(indexes[songindex])}><RiDeleteBin6Line size={30}/></div>
-                </div>)) : (
+                </div>
+                )) : (
                     <div className="ml-4 text-lg">No songs in this playlist! Add some to start the vibe 😎</div>
-                )
-            }
+                )}
+                </div>
             </div>    
         </div>
     )

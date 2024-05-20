@@ -2,19 +2,18 @@
 
 import { Howl } from 'howler';
 import React, { useEffect, useState } from 'react';
-import { BeatLoader } from 'react-spinners';
 //import { LiveAudioVisualizer } from 'react-audio-visualize';
 import { toast, ToastContainer } from "react-toastify";
 import ReactSlider from 'react-slider';
 import supabase from "./ClientInstance";
 import toast_style from './ToastStyle';
 import 'react-toastify/dist/ReactToastify.css';
-import { useParams } from 'react-router-dom';
-import { FaPlay, FaPause } from "react-icons/fa6";
-import { FaVolumeMute, FaVolumeUp } from "react-icons/fa";
+import { FaPlay, FaPause, FaForwardStep, FaBackwardStep } from "react-icons/fa6";
+import { FaVolumeMute, FaVolumeUp, FaRandom } from "react-icons/fa";
+import { MdOutlineLoop } from "react-icons/md";
 
 
-export default function Player ({isOpen, songs, songNames, images, indexes, index, setIndex}) {
+export default function Player ({isOpen, songs, songNames, indexes, index, setIndex}) {
     const [isPlaying, setIsPlaying] = useState(false)
     const [song, setSong] = useState(null)
     const [duration, setDuration] = useState(0)
@@ -28,12 +27,8 @@ export default function Player ({isOpen, songs, songNames, images, indexes, inde
     const [Tmins, setTMins] = useState(0)
     const [Tsecs, setTSecs] = useState(0)
     const [randomize, setRandomize] = useState(false)
-    const [autoplay, setAutoplay] = useState(true)
     // const [mediaRecorder, setMediaRecorder] = useState(null)
     const [disabled, setDisabled] = useState(false)
-    const [playcount, setPlaycount] = useState(0)
-
-    const {username} = useParams();
 
     useEffect(() => {
         if (isPlaying) {
@@ -89,23 +84,20 @@ export default function Player ({isOpen, songs, songNames, images, indexes, inde
                     setDuration(newSong.duration());
                     setDisabled(false);
                     updateCounter();
-                    showPlayCount();
                 },
                 onend: () => {
                     setIsPlaying(false);
                     setProgress(0);
-                    if (autoplay) {
-                        if (randomize) {
-                            randomizeSong(0,songs.length-1)
-                        } else {
-                            if (index<songs.length-1) {
-                                setIndex(index+1)
-                            }
-                            else {
-                                setIndex(0)
-                            }
+                    if (randomize) {
+                        randomizeSong(0,songs.length-1)
+                    } else {
+                        if (index<songs.length-1) {
+                            setIndex(index+1)
                         }
-                    }  
+                        else {
+                            setIndex(0)
+                        }
+                    } 
                 }
             })
             setSong(newSong)
@@ -174,17 +166,6 @@ export default function Player ({isOpen, songs, songNames, images, indexes, inde
         }
     }
     
-    async function showPlayCount() {
-        const {data, error} = await supabase.from('playcount_information').select('alltimecount').eq('song_id',indexes[index])
-        if (error) { 
-            toast.error(error.message, toast_style)
-        } else {
-            if (data.length!==0) {
-                setPlaycount(data[0].alltimecount)
-            }    
-        }    
-    }
-
     const handleSeek = (position) => {
         if (position<=duration) {
             song.seek(position)
@@ -210,11 +191,9 @@ export default function Player ({isOpen, songs, songNames, images, indexes, inde
     }
 
     useEffect(() => {
-        if (autoplay) {
-            if (index!==0) {
-                song.play()
-            }
-        }    
+        if (index!==0) {
+            song.play()
+        }  
     // eslint-disable-next-line   
     }, [duration])
 
@@ -262,48 +241,68 @@ export default function Player ({isOpen, songs, songNames, images, indexes, inde
 
     return (
         <>
-            {song && (
-            
-            <>
-                <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} fixed bg-gray-800 bottom-0 flex flex-row w-full justify-between items-center p-4`}>
-                    <div className="flex items-center">
-                        <button disabled={disabled} onClick={handleClick} className={disabled ? "text-white mr-2 rounded-full h-8 w-8 bg-slate-600 text-xs text-center cursor-not-allowed" : "text-white mr-2 rounded-full h-8 w-8 bg-green-900 hover:bg-green-800 text-xs text-center flex items-center justify-center"}>
-                            {isPlaying ? <FaPause size={17}/> : <FaPlay size={17}/>}
-                        </button>
-                        <div id="timer" className='font-mono text-base text-blue-600'>
-                            {mins}:{secs<10 ? "0"+secs : secs} / {Tmins}:{Tsecs<10 ? "0"+Tsecs : Tsecs}
+        {song && (
+            <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} fixed bg-gray-800 bottom-0 w-full justify-between items-center p-4`}>
+                <div className='flex flex-col justify-center items-center'>
+                    <div className="flex flex-row w-full">
+                        <div id="timer" className='font-mono -mt-1.5 text-base text-white'>
+                            {mins}:{secs < 10 ? "0" + secs : secs}
+                        </div>
+                        <ReactSlider
+                            id="song-slider"
+                            className="flex-grow h-2 bg-gray-700 rounded-md mx-1 cursor-pointer"
+                            onAfterChange={handleSeek}
+                            value={progress}
+                            min={0}
+                            max={duration}
+                            thumbClassName="w-4 h-4 bg-purple-400 hover:bg-purple-900 rounded-full -mt-1 outline-none focus:outline-none -top-1/6 cursor-pointer"
+                            trackClassName="h-full rounded-full bg-gradient-to-r from-gray-300 to-purple-600"
+                        />
+                        <div className='font-mono -mt-1.5 text-base text-center text-white mr-1'>
+                            {Tmins}:{Tsecs < 10 ? "0" + Tsecs : Tsecs}
                         </div>
                     </div>
-                    <ReactSlider
-                        id="song-slider"
-                        className="flex-grow h-3 bg-gray-700 rounded-md mx-4 cursor-pointer"
-                        onAfterChange={handleSeek}
-                        value={progress}
-                        min={0}
-                        max={duration}
-                        thumbClassName="w-5 h-5 bg-blue-600 hover:bg-blue-800 rounded-full -mt-1 outline-none focus:outline-none top-px cursor-pointer"
-                        trackClassName="h-full rounded-full bg-gradient-to-r from-blue-400 to-green-400"
-                    />
-                    <div className="flex items-center w-1/5">
-                        <button className="flex justify-center items-center text-white mr-2 rounded-full bg-blue-900 hover:bg-blue-800 w-20 h-8 text-xs text-center" onClick={handleVolumeMute}>
-                            {isMuted ? <FaVolumeMute size={17}/> : <FaVolumeUp size={17}/>}
-                        </button>
-                        <ReactSlider
-                            id="volume-slider"
-                            className="h-3 rounded-md mx-4 w-full"
-                            value={volume}
-                            onChange={handleVolumeSeek}
-                            min={0}
-                            max={1}
-                            step={0.01}
-                            thumbClassName="w-5 h-5 bg-green-400 rounded-full -mt-1 outline-none focus:outline-none hover:bg-blue-400"
-                            trackClassName="h-full rounded-full bg-gradient-to-l from-blue-400 to-green-400"
-                        />
+
+                    <div className='flex flex-row items-center w-full justify-end'>
+                    <div className='flex items-center mr-10 w-2/5 justify-center'>
+                        <button className="text-white mr-4 hover:text-green-500" onClick={handlePlayPrevSong}><FaBackwardStep size={20}/></button>
+                        
+                            <button
+                                disabled={disabled}
+                                onClick={handleClick}
+                                className={disabled ? "text-white mr-2 rounded-full h-8 w-8 bg-slate-600 text-xs text-center cursor-not-allowed flex items-center justify-center" : "text-white mr-2 rounded-full h-8 w-8 bg-purple-900 text-xs text-center flex items-center justify-center"}
+                            >
+                                {isPlaying ? <FaPause size={20} /> : <FaPlay size={20} />}
+                            </button>
+                            <button className="text-white ml-2 hover:text-green-500" onClick={handlePlayNextSong}><FaForwardStep size={20}/></button>
+                        </div>
+                        <div className={randomize ? 'text-white hover:cursor-pointer' : 'text-green-400 hover:cursor-pointer'} onClick={() => setRandomize(!randomize)}>
+                            <FaRandom size={20} />
+                        </div>
+                        <div className={repeat ? 'text-white hover:cursor-pointer' : 'text-green-400 hover:cursor-pointer'} onClick={() => setRepeat(!repeat)}>
+                            <MdOutlineLoop size={20} />
+                        </div>
+                        <div className="flex items-center w-1/5 justify-end">
+                            <button className="flex justify-center items-center text-white mr-1 rounded-full bg-blue-900 hover:bg-blue-800 w-10 h-6 text-xs text-center" onClick={handleVolumeMute}>
+                                {isMuted ? <FaVolumeMute size={15} /> : <FaVolumeUp size={15} />}
+                            </button>
+                            <ReactSlider
+                                id="volume-slider"
+                                className="h-2 rounded-md w-full"
+                                value={volume}
+                                onChange={handleVolumeSeek}
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                thumbClassName="w-4 h-4 bg-green-400 rounded-full -mt-1 outline-none focus:outline-none hover:bg-blue-400 cursor-pointer"
+                                trackClassName="h-full rounded-full bg-gradient-to-l from-blue-400 to-green-400"
+                            />
+                        </div>
                     </div>
                 </div>
-                <ToastContainer position="top-right" autoClose={5000}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
-                </>
-            )}
-        </>
+                <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark' />
+            </div>
+        )}
+    </>
     )
 }
