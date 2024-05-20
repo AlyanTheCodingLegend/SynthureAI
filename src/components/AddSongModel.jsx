@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import toast_style from "./ToastStyle";
 import { BeatLoader } from "react-spinners";
 import { Link, useParams } from "react-router-dom";
+import { IoMdClose } from "react-icons/io";
 
 export default function AddSongModel () {
     const [isLoading, setIsLoading] = useState(true)
@@ -48,20 +49,18 @@ export default function AddSongModel () {
     }
 
     return (
-        <div className="min-h-screen bg-black text-white flex flex-col justify-center items-center">
-            <div className="absolute top-0 right-0 m-2 text-red-700 text-lg font-bold focus:outline-none">
+            <div className="min-w-screen min-h-screen overflow-x-hidden bg-blue-600 shadow-lg p-8">
+                <div className="absolute flex flex-col top-0 right-0 m-2 text-red-700 text-lg font-bold focus:outline-none">
                     <Link to={`/${username}`}>
-                        <button>
-                            X
-                        </button>
+                        <IoMdClose size={40}/>
                     </Link>    
                 </div>
-            <div className="max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
+                <div className="text-white text-4xl text-center">Add your uploaded songs to this playlist</div>
+                <div className="mt-2 border-white border-t-2 mb-10"></div>
                 {songs && songs.map((song, index) => (
                     <button key={index} onClick={()=>handleClick(song)}>{song.song_name}</button>
                 ))}
                 <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
             </div>
-        </div>
     )
 }

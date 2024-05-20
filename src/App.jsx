@@ -1,18 +1,16 @@
 import React from "react";
-import Player from './components/Player';
 import { AuthUser, CreateUser } from "./components/UserAuthModel";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import AddSongModel from "./components/AddSongModel";
-import PlaylistModel from "./components/PlaylistModel";
 import { ProfilePage } from "./components/ProfilePage";
-import SongUploadModel from "./components/SongUploadModel";
-import Sidebar from "./components/Sidebar";
+import Home from "./components/Home";
+import ShowPlaylistModel from "./components/ShowPlaylistModel";
 
 function App() {
   const router=createBrowserRouter([
     {
       path: '/:username',
-      element: <Sidebar><Player /></Sidebar>
+      element: <Home />
     },
     {
       path: '/login',
@@ -23,25 +21,17 @@ function App() {
       element: <CreateUser />
     },
     {
-      path: '/addsong/:username/:playlistid',
+      path: '/:username/:playlistid/addsongs',
       element: <AddSongModel />
     },
     {
-      path: '/playlists/:username',
-      element: <PlaylistModel />
+      path: '/:username/playlists/:playlistid',
+      element: <ShowPlaylistModel />
     },
     {
       path: '/profile/:username',
       element: <ProfilePage />
     },
-    {
-      path: '/songuploader/:username',
-      element: <SongUploadModel />
-    },
-    {
-      path: '/sidebar/:username',
-      element: <Sidebar />
-    }
   ])
   return (
     <RouterProvider router={router}/>

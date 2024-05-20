@@ -10,34 +10,16 @@ import supabase from "./ClientInstance";
 import toast_style from './ToastStyle';
 import 'react-toastify/dist/ReactToastify.css';
 import { useParams } from 'react-router-dom';
+import { FaPlay, FaPause } from "react-icons/fa6";
+import { FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 
-async function loadSongs (username) {
-    let songArray=[]
-    let songNameArray=[]
-    let imageArray=[]
-    let indexArray=[]
-    const { count } = await supabase.from("song_information").select("*",{count: "exact", head: true}).eq('uploaded_by', username)
-    const { data } = await supabase.from("song_information").select("*").eq('uploaded_by', username)
-    
-    for (let i=0;i<count;i++) {
-        songArray.push(data[i].song_path.split(",")[0])
-        songNameArray.push(data[i].song_name.split(",")[0])
-        imageArray.push(data[i].image_path)
-        indexArray.push(data[i].id)
-    }
-    
-    return [songArray, songNameArray, imageArray, indexArray]
-}
 
-export default function Player () {
+export default function Player ({isOpen, songs, songNames, images, indexes, index, setIndex}) {
     const [isPlaying, setIsPlaying] = useState(false)
     const [song, setSong] = useState(null)
     const [duration, setDuration] = useState(0)
     const [progress, setProgress] = useState(0)
     const [volume, setVolume] = useState(1)
-    const [index, setIndex] = useState(0)
-    const [songs, setSongs] = useState([])
-    const [songNames, setSongNames] = useState([])
     const [repeat, setRepeat] = useState(false)
     const [isMuted, setIsMuted] = useState(false)
     const [prevVol, setPrevVol] = useState(0)
@@ -49,8 +31,6 @@ export default function Player () {
     const [autoplay, setAutoplay] = useState(true)
     // const [mediaRecorder, setMediaRecorder] = useState(null)
     const [disabled, setDisabled] = useState(false)
-    const [images, setImages] = useState(null)
-    const [indexes, setIndexes] = useState(null)
     const [playcount, setPlaycount] = useState(0)
 
     const {username} = useParams();
@@ -64,20 +44,6 @@ export default function Player () {
         }
     // eslint-disable-next-line    
     }, [progress, isPlaying, duration])    
-
-    useEffect(() => {
-
-        async function fetchSong(username) {
-
-            let [songArray, songNameArray, imageArray, indexArray] = await loadSongs(username)
-            setSongs(songArray)
-            setSongNames(songNameArray)
-            setImages(imageArray)
-            setIndexes(indexArray)
-        }
-        fetchSong(username)
-    // eslint-disable-next-line
-    },[])
 
     // useEffect(() => {
         
@@ -190,7 +156,6 @@ export default function Player () {
         return () => clearInterval(interval);
     }, [song, isPlaying]);
 
-    
     async function updateCounter() {
         try {
             const {data, error} = await supabase.from('playcount_information').select("*").eq('song_id',indexes[index])
@@ -295,79 +260,50 @@ export default function Player () {
     // eslint-disable-next-line    
     }, [volume])
 
-    if (!song) {
-        return (
-            <div className='flex w-full h-full justify-center items-center my-auto'>
-                <BeatLoader size={30} color="lightblue"/>
-            </div>
-        )
-    }
-    
     return (
-        <div className="flex flex-col h-screen w-screen bg-gray-900 text-white relative">
-            <div className="flex justify-center items-center h-1/6">
-                <div className="text-center">
-                    <h1 className="text-3xl">Now Playing: {songNames[index]}</h1>
-                    <div className="flex justify-center mt-4">
-                        <button className='bg-green-600 hover:bg-green-400 rounded-full py-2 px-4 mr-4' onClick={handlePlayPrevSong}>Prev Song</button>
-                        <button className='bg-red-600 hover:bg-red-400 rounded-full py-2 px-4 mr-4' onClick={handlePlayNextSong}>Next Song</button>
-                        <button className="bg-blue-600 hover:bg-blue-400 rounded-full py-2 px-4 mr-4" onClick={() => setRepeat(!repeat)}>{repeat ? "Repeat: On" : "Repeat: Off"}</button>
-                        <button className="bg-purple-600 hover:bg-purple-400 rounded-full py-2 px-4 mr-4" onClick={() => setAutoplay(!autoplay)}>{autoplay ? "Disable autoplay" : "Enable autoplay"}</button>
-                        <button className='bg-pink-600 hover:bg-pink-400 rounded-full py-2 px-4' onClick={()=>setRandomize(!randomize)}>{randomize ? "Randomize: On" : "Randomize: Off"}</button>
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex-grow flex justify-center items-center bg-gray-800">
-                <div className="flex flex-col justify-center items-center">
-                    <div className="flex justify-center items-center w-80 h-80 bg-gray-700 rounded-full mb-8">
-                        <div className="w-64 h-64 bg-gray-600 rounded-full relative">
-                            {images && images[index] && (
-                                <img src={images[index]} alt="Song graphic" className="w-full h-full object-cover" style={{ borderRadius: '50%' }}/>
-                            )} 
+        <>
+            {song && (
+            
+            <>
+                <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} fixed bg-gray-800 bottom-0 flex flex-row w-full justify-between items-center p-4`}>
+                    <div className="flex items-center">
+                        <button disabled={disabled} onClick={handleClick} className={disabled ? "text-white mr-2 rounded-full h-8 w-8 bg-slate-600 text-xs text-center cursor-not-allowed" : "text-white mr-2 rounded-full h-8 w-8 bg-green-900 hover:bg-green-800 text-xs text-center flex items-center justify-center"}>
+                            {isPlaying ? <FaPause size={17}/> : <FaPlay size={17}/>}
+                        </button>
+                        <div id="timer" className='font-mono text-base text-blue-600'>
+                            {mins}:{secs<10 ? "0"+secs : secs} / {Tmins}:{Tsecs<10 ? "0"+Tsecs : Tsecs}
                         </div>
                     </div>
-                    <h2 className="text-2xl">Played {playcount} times</h2>
-                </div>
-            </div>
-
-            <div className='fixed bg-gray-800 bottom-0 flex flex-row w-full justify-between items-center p-4'>
-                <div className="flex items-center">
-                    <button disabled={disabled} onClick={handleClick} className={disabled ? "text-white mr-2 rounded-full h-8 w-8 bg-slate-600 text-xs text-center cursor-not-allowed" : "text-white mr-2 rounded-full h-8 w-8 bg-green-900 hover:bg-green-800 text-xs text-center"}>
-                        {isPlaying ? "Pause" : "Play"}
-                    </button>
-                    <div id="timer" className='font-mono text-base text-blue-600'>
-                        {mins}:{secs<10 ? "0"+secs : secs} / {Tmins}:{Tsecs<10 ? "0"+Tsecs : Tsecs}
+                    <ReactSlider
+                        id="song-slider"
+                        className="flex-grow h-3 bg-gray-700 rounded-md mx-4 cursor-pointer"
+                        onAfterChange={handleSeek}
+                        value={progress}
+                        min={0}
+                        max={duration}
+                        thumbClassName="w-5 h-5 bg-blue-600 hover:bg-blue-800 rounded-full -mt-1 outline-none focus:outline-none top-px cursor-pointer"
+                        trackClassName="h-full rounded-full bg-gradient-to-r from-blue-400 to-green-400"
+                    />
+                    <div className="flex items-center w-1/5">
+                        <button className="flex justify-center items-center text-white mr-2 rounded-full bg-blue-900 hover:bg-blue-800 w-20 h-8 text-xs text-center" onClick={handleVolumeMute}>
+                            {isMuted ? <FaVolumeMute size={17}/> : <FaVolumeUp size={17}/>}
+                        </button>
+                        <ReactSlider
+                            id="volume-slider"
+                            className="h-3 rounded-md mx-4 w-full"
+                            value={volume}
+                            onChange={handleVolumeSeek}
+                            min={0}
+                            max={1}
+                            step={0.01}
+                            thumbClassName="w-5 h-5 bg-green-400 rounded-full -mt-1 outline-none focus:outline-none hover:bg-blue-400"
+                            trackClassName="h-full rounded-full bg-gradient-to-l from-blue-400 to-green-400"
+                        />
                     </div>
                 </div>
-                <ReactSlider
-                    id="song-slider"
-                    className="flex-grow h-3 bg-gray-700 rounded-md mx-4 cursor-pointer"
-                    onAfterChange={handleSeek}
-                    value={progress}
-                    min={0}
-                    max={duration}
-                    thumbClassName="w-5 h-5 bg-blue-600 hover:bg-blue-800 rounded-full -mt-1 outline-none focus:outline-none top-px cursor-pointer"
-                    trackClassName="h-full rounded-full bg-gradient-to-r from-blue-400 to-green-400"
-                />
-                <div className="flex items-center w-1/5">
-                    <button className="text-white mr-2 rounded-full bg-blue-900 hover:bg-blue-800 w-20 h-8 text-xs text-center" onClick={handleVolumeMute}>
-                        {isMuted ? "Unmute" : "Mute"}
-                    </button>
-                    <ReactSlider
-                        id="volume-slider"
-                        className="h-3 rounded-md mx-4 w-full"
-                        value={volume}
-                        onChange={handleVolumeSeek}
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        thumbClassName="w-5 h-5 bg-green-400 rounded-full -mt-1 outline-none focus:outline-none hover:bg-blue-400"
-                        trackClassName="h-full rounded-full bg-gradient-to-l from-blue-400 to-green-400"
-                    />
-                </div>
-            </div>
-            <ToastContainer position="top-right" autoClose={5000}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
-        </div>
+                <ToastContainer position="top-right" autoClose={5000}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
+                </>
+            )}
+        </>
     )
 }

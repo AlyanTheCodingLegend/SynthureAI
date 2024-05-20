@@ -61,18 +61,15 @@ export function CreateUser() {
             return
         }
         setIsLoading(true)
-        const {data, errorOne} = await supabase.auth.signUp({
+        const {data, error: errorOne} = await supabase.auth.signUp({
             email: email,
             password: pass
         })
 
         if (errorOne) {
-            toast.error(errorOne.message, toast_style)
+            toast.error("Email is already registered!", toast_style)
             return;
-        }
-
-        if (data) {
-        
+        } else if (data) {
             bcrypt.hash(pass, 10, async function(err, hash) {
                 if (err) {
                     toast.error(err.message, toast_style);
@@ -84,9 +81,9 @@ export function CreateUser() {
                     return;
                 }
             })
-            setIsLoading(false)
             setMsg(true)
-        }    
+        }
+        setIsLoading(false)    
     }
 
     if (isLoading) {
@@ -256,6 +253,13 @@ export function AuthUser() {
         }
     }
 
+    useEffect(() => {
+        if (gotoprof && username) {
+            navigate(`/${username}`);
+        }
+    // eslint-disable-next-line    
+    }, [gotoprof, username]);
+
     if (isLoading) {
         return (
           <div className="w-screen h-screen flex flex-col items-center justify-center bg-gradient-to-b from-black to-slate-700">
@@ -266,10 +270,6 @@ export function AuthUser() {
           </div>
         )
     }
-
-    if (gotoprof && username) {
-        navigate(`/profile/${username}`)
-    } else {
 
     return (
         <div className="min-h-screen bg-black text-white flex justify-center items-center">
@@ -311,5 +311,5 @@ export function AuthUser() {
             <ToastContainer position="top-right" autoClose={1500}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
         </div>
     )
-    }
 }
+

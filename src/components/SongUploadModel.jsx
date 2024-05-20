@@ -1,23 +1,21 @@
 "use client"
 
 import supabase from './ClientInstance';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { ToastContainer, toast} from "react-toastify";
 import toast_style from './ToastStyle';
-import { Link, useParams } from 'react-router-dom';
+import { IoMdClose } from "react-icons/io";
+import { FadeLoader } from 'react-spinners';
 
-export default function SongUploadModel () {
+export default function SongUploadModel ({username, onClick}) {
     const [selectedFile, setSelectedFile] = useState(null)
     const [filename, setFilename] = useState("")
     const [initialFilename, setInitialFilename] = useState("")
     const [isProcessing, setIsProcessing] = useState(false)
     const [artistName, setArtistName] = useState("")
     const [imageFile, setImageFile] = useState(null)
-    const [songID, setSongID] = useState(null)
 
-    const {username} = useParams()
-
-    const handleArtistRowUpdate = async () => {
+    const handleArtistRowUpdate = async (songID) => {
         try {
             const { data, error } = await supabase.from('artist_information').select('artist_id').eq('name', artistName)
             if (error) throw error;
@@ -60,9 +58,7 @@ export default function SongUploadModel () {
             const { data, error: errorTwo } = await supabase.from('song_information').insert({ song_name: initialFilename, song_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/songs/${username}/${filename}.mp3`, uploaded_by: username, artist_name: artistName, image_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` }).select()
             if (errorTwo) throw errorTwo;
 
-            setSongID(data[0].id)
-
-            await handleArtistRowUpdate();
+            await handleArtistRowUpdate(data[0].id);
 
             toast.success("Song has been uploaded successfully!", toast_style)
         } catch (error) {
@@ -79,7 +75,6 @@ export default function SongUploadModel () {
         setArtistName("")
         setSelectedFile(null)
         setImageFile(null)
-        setSongID(null)
     };
 
     const handleNameChange = (event) => {
@@ -107,11 +102,9 @@ export default function SongUploadModel () {
         <form>
             <div className="relative max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
                 <div className="absolute top-0 right-0 m-2 text-red-700 text-lg font-bold focus:outline-none">
-                    <Link to={`/${username}`}>
-                        <button >
-                            X
-                        </button>
-                    </Link>    
+                    <button onClick={onClick}>
+                        <IoMdClose size={25}/>
+                    </button>   
                 </div>
                 <input 
                     onChange={handleNameChange} 
@@ -138,6 +131,7 @@ export default function SongUploadModel () {
                     alt="Upload mp3 track"
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
                 />
+                <div className='-mt-4 text-white ml-1'>Upload Song</div>
                 <input 
                     onChange={handleImageChange} 
                     type="file" 
@@ -145,14 +139,15 @@ export default function SongUploadModel () {
                     accept=".jpeg, .png, .jpg"
                     multiple={false} 
                     alt="Upload Image"
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
+                    className=" mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
                 />
+                <div className='-mt-4 text-white ml-1'>Upload Image</div>
                 <button 
                     disabled={filename==="" || selectedFile===null || isProcessing || imageFile===null} 
-                    className={(!(filename!=="" && selectedFile!==null && imageFile!==null) || isProcessing)? "w-full bg-slate-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-not-allowed": "w-full bg-red-700 hover:bg-red-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
+                    className={(!(filename!=="" && selectedFile!==null && imageFile!==null) || isProcessing)? "w-full bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-not-allowed": "w-full bg-red-700 hover:bg-red-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
                     onClick={handleFileUpload}
                 >
-                    {isProcessing ? "Uploading..." : "Upload Song"}
+                    {isProcessing ? <FadeLoader color='#ffffff' radius={1}/> : "Upload Song"}
                 </button>
             </div>
             <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
