@@ -9,90 +9,75 @@ import supabase from "./ClientInstance";
 import 'react-toastify/dist/ReactToastify.css';
 
 export function CreateUser() {
+    const [email, setEmail] = useState("");
+    const [pass, setPass] = useState("");
+    const [confpass, setConfpass] = useState("");
+    const [username, setUsername] = useState("");
+    const [passEqual, setPassEqual] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [showPass, setShowPass] = useState(false);
+    const [showConfPass, setShowConfPass] = useState(false);
+    const [msg, setMsg] = useState(false);
 
-    const [email, setEmail] = useState("")
-    const [pass, setPass] = useState("")
-    const [confpass, setConfpass] = useState("")
-    const [username, setUsername] = useState("")
-    const [passEqual, setPassEqual] = useState(false)
-    const [msg, setMsg] = useState(false)
-    const [isLoading, setIsLoading] = useState(false)
-    const [showPass, setShowPass] = useState(false)
-    const [showConfPass, setShowConfPass] = useState(false)
-
-    const handleUsernameChange = (event) => {
-        setUsername(event.target.value)
-    }
-
-    const handleEmailChange = (event) => {
-        setEmail(event.target.value)
-    }
-
-    const handlePassChange = (event) => {
-        setPass(event.target.value)
-    }
-
-    const handleConfPassChange = (event) => {
-        setConfpass(event.target.value)
-    }
+    const handleUsernameChange = (event) => setUsername(event.target.value);
+    const handleEmailChange = (event) => setEmail(event.target.value);
+    const handlePassChange = (event) => setPass(event.target.value);
+    const handleConfPassChange = (event) => setConfpass(event.target.value);
 
     useEffect(() => {
-        if (pass!=="" && confpass!=="") {
-            if (pass===confpass) {
-                setPassEqual(true)
-            }
-            else {
-                setPassEqual(false)
-            }
-        } else {
-            setPassEqual(false)
-        }    
-    }, [pass, confpass])
-
-
+        setPassEqual(pass !== "" && confpass !== "" && pass === confpass);
+    }, [pass, confpass]);
 
     const handleClick = async () => {
-        if (!passEqual && pass!=="" && confpass!=="") {
-            toast.error("Passwords do not match! 😞")
-            return
+        if (!passEqual) {
+            toast.error("Passwords do not match! 😞");
+            return;
         }
-        if (pass.length<6 && confpass.length<6 && pass.length>0) {
-            toast.error("The password should be a minimum of 6 characters long! 😞")
-            return
+        if (pass.length < 6) {
+            toast.error("The password should be a minimum of 6 characters long! 😞");
+            return;
         }
-        setIsLoading(true)
-        const {data, error: errorOne} = await supabase.auth.signUp({
+        setIsLoading(true);
+
+        const { data: data, error: errorOne } = await supabase.auth.signUp({
             email: email,
-            password: pass
-        })
+            password: pass,
+        });
 
         if (errorOne) {
-            toast.error("Email is already registered!", toast_style)
-            setIsLoading(false)
+            toast.error(errorOne.message, toast_style);
+            setIsLoading(false);
             return;
-        } else if (data) {
-            if (data.user && data.session) {
-                bcrypt.hash(pass, 10, async function(err, hash) {
-                    if (err) {
-                        toast.error(err.message, toast_style);
-                        setIsLoading(false)
-                        return;
-                    }
-                    const {error} = await supabase.from("user_information").insert({userid: data.user.id, email: email, hashpass: hash, username: username})
-                    if (error) {
-                        toast.error(error.message, toast_style);
-                        setIsLoading(false)
-                        return;
-                    }
-                }    
-                )
-            } else {
-                toast.error("An error occurred, please try again later!", toast_style)
-            }    
-            setIsLoading(false)
-            setMsg(true)
-        }   
-    }
+        } 
+
+        if (data.user) {
+            bcrypt.hash(pass, 10, async function (err, hash) {
+                if (err) {
+                    toast.error(err.message);
+                    setIsLoading(false);
+                    return;
+                }
+                const { error } = await supabase.from("user_information").insert({
+                    userid: data.user.id,
+                    email: email,
+                    hashpass: hash,
+                    username: username,
+                });
+
+                if (error) {
+                    toast.error(error.message);
+                    setIsLoading(false);
+                    return;
+                }
+
+                setIsLoading(false);
+                setMsg(true);
+            });
+        } else {
+            toast.error("An error occurred, please try again later!");
+            setIsLoading(false);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -117,65 +102,70 @@ export function CreateUser() {
     
     return (
         <div className="min-h-screen flex justify-center items-center bg-gradient-to-b from-black via-gray-900 to-gray-800 bg-opacity-80 backdrop-blur-md">
-            <div className="max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
-                <h2 className="text-2xl font-bold mb-4">Create Account</h2>
-                <input 
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
-                    onChange={handleUsernameChange} 
-                    id="username" 
-                    type="text" 
-                    placeholder="Enter your username"
-                />
-                <input 
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
-                    onChange={handleEmailChange} 
-                    id="email" 
-                    type="email" 
-                    placeholder="Enter your email address"
-                />
-                <div className="relative w-full">
-                    <input 
-                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
-                        onChange={handlePassChange} 
-                        id="password" 
-                        type={showPass ? "text" : "password"} 
-                        placeholder="Enter your password"
-                        minLength={6}
-                        maxLength={15}
+            <div className="max-w-4xl w-full bg-blue-600 rounded-lg shadow-lg text-white p-8 flex">
+                <div className="w-1/2 p-4 border-r-4 border-white">
+                    <h2 className="text-2xl font-bold mb-4">Create Account</h2>
+                    <input
+                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
+                        onChange={handleUsernameChange}
+                        id="username"
+                        type="text"
+                        placeholder="Enter your username"
                     />
-                    <button className="absolute top-0 right-0 mt-2 mr-2" onClick={() => setShowPass(!showPass)}><SlEye size={25} className="mb-4 mr-2 ml-2" color="white"/></button>
-                </div>
-                
-                <div className="relative w-full">
-                    <input 
-                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
-                        onChange={handleConfPassChange} 
-                        id="confirmpassword" 
-                        type={showConfPass ? "text" : "password"} 
-                        placeholder="Confirm your password"
-                        minLength={6}
-                        maxLength={15}
+                    <input
+                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
+                        onChange={handleEmailChange}
+                        id="email"
+                        type="email"
+                        placeholder="Enter your email address"
                     />
-                    <button className="absolute top-0 right-0 mt-2 mr-2" onClick={() => setShowConfPass(!showConfPass)}><SlEye size={25} className="mb-4 mr-2 ml-2" color="white"/></button>
-                </div>
-                
-                <button 
-                    disabled={!username || !email || !pass || !confpass} 
-                    onClick={handleClick} 
-                    className={(!username || !email || !pass || !confpass)? "w-full bg-slate-500 hover:cursor-not-allowed text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline":"w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
-                >
-                    Sign Up
-                </button>
-                <Link to='/login'>
+                    <div className="relative w-full">
+                        <input
+                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
+                            onChange={handlePassChange}
+                            id="password"
+                            type={showPass ? "text" : "password"}
+                            placeholder="Enter your password"
+                            minLength={6}
+                            maxLength={15}
+                        />
+                        <button className="absolute top-0 right-0 mt-2 mr-2" onClick={() => setShowPass(!showPass)}><SlEye size={25} className="mb-4 mr-2 ml-2" color="white" /></button>
+                    </div>
+                    <div className="relative w-full">
+                        <input
+                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
+                            onChange={handleConfPassChange}
+                            id="confirmpassword"
+                            type={showConfPass ? "text" : "password"}
+                            placeholder="Confirm your password"
+                            minLength={6}
+                            maxLength={15}
+                        />
+                        <button className="absolute top-0 right-0 mt-2 mr-2" onClick={() => setShowConfPass(!showConfPass)}><SlEye size={25} className="mb-4 mr-2 ml-2" color="white" /></button>
+                    </div>
                     <button
-                        
-                        className="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        disabled={!username || !email || !pass || !confpass}
+                        onClick={handleClick}
+                        className={(!username || !email || !pass || !confpass) ? "w-full bg-slate-500 hover:cursor-not-allowed text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" : "w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
                     >
-                        Log In Instead
+                        Sign Up
                     </button>
-                </Link>
+                    <Link to='/login'>
+                        <button
+                            className="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        >
+                            Log In Instead
+                        </button>
+                    </Link>
+                </div>
+                <div className="w-1/2 p-4 flex flex-col justify-center items-center text-center">
+                    <img src="https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/logo.png" alt="app logo" className="rounded-lg ml-5"/>
+                    <h2 className="texl-xl">😍 The only music application you'll ever need for your late night vibing sessions 😍</h2>
+                    <div className="border-white border-t-2"></div>
+                    <p className="text-xl">Vibe On!!! 🤘 😎 🤘</p>
+                </div>
             </div>
-            <ToastContainer position="top-right" autoClose={1500}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
+            <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark' />
         </div>
     )
 }
@@ -184,10 +174,10 @@ export function AuthUser() {
     const [email, setEmail] = useState("")
     const [pass, setPass] = useState("")
     const [verEmail, setVerEmail] = useState(null)
+    const [username, setUsername] = useState(null)
     const [gotoprof, setGotoprof] = useState(false)
     const [disabled, setDisabled] = useState(true)
     const [showPass, setShowPass] = useState(false)
-    const [username, setUsername] = useState(null)
     const [isLoading, setIsLoading] = useState(false)
 
     const navigate = useNavigate()
@@ -280,43 +270,55 @@ export function AuthUser() {
     }
 
     return (
-        <div className="min-h-screen bg-black text-white flex justify-center items-center">
-            <div className="max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
-                <h2 className="text-2xl font-bold mb-4">Log In</h2>
-                <input 
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
-                    onChange={handleEmailChange} 
-                    id="email" 
-                    type="email" 
-                    placeholder="Enter your email address"
-                />
-                <div className="relative w-full">
+        <div className="min-h-screen bg-gradient-to-b text-white from-black via-gray-900 to-gray-800 flex justify-center items-center">
+            <div className="max-w-4xl w-full bg-blue-600 rounded-lg shadow-lg p-8 flex">
+                <div className="w-1/2 p-4 border-r-2 border-white">
+                    <h2 className="text-2xl font-bold mb-4">Log In</h2>
                     <input 
                         className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
-                        onChange={handlePassChange} 
-                        id="password" 
-                        type={showPass ? "text" : "password"}
-                        placeholder="Enter your password"
+                        onChange={handleEmailChange} 
+                        id="email" 
+                        type="email" 
+                        placeholder="Enter your email address"
                     />
-                    <button className="absolute top-0 right-0 mt-2 mr-2" onClick={() => setShowPass(!showPass)}><SlEye size={25} className="mb-4 mr-2 ml-2" color="white"/></button>
-                </div>
-                <button 
-                    onClick={handleClick}
-                    disabled={disabled} 
-                    className={disabled ? "w-full bg-slate-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-not-allowed" : "w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
-                >
-                    Log In
-                </button>
-                <Link to='/signup'>
+                    <div className="relative w-full">
+                        <input 
+                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500" 
+                            onChange={handlePassChange} 
+                            id="password" 
+                            type={showPass ? "text" : "password"}
+                            placeholder="Enter your password"
+                        />
+                        <button 
+                            className="absolute top-5 transform -translate-y-1/2 right-3" 
+                            onClick={() => setShowPass(!showPass)}
+                        >
+                            <SlEye size={25} className="text-white"/>
+                        </button>
+                    </div>
                     <button 
-                        className="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        onClick={handleClick}
+                        disabled={disabled} 
+                        className={disabled ? "w-full bg-slate-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-not-allowed" : "w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
                     >
-                        Sign Up Instead
-                        
+                        Log In
                     </button>
-                </Link>
+                    <Link to='/signup'>
+                        <button 
+                            className="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        >
+                            Sign Up Instead
+                        </button>
+                    </Link>
+                </div>
+                <div className="w-1/2 p-4 flex flex-col items-center justify-center">
+                    <img src="https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/logo.png" alt="Logo" className="rounded-lg" />
+                    <h1 className="text-4xl font-bold mb-2">SynthureAI</h1>
+                    <h2 className="texl-xl">😍 The only music application you'll ever need for your late night vibing sessions 😍</h2>
+                    <p className="text-xl">Vibe On 🤘 😎 🤘</p>
+                </div>
             </div>
-            <ToastContainer position="top-right" autoClose={1500}  hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
+            <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
         </div>
     )
 }

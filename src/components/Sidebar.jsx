@@ -15,12 +15,11 @@ import { BounceLoader } from "react-spinners";
 import PlaylistModel from "./PlaylistModel";
 import SongUploadModel from "./SongUploadModel";
 
-export default function Sidebar ({isOpen, toggleSidebar}) {
+export default function Sidebar ({isOpen, toggleSidebar, signOut, setSignOut}) {
     
     const [pfpPath, setPfpPath] = useState("https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/defaultpfp.jpg")
     const [isPlaylistModalOpen, setPlaylistModalOpen] = useState(false)
     const [isUploadModelOpen, setUploadModelOpen] = useState(false)
-    const [signout, setSignout] = useState(false)
 
     const {username} = useParams()
 
@@ -40,14 +39,14 @@ export default function Sidebar ({isOpen, toggleSidebar}) {
     }  
 
     const handleClick = async () => {
-      setSignout(true)
+      setSignOut(true)
       const {error} = await supabase.auth.signOut()
       if (error) {
         toast.error(error.message, toast_style)
       } else {
         navigate('/login')
       }
-      setSignout(false)
+      setSignOut(false)
     }
 
     useEffect(() => {
@@ -65,17 +64,6 @@ export default function Sidebar ({isOpen, toggleSidebar}) {
       }
       loadPfp()  
     },[username])
-
-    if (signout) {
-      return (
-        <div className="w-screen h-screen flex flex-col items-center justify-center bg-gradient-to-b from-black to-slate-700 z-40">
-          <div className="text-center">
-              <BounceLoader color="#36d7b7" />
-          </div>
-          <div className='mt-5 text-xl text-white'>Signing you out...</div>
-        </div>
-      )
-    }
 
   return (
     <div className={`sidebar ${isOpen ? '' : 'collapsed'} transition-width`}>
@@ -107,7 +95,7 @@ export default function Sidebar ({isOpen, toggleSidebar}) {
       </div>
       {isOpen && (
         <>
-        <div className="mt-2 border-t-2 border-gray-300"></div>
+        <div className="border-t-2 border-gray-300"></div>
         <div className="ml-2 mt-4 text-2xl flex items-center text-center text-white"><CgOptions className="mr-2"/>Options</div>
         <div className="space-y-8 p-4 h-5/6">
           <div className="relative group">

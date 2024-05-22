@@ -6,6 +6,7 @@ import toast_style from "./ToastStyle"
 import { IoMdClose } from "react-icons/io"
 import { FaPlus } from "react-icons/fa6"
 import { BeatLoader } from "react-spinners"
+import axios from "axios"
 
 export default function AIGeneration() {
     const [songs, setSongs] = useState(null)
@@ -30,18 +31,30 @@ export default function AIGeneration() {
         }
 
         loadSongs()
-    }, [])
+    }, [username])
+
+    const handleClick = async (songID) => {
+        try{
+            setIsLoading(true)
+            const res = await axios.post('http://localhost:5000/song_id', {song_id: songID}, {headers: {'Content-Type': 'application/json'}})
+            toast.success("Song has been created successfully, you can add it to any of your playlists now!", toast_style)
+        } catch (err) {
+            toast.error("Sorry, something went wrong while creating your song!", toast_style)
+        } finally {
+            setIsLoading(false)
+        }    
+    }
     
     if (isLoading) {
         return (
-            <div className='flex w-screen h-screen justify-center bg-gradient-to-b from-black to-blue-600 items-center my-auto'>
+            <div className='flex w-screen h-screen justify-center bg-gradient-to-b from-black to-purple-600 items-center my-auto'>
                 <BeatLoader size={30} color="purple"/>
             </div>
         )
     }
 
     return (
-        <div className="min-w-screen min-h-screen overflow-x-hidden bg-gradient-to-b from-black to-blue-600 shadow-lg p-8">
+        <div className="min-w-screen min-h-screen overflow-x-hidden bg-gradient-to-b from-black to-purple-600 shadow-lg p-8">
             <div className="absolute flex flex-col top-0 right-0 m-2 text-red-700 hover:text-red-500 text-lg font-bold focus:outline-none">
                 <Link to={`/${username}`}>
                     <IoMdClose size={40}/>
@@ -57,7 +70,7 @@ export default function AIGeneration() {
                         <div className="text-xl">{song.song_name}</div>
                         <div className="text-sm">By: {song.artist_name}</div>
                     </div>
-                    <div className="flex flex-row text-green-500 hover:text-white ml-auto mr-4" onClick={()=>setSongindex(song.id)}><FaPlus size={30}/></div>
+                    <div className="flex flex-row text-green-500 hover:text-white ml-auto mr-4" onClick={()=>handleClick(song.id)}><FaPlus size={30}/></div>
                 </div>
             )))) : (
                 <div className="text-white text-lg">No songs to add, try uploading some to add them to this playlist!</div>
