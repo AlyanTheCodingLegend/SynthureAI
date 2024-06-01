@@ -35,14 +35,13 @@ export default function AIGeneration() {
     const handleClick = async (songID) => {
         try{
             setIsLoading(true)
-            const res = await axios.post('http://localhost:5000/song_id', {song_id: songID}, {headers: {'Content-Type': 'application/json'}})
-            console.log(res)
+            const res = await axios.post('http://localhost:5000/process_song_id', {song_id: songID}, {headers: {'Content-Type': 'application/json'}})
             if (res.status!==200) throw new Error("Sorry, something went wrong while creating your song!")
+            setIsLoading(false)
             toast.success("Song has been created successfully, you can add it to any of your playlists now!", toast_style)
         } catch (err) {
-            toast.error("Sorry, something went wrong while creating your song!", toast_style)
-        } finally {
             setIsLoading(false)
+            toast.error("Sorry, something went wrong while creating your song!", toast_style)
         }    
     }
     
