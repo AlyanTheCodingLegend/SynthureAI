@@ -10,7 +10,6 @@ import axios from "axios"
 
 export default function AIGeneration() {
     const [songs, setSongs] = useState(null)
-    const [songindex, setSongindex] = useState(null)
     const [isLoading, setIsLoading] = useState(false)
 
     const {username} = useParams()
@@ -37,6 +36,8 @@ export default function AIGeneration() {
         try{
             setIsLoading(true)
             const res = await axios.post('http://localhost:5000/song_id', {song_id: songID}, {headers: {'Content-Type': 'application/json'}})
+            console.log(res)
+            if (res.status!==200) throw new Error("Sorry, something went wrong while creating your song!")
             toast.success("Song has been created successfully, you can add it to any of your playlists now!", toast_style)
         } catch (err) {
             toast.error("Sorry, something went wrong while creating your song!", toast_style)
