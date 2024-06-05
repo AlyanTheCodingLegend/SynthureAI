@@ -26,12 +26,8 @@ export default function AddSongModel () {
                     songIDs.push(data[i].id)
                 }
 
-                console.log(songIDs)
-
                 const {data: playlistSongs, error: playlistError} = await supabase.from('playlistsong_information').select('song_id').eq('playlist_id', playlistid).in('song_id', songIDs)
                 if (playlistError) throw playlistError
-
-                console.log(playlistSongs)
 
                 for (let i=0;i<playlistSongs.length;i++) {
                     playlistsongIDs.push(playlistSongs[i].song_id)

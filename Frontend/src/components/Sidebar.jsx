@@ -3,7 +3,7 @@ import { BiArrowToLeft, BiArrowToRight } from "react-icons/bi";
 import './Sidebar.css';
 import { useNavigate, useParams } from "react-router-dom";
 import supabase from "./ClientInstance";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import toast_style from "./ToastStyle";
 import { PiPlaylistDuotone, PiSignOut } from "react-icons/pi";
 import { LuUpload } from "react-icons/lu";
@@ -11,7 +11,6 @@ import { RiRobot2Line } from "react-icons/ri";
 import { LiaSpotify } from "react-icons/lia";
 import { CgOptions } from "react-icons/cg";
 import { ImLab } from "react-icons/im";
-import { BounceLoader } from "react-spinners";
 import PlaylistModel from "./PlaylistModel";
 import SongUploadModel from "./SongUploadModel";
 
@@ -69,7 +68,7 @@ export default function Sidebar ({isOpen, toggleSidebar, signOut, setSignOut}) {
     <div className={`sidebar ${isOpen ? '' : 'collapsed'} transition-width`}>
       <div className="sidebar-header flex items-center p-4">
         {!isOpen && (
-          <button onClick={toggleSidebar} className="toggle-btn p-2">
+          <button onClick={toggleSidebar} className="">
             <BiArrowToRight size={30} />
           </button>
         )}
@@ -87,7 +86,7 @@ export default function Sidebar ({isOpen, toggleSidebar, signOut, setSignOut}) {
               </div>
             )}
             <div className="text-xl ml-2">{username}</div>
-            <button onClick={toggleSidebar} className="toggle-btn ml-auto p-2">
+            <button onClick={toggleSidebar} className="ml-auto">
               <BiArrowToLeft size={30}/>
             </button>
           </>
@@ -132,7 +131,7 @@ export default function Sidebar ({isOpen, toggleSidebar, signOut, setSignOut}) {
           <div className="-mt-2 ml-2 text-2xl flex items-center text-center text-white"><ImLab className="mr-2"/>Beta Feature</div>  
           <div
             className="flex items-center justify-center p-4 cursor-pointer transition duration-300 rounded-full bg-green-600 hover:bg-green-500 text-center hover:border-white border hover:text-black"
-            onClick={() => {}}
+            onClick={() => toast.info("This feature is currently in development", toast_style)}
           >
             <LiaSpotify size={30} className="mr-2" />
             Login with Spotify®
@@ -158,6 +157,7 @@ export default function Sidebar ({isOpen, toggleSidebar, signOut, setSignOut}) {
           <SongUploadModel username={username} onClick={toggleUploadModal}/>
         </div>
       )}
+      <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark' />
     </div> 
   );
 };

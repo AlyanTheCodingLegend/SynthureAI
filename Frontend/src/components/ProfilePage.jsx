@@ -60,7 +60,7 @@ export function ProfilePage() {
       }
 
       loadPlaylists()
-    }, [])  
+    }, [username])  
 
     const handleSubmit = async () => {
       const {error} = await supabase.storage.from('images').upload(`${username}/pfp.${pfp.type.replace('image/', '')}`, pfp, { cacheControl: '3600', upsert: true, contentType: pfp.type})
@@ -85,7 +85,7 @@ export function ProfilePage() {
       
       const { data, error } = await supabase
           .from('user_information')
-          .select('userid, email, hashpass')
+          .select('userid, hashpass')
           .eq('username', username);
           
       if (error) {
@@ -103,24 +103,14 @@ export function ProfilePage() {
                     toast.error(compareErr.message, toast_style);
                   } else {
                       if (result) {
-                          const { error: deleteError } = await supabase
-                              .from('user_information')
-                              .delete()
-                              .eq('username', username);
-
-                          if (deleteError) {
-                            setIsLoading(false);
-                            toast.error(deleteError.message, toast_style);
-                          } else {
-                            const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userID);
-                            if (deleteUserError) {
-                              setIsLoading(false);
-                              toast.error(deleteUserError.message, toast_style);
-                            } else {
-                                toast.success('Account has been successfully deleted', toast_style);
-                                setSignOut(true)
-                            }
-                          }
+                        const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userID);
+                        if (deleteUserError) {
+                          setIsLoading(false);
+                          toast.error(deleteUserError.message, toast_style);
+                        } else {
+                            toast.success('Account has been successfully deleted', toast_style);
+                            setSignOut(true)
+                        }
                       } else {
                         setIsLoading(false);
                         toast.error('Wrong password!', toast_style);

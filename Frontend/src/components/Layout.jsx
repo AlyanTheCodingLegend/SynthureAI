@@ -2,25 +2,38 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import toast_style from "./ToastStyle";
 import supabase from "./ClientInstance";
+import "./noscrollbar.css"
+import { BeatLoader } from "react-spinners";
 
 export default function Layout({isOpen, username, setOpenPlaylist, setPlaylistID}) {
     const [playlists, setPlaylists] = useState(null)
+    const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
         async function loadPlaylists() {
+            setIsLoading(true)
             const {data, error} = await supabase.from('playlist_information').select('playlist_id, playlist_name').eq('created_by', username)
             if (error) {
                 toast.error(error.message, toast_style)
             } else {
                 setPlaylists(data)
             }
+            setIsLoading(false)
         }
 
         loadPlaylists()
     }, [username])
 
+    if (isLoading) {
+        return (
+            <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-gradient-to-b from-black to-slate-700 w-screen min-h-screen overflow-x-hidden flex items-center justify-center`}>
+                <BeatLoader size={30} color="purple"/>
+            </div>
+        )
+    }
+
     return (
-        <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-gradient-to-b from-black to-slate-700 w-screen min-h-screen overflow-x-hidden`}>
+        <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-gradient-to-b from-black to-slate-700 w-screen min-h-screen overflow-x-hidden no-scrollbar`}>
             <div className="text-white text-2xl h-full">
                 <div className="ml-4 mt-2">Welcome, {username} 👋</div>
                 <div className="mt-5 border-gray-300 border-t-2 mb-5"></div>
@@ -30,7 +43,7 @@ export default function Layout({isOpen, username, setOpenPlaylist, setPlaylistID
                     {playlists && playlists.map((playlist, index) => (
                     <div key={index} className="relative group ml-4 mb-10">
                     <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-700 to-purple-400 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-                    <div className="relative flex flex-col justify-center items-center h-40 w-40 bg-black rounded-lg text-gray-200 hover:text-white hover:cursor-pointer" onClick={() => { setPlaylistID(playlist.playlist_id); setOpenPlaylist(true) }}>
+                    <div className="relative flex flex-col justify-center items-center h-40 w-40 bg-black rounded-lg text-gray-200 hover:text-white hover:cursor-pointer" onClick={() => { setPlaylistID(playlist.playlist_id); setOpenPlaylist(true); }}>
                         <img src="https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/anonymous-man-graphic-good-pfp-1y0csvb81cmqaggg.jpg" alt="default playlist" className="w-4/5 h-4/5 rounded-lg" />
                         <div className="text-lg">{playlist.playlist_name}</div>
                     </div>

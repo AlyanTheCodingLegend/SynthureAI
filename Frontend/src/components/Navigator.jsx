@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 
 export default function Navigator() {
@@ -6,6 +6,7 @@ export default function Navigator() {
 
     useEffect(() => {
         navigate('/login')
+    // eslint-disable-next-line react-hooks/exhaustive-deps    
     }, [])
     
     return

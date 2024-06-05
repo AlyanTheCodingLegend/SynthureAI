@@ -11,11 +11,11 @@ export default function Home() {
     const [openPlaylist, setOpenPlaylist] = useState(false)
     const [playlistID, setPlaylistID] = useState(null)
     const [songArray, setSongArray] = useState([])
-    const [songNameArray, setSongNameArray] = useState([])
     const [imageArray, setImageArray] = useState([])
-    const [indexArray, setIndexArray] = useState([])
     const [index, setIndex] = useState(0)
     const [signOut, setSignOut] = useState(false)
+    const [playPlaylistID, setPlayPlaylistID] = useState(null)
+    const [isUniversallyPlaying, setIsUniversallyPlaying] = useState(false)
 
     const toggleSidebar = () => setIsOpen(!isOpen);
 
@@ -35,8 +35,8 @@ export default function Home() {
     return (
         <div className="flex h-screen overflow-none">
             <Sidebar isOpen={isOpen} toggleSidebar={toggleSidebar} signOut={signOut} setSignOut={setSignOut}/>
-            {openPlaylist ? <ShowPlaylistModel isOpen={isOpen} playlistid={playlistID} setOpenPlaylist={setOpenPlaylist} setSongArray={setSongArray} setSongNameArray={setSongNameArray} setImageArray={setImageArray} setIndexArray={setIndexArray} setIndex={setIndex} username={username} index={index}/> : <Layout isOpen={isOpen} username={username} setOpenPlaylist={setOpenPlaylist} setPlaylistID={setPlaylistID}/>}
-            <Player isOpen={isOpen} songs={songArray} songNames={songNameArray} images={imageArray} indexes={indexArray} index={index} setIndex={setIndex}/>
+            {openPlaylist ? <ShowPlaylistModel isOpen={isOpen} playPlaylistID={playPlaylistID} setPlayPlaylistID={setPlayPlaylistID} playlistid={playlistID} setOpenPlaylist={setOpenPlaylist} isUniversallyPlaying={isUniversallyPlaying} setIsUniversallyPlaying={setIsUniversallyPlaying} setSongArray={setSongArray} setImageArray={setImageArray} setIndex={setIndex} username={username} index={index}/> : <Layout isOpen={isOpen} username={username} setOpenPlaylist={setOpenPlaylist} setPlaylistID={setPlaylistID}/>}
+            <Player isOpen={isOpen} songs={songArray} images={imageArray} index={index} setIndex={setIndex}/>
         </div>    
     )
 }

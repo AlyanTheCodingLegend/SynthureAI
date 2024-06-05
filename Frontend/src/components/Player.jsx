@@ -13,7 +13,7 @@ import { FaVolumeMute, FaVolumeUp, FaRandom } from "react-icons/fa";
 import { MdOutlineLoop } from "react-icons/md";
 
 
-export default function Player ({isOpen, songs, songNames, indexes, index, setIndex}) {
+export default function Player ({isOpen, songs, index, setIndex}) {
     const [isPlaying, setIsPlaying] = useState(false)
     const [song, setSong] = useState(null)
     const [duration, setDuration] = useState(0)
@@ -66,7 +66,6 @@ export default function Player ({isOpen, songs, songNames, indexes, index, setIn
         
     // }, [songs, index]);
        
-
     useEffect(() => {
         if (songs.length>0) {
             var newSong = new Howl({
@@ -83,7 +82,7 @@ export default function Player ({isOpen, songs, songNames, indexes, index, setIn
                 onload: () => {
                     setDuration(newSong.duration());
                     setDisabled(false);
-                    updateCounter();
+                    //updateCounter();
                 },
                 onend: () => {
                     setIsPlaying(false);
@@ -107,7 +106,7 @@ export default function Player ({isOpen, songs, songNames, indexes, index, setIn
             }
         }
     // eslint-disable-next-line
-    }, [songs, index, songNames])
+    }, [songs, index])
 
     const handleClick = () => {
         if (isPlaying) {
@@ -148,23 +147,23 @@ export default function Player ({isOpen, songs, songNames, indexes, index, setIn
         return () => clearInterval(interval);
     }, [song, isPlaying]);
 
-    async function updateCounter() {
-        try {
-            const {data, error} = await supabase.from('playcount_information').select("*").eq('song_id',indexes[index])
-            if (error) throw error
-            if (data.length===0) { // no row
-                const {error: errorTwo} = await supabase.from('playcount_information').insert({song_id: indexes[index], dailycount: 1, monthlycount: 1, alltimecount: 1})
+    // async function updateCounter() {
+    //     try {
+    //         const {data, error} = await supabase.from('playcount_information').select("*").eq('song_id',indexes[index])
+    //         if (error) throw error
+    //         if (data.length===0) { // no row
+    //             const {error: errorTwo} = await supabase.from('playcount_information').insert({song_id: indexes[index], dailycount: 1, monthlycount: 1, alltimecount: 1})
 
-                if (errorTwo) throw errorTwo
-            } else { // song has row
-                const {error: errorThree} = await supabase.from('playcount_information').update({dailycount: data[0].dailycount+1, monthlycount: data[0].monthlycount+1, alltimecount: data[0].alltimecount+1}).eq('song_id',indexes[index])
+    //             if (errorTwo) throw errorTwo
+    //         } else { // song has row
+    //             const {error: errorThree} = await supabase.from('playcount_information').update({dailycount: data[0].dailycount+1, monthlycount: data[0].monthlycount+1, alltimecount: data[0].alltimecount+1}).eq('song_id',indexes[index])
 
-                if (errorThree) throw errorThree
-            }
-        } catch (error) {
-            toast.error(error.message, toast_style)
-        }
-    }
+    //             if (errorThree) throw errorThree
+    //         }
+    //     } catch (error) {
+    //         toast.error(error.message, toast_style)
+    //     }
+    // }
     
     const handleSeek = (position) => {
         if (position<=duration) {

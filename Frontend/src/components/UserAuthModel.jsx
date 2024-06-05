@@ -39,7 +39,7 @@ export function CreateUser() {
         }
         setIsLoading(true);
 
-        const { data: data, error: errorOne } = await supabase.auth.signUp({
+        const { data, error: errorOne } = await supabase.auth.signUp({
             email: email,
             password: pass,
         });
@@ -162,7 +162,7 @@ export function CreateUser() {
                     <img src="https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/logo.png" alt="app logo" className="rounded-lg ml-5"/>
                     <h2 className="texl-xl">😍 The only music application you'll ever need for your late night vibing sessions 😍</h2>
                     <div className="border-white border-t-2"></div>
-                    <p className="text-xl">Vibe On!!! 🤘 😎 🤘</p>
+                    <p className="text-xl">🤘 Vibe On! 🤘</p>
                 </div>
             </div>
             <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark' />
@@ -311,11 +311,11 @@ export function AuthUser() {
                         </button>
                     </Link>
                 </div>
-                <div className="w-1/2 p-4 flex flex-col items-center justify-center">
+                <div className="w-1/2 p-4 flex flex-col items-center justify-center text-center">
                     <img src="https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/logo.png" alt="Logo" className="rounded-lg" />
                     <h1 className="text-4xl font-bold mb-2">SynthureAI</h1>
                     <h2 className="texl-xl">😍 The only music application you'll ever need for your late night vibing sessions 😍</h2>
-                    <p className="text-xl">Vibe On 🤘 😎 🤘</p>
+                    <p className="text-xl">🤘 Vibe On 😎 🤘</p>
                 </div>
             </div>
             <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>

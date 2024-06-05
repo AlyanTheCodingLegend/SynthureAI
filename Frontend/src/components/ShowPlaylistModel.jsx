@@ -8,71 +8,71 @@ import { RiDeleteBin6Line } from "react-icons/ri";
 import { FaPlus } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
+import { BeatLoader } from "react-spinners";
+import "./noscrollbar.css"
 
-export default function ShowPlaylistModel({isOpen, playlistid, setOpenPlaylist, setSongArray, setSongNameArray, setImageArray, setIndexArray, setIndex, username, index}) {
+export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlaylistID, playlistid, setOpenPlaylist, isUniversallyPlaying, setIsUniversallyPlaying, setSongArray, setImageArray, setIndex, username, index}) {
     const [name, setName] = useState(null)
     const [songnames, setSongnames] = useState([])
     const [images, setImages] = useState([])
     const [artists, setArtists] = useState([])
     const [indexes, setIndexes] = useState([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [backupSongs, setBackupSongs] = useState([])
 
     const navigate = useNavigate()
 
     useEffect(() => {
         async function loadSongsFromPlaylist(playlistID) {
-            let songArray=[]
-            let songNameArray=[]
-            let imageArray=[]
-            let indexArray=[]
-            let artistArray=[]
-            let songDataArray=[]
-            const {data: playlistData, error: playlistError} = await supabase.from('playlist_information').select('playlist_name').eq('playlist_id', playlistID)
-            if (playlistError) {
-                toast.error(playlistError.message, toast_style)
-                return
-            } else {
-                setName(playlistData[0].playlist_name)
-            }    
-            const {data, error} = await supabase.from('playlistsong_information').select('song_id').eq('playlist_id', playlistID)
-            if (error) {
-                toast.error(error.message, toast_style)
-                return
-            } else {
+            try {    
+                let songArray=[]
+                let songNameArray=[]
+                let imageArray=[]
+                let indexArray=[]
+                let artistArray=[]
+                let songDataArray=[]
+                const {data: playlistData, error: playlistError} = await supabase.from('playlist_information').select('playlist_name').eq('playlist_id', playlistID)
+                if (playlistError) throw playlistError
+                setName(playlistData[0].playlist_name)   
+                const {data, error} = await supabase.from('playlistsong_information').select('song_id').eq('playlist_id', playlistID)
+                if (error) throw error
                 if (data.length!==0) {
-
                     for (let i=0;i<data.length;i++) {
                         songDataArray.push(data[i].song_id)
-                    
                     }
                     const {data: songData, error: songError} = await supabase.from('song_information').select('*').in('id', songDataArray)
-                    if (songError) {
-                        toast.error(songError.message, toast_style)
-                        return
-                    } else {
-                        for (let j=0;j<songData.length;j++) {
-                            songArray.push(songData[j].song_path)
-                            songNameArray.push(songData[j].song_name)
-                            imageArray.push(songData[j].image_path)
-                            indexArray.push(songData[j].id)
-                            artistArray.push(songData[j].artist_name)
-                        }
-                    }    
-                
-                    setSongArray(songArray)
-                    setSongNameArray(songNameArray)
+                    if (songError) throw songError
+                    for (let j=0;j<songData.length;j++) {
+                        songArray.push(songData[j].song_path)
+                        songNameArray.push(songData[j].song_name)
+                        imageArray.push(songData[j].image_path)
+                        indexArray.push(songData[j].id)
+                        artistArray.push(songData[j].artist_name)
+                    }
+
+                    setBackupSongs(songArray)
                     setImageArray(imageArray)
-                    setIndexArray(indexArray)
                     setIndexes(indexArray)
                     setSongnames(songNameArray)
                     setImages(imageArray)
                     setArtists(artistArray)
                 }
-            }
+            } catch (error) {
+                toast.error(error.message, toast_style)
+            } finally {
+                setIsLoading(false)
+            }    
         }
 
         loadSongsFromPlaylist(playlistid)
     // eslint-disable-next-line
     }, [])
+
+    useEffect(() => {
+        if (playPlaylistID===playlistid && isUniversallyPlaying===false) {
+            setSongArray(backupSongs)
+        }
+    }, [playPlaylistID, isUniversallyPlaying])   
     
     const removeFromPlaylist = async (songindex) => {
         const {error} = await supabase.from("playlistsong_information").delete().eq('playlist_id', playlistid).eq('song_id', indexes[songindex])
@@ -99,8 +99,16 @@ export default function ShowPlaylistModel({isOpen, playlistid, setOpenPlaylist, 
         }
     }
 
+    if (isLoading) {
+        return (
+            <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-gradient-to-b from-black to-slate-700 w-screen min-h-screen overflow-x-hidden flex items-center justify-center`}>
+                <BeatLoader size={30} color="purple"/>
+            </div>
+        )
+    }
+
     return (
-        <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-gradient-to-b from-black to-slate-700 w-screen min-h-screen overflow-x-hidden`}>
+        <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-gradient-to-b from-black to-slate-700 w-screen min-h-screen overflow-x-hidden no-scrollbar`}>
             <div className="flex flex-row justify-end mt-4">
                 <div className="flex flex-row w-2/3">
                         <div className="ml-4 text-4xl mb-1.5 text-white">{name}</div>
@@ -116,17 +124,17 @@ export default function ShowPlaylistModel({isOpen, playlistid, setOpenPlaylist, 
                 <div  className="flex flex-col justify-center items-center">
                 {songnames && songnames.length!==0 ? songnames.map((songname, songindex)=> (
                     <div key={songindex} className="relative group ml-4 mb-10 w-5/6">
-                    <div className={index===songindex ? "absolute -inset-0.5 bg-gradient-to-r from-green-700 to-green-400 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" : "absolute -inset-0.5 bg-gradient-to-r from-blue-700 to-purple-700 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"}></div>
+                    <div className={(index===songindex && playPlaylistID===playlistid) ? "absolute -inset-0.5 bg-gradient-to-r from-green-700 to-green-400 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" : "absolute -inset-0.5 bg-gradient-to-r from-blue-700 to-purple-700 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"}></div>
                     <div className="relative bg-black rounded-lg flex flex-row items-center text-gray-400 hover:text-white hover:cursor-pointer">
                         <div className="flex flex-row justify-start items-center h-24 w-4/5">
-                            <img src={images[songindex]} className="h-full w-1/4 rounded-lg ml-2" alt="song cover" />
+                            <img src={images[songindex]} className="h-full w-1/4 rounded-xl ml-2 pt-2 pb-2" alt="song cover" />
                             <div className="flex flex-col flex-wrap ml-4">
                                 <div className="text-xl">{songname}</div>
                                 <div className="text-sm">By: {artists[songindex]}</div>
                             </div>
                         </div>
-                        <div className={index===songindex ? "flex flex-row justify-end text-white mr-4" : "flex flex-row justify-end text-green-500 hover:text-white mr-4"} onClick={() => setIndex(songindex)}>
-                            {index===songindex ? <FaRegCirclePause size={30}/> : <FaRegCirclePlay size={30} />}
+                        <div className={(index===songindex && playPlaylistID===playlistid)? "flex flex-row justify-end text-white mr-4" : "flex flex-row justify-end text-green-500 hover:text-white mr-4"} onClick={() => {setIndex(songindex); if (playPlaylistID!==playlistid) setPlayPlaylistID(playlistid); if (isUniversallyPlaying===false) setIsUniversallyPlaying(true);}}>
+                            {(index===songindex && playPlaylistID===playlistid)? <FaRegCirclePause size={30}/> : <FaRegCirclePlay size={30} />}
                         </div>
                         <div className="flex flex-row justify-end text-green-500 hover:text-white" onClick={() => removeFromPlaylist(songindex)}>
                             <RiDeleteBin6Line size={30} />

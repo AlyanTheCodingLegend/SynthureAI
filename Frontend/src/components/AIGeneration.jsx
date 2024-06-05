@@ -6,7 +6,6 @@ import toast_style from "./ToastStyle"
 import { IoMdClose } from "react-icons/io"
 import { FaPlus } from "react-icons/fa6"
 import { BeatLoader } from "react-spinners"
-import axios from "axios"
 
 export default function AIGeneration() {
     const [songs, setSongs] = useState(null)
@@ -33,16 +32,7 @@ export default function AIGeneration() {
     }, [username])
 
     const handleClick = async (songID) => {
-        try{
-            setIsLoading(true)
-            const res = await axios.post('http://localhost:5000/process_song_id', {song_id: songID}, {headers: {'Content-Type': 'application/json'}})
-            if (res.status!==200) throw new Error("Sorry, something went wrong while creating your song!")
-            setIsLoading(false)
-            toast.success("Song has been created successfully, you can add it to any of your playlists now!", toast_style)
-        } catch (err) {
-            setIsLoading(false)
-            toast.error("Sorry, something went wrong while creating your song!", toast_style)
-        }    
+        console.log(songID)   
     }
     
     if (isLoading) {
