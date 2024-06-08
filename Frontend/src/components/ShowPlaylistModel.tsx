@@ -83,13 +83,6 @@ export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlayli
     // eslint-disable-next-line
     }, [])
 
-    useEffect(() => {
-        if (playPlaylistID===playlistid && isUniversallyPlaying===true) {
-            setSongArray(backupSongs)
-        }
-    // eslint-disable-next-line    
-    }, [playPlaylistID, isUniversallyPlaying])   
-    
     const removeFromPlaylist = async (songindex: number) => {
         const {error} = await supabase.from("playlistsong_information").delete().eq('playlist_id', playlistid).eq('song_id', indexes[songindex])
         if (error) {
@@ -116,13 +109,14 @@ export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlayli
     }
 
     const handlePlay = (songindex: number) => {
-        setIndex(songindex); 
         if (playPlaylistID!==playlistid) {
             setPlayPlaylistID(playlistid);
-        }     
-        if (isUniversallyPlaying===false) {
-            setIsUniversallyPlaying(true);
-        }    
+            if (isUniversallyPlaying===false) {
+                setSongArray(backupSongs)
+                setIsUniversallyPlaying(true)
+            }
+        }
+        setIndex(songindex)  
     }
 
     if (isLoading) {

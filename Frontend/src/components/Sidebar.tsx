@@ -134,8 +134,10 @@ export default function Sidebar ({isOpen, toggleSidebar, setSignOut}: SidebarPro
               Create AI-Generated Songs
             </div>
           </div>
-          <div className="border-t-2 border-gray-300"></div>
-          <div className="-mt-2 ml-2 text-2xl flex items-center text-center text-white"><ImLab className="mr-2"/>Beta Feature</div>  
+          <div>
+            <div className="border border-opacity-100 border-gray-300"></div>
+            <div className="ml-2 text-2xl flex items-center text-center text-white mt-4"><ImLab className="mr-2"/>Beta Feature</div>  
+          </div>
           <div
             className="flex items-center justify-center p-4 cursor-pointer transition duration-300 rounded-full bg-green-600 hover:bg-green-500 text-center hover:border-white border hover:text-black"
             onClick={() => toast.info("This feature is currently in development", toast_style)}
@@ -143,14 +145,16 @@ export default function Sidebar ({isOpen, toggleSidebar, setSignOut}: SidebarPro
             <LiaSpotify size={30} className="mr-2" />
             Login with Spotify®
           </div>
-          <div className="-mt-2 border-t-2 border-gray-300"></div> 
-          <div
-            className="border-white flex items-center justify-center text-gray-300 hover:text-white p-2 cursor-pointer transition duration-300 rounded-full bg-red-800 hover:bg-red-700 text-center"
-            onClick={handleClick}
-          >
-            <PiSignOut size={30} className="mr-2" />
-            Sign Out
-          </div>
+          <div>
+            <div className="border-gray-300 border-opacity-100 border w-full"></div>
+            <div
+              className="border-white flex items-center justify-center text-gray-300 hover:text-white p-2 cursor-pointer transition duration-300 rounded-full bg-red-800 hover:bg-red-700 text-center mt-4"
+              onClick={handleClick}
+            >
+              <PiSignOut size={30} className="mr-2" />
+              Sign Out
+            </div>
+          </div>  
         </div>
         </>
       )}
