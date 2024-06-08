@@ -5,13 +5,18 @@ import toast_style from "./ToastStyle"
 import { useNavigate } from "react-router-dom"
 import { IoMdClose } from "react-icons/io";
 
-export default function PlaylistModel ({username, onClick}) {
-    const [playlistname, setPlaylistname] = useState('')
-    const [playid, setPlayid] = useState(null)
+type PlaylistModelProps = {
+    username: string;
+    onClick: () => void;
+}
+
+export default function PlaylistModel ({username, onClick}: PlaylistModelProps): JSX.Element {
+    const [playlistname, setPlaylistname] = useState<string>('')
+    const [playid, setPlayid] = useState<number | null>(null)
 
     const navigate = useNavigate()
 
-    const handleNameChange = (event) => {
+    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setPlaylistname(event.target.value)
     }
 

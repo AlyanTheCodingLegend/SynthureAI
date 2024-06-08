@@ -8,21 +8,21 @@ import toast_style from "./ToastStyle"
 import supabase from "./ClientInstance";
 import 'react-toastify/dist/ReactToastify.css';
 
-export function CreateUser() {
-    const [email, setEmail] = useState("");
-    const [pass, setPass] = useState("");
-    const [confpass, setConfpass] = useState("");
-    const [username, setUsername] = useState("");
-    const [passEqual, setPassEqual] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [showPass, setShowPass] = useState(false);
-    const [showConfPass, setShowConfPass] = useState(false);
-    const [msg, setMsg] = useState(false);
+export function CreateUser(): JSX.Element {
+    const [email, setEmail] = useState<string>("");
+    const [pass, setPass] = useState<string>("");
+    const [confpass, setConfpass] = useState<string>("");
+    const [username, setUsername] = useState<string>("");
+    const [passEqual, setPassEqual] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [showPass, setShowPass] = useState<boolean>(false);
+    const [showConfPass, setShowConfPass] = useState<boolean>(false);
+    const [msg, setMsg] = useState<boolean>(false);
 
-    const handleUsernameChange = (event) => setUsername(event.target.value);
-    const handleEmailChange = (event) => setEmail(event.target.value);
-    const handlePassChange = (event) => setPass(event.target.value);
-    const handleConfPassChange = (event) => setConfpass(event.target.value);
+    const handleUsernameChange = (event: React.ChangeEvent<HTMLInputElement>) => setUsername(event.target.value);
+    const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
+    const handlePassChange = (event: React.ChangeEvent<HTMLInputElement>) => setPass(event.target.value);
+    const handleConfPassChange = (event: React.ChangeEvent<HTMLInputElement>) => setConfpass(event.target.value);
 
     useEffect(() => {
         setPassEqual(pass !== "" && confpass !== "" && pass === confpass);
@@ -51,14 +51,13 @@ export function CreateUser() {
         } 
 
         if (data.user) {
-            bcrypt.hash(pass, 10, async function (err, hash) {
+            bcrypt.hash(pass, 10, async function (err: Error | null, hash: string) {
                 if (err) {
                     toast.error(err.message);
                     setIsLoading(false);
-                    return;
                 }
                 const { error } = await supabase.from("user_information").insert({
-                    userid: data.user.id,
+                    userid: data.user?.id,
                     email: email,
                     hashpass: hash,
                     username: username,
@@ -67,7 +66,6 @@ export function CreateUser() {
                 if (error) {
                     toast.error(error.message);
                     setIsLoading(false);
-                    return;
                 }
 
                 setIsLoading(false);
@@ -170,23 +168,23 @@ export function CreateUser() {
     )
 }
 
-export function AuthUser() {
-    const [email, setEmail] = useState("")
-    const [pass, setPass] = useState("")
-    const [verEmail, setVerEmail] = useState(null)
-    const [username, setUsername] = useState(null)
-    const [gotoprof, setGotoprof] = useState(false)
-    const [disabled, setDisabled] = useState(true)
-    const [showPass, setShowPass] = useState(false)
-    const [isLoading, setIsLoading] = useState(false)
+export function AuthUser(): JSX.Element {
+    const [email, setEmail] = useState<string>("")
+    const [pass, setPass] = useState<string>("")
+    const [verEmail, setVerEmail] = useState<string>("")
+    const [username, setUsername] = useState<string>("")
+    const [gotoprof, setGotoprof] = useState<boolean>(false)
+    const [disabled, setDisabled] = useState<boolean>(true)
+    const [showPass, setShowPass] = useState<boolean>(false)
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
     const navigate = useNavigate()
 
-    const handleEmailChange = (event) => {
+    const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setEmail(event.target.value)
     }
 
-    const handlePassChange = (event) => {
+    const handlePassChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setPass(event.target.value)
     }
 
@@ -215,7 +213,7 @@ export function AuthUser() {
         else {
             const {user,session} = data
             if (user && session) {
-                if (user.role==="authenticated") {
+                if (user.role==="authenticated" && user.email) {
                     setVerEmail(user.email)
                 } else {
                     toast.error("Please verify your account via email first!")

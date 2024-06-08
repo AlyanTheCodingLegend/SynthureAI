@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { BiArrowToLeft, BiArrowToRight } from "react-icons/bi";
 import './Sidebar.css';
 import { useNavigate, useParams } from "react-router-dom";
@@ -14,17 +14,24 @@ import { ImLab } from "react-icons/im";
 import PlaylistModel from "./PlaylistModel";
 import SongUploadModel from "./SongUploadModel";
 
-export default function Sidebar ({isOpen, toggleSidebar, signOut, setSignOut}) {
-    
-    const [pfpPath, setPfpPath] = useState("https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/defaultpfp.jpg")
-    const [isPlaylistModalOpen, setPlaylistModalOpen] = useState(false)
-    const [isUploadModelOpen, setUploadModelOpen] = useState(false)
+type SidebarProps = {
+  isOpen: boolean;
+  toggleSidebar: () => void;
+  setSignOut: (value: boolean) => void;
+}
 
-    const {username} = useParams()
+export default function Sidebar ({isOpen, toggleSidebar, setSignOut}: SidebarProps): JSX.Element {
+    
+    const [pfpPath, setPfpPath] = useState<string>("https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/defaultpfp.jpg")
+    const [isPlaylistModalOpen, setPlaylistModalOpen] = useState<boolean>(false)
+    const [isUploadModelOpen, setUploadModelOpen] = useState<boolean>(false)
+
+    const usernameData = useParams()
+    const username = usernameData.username || ""
 
     const navigate = useNavigate()
 
-    function addTimestampToUrl(url) {
+    function addTimestampToUrl(url: string) {
       var timestamp = new Date().getTime();
       return url + (url.indexOf('?') === -1 ? '?' : '&') + 'timestamp=' + timestamp;
     } 
@@ -85,7 +92,7 @@ export default function Sidebar ({isOpen, toggleSidebar, signOut, setSignOut}) {
                 />
               </div>
             )}
-            <div className="text-xl ml-2">{username}</div>
+            <div className="text-xl text-center ml-4">{username}</div>
             <button onClick={toggleSidebar} className="ml-auto">
               <BiArrowToLeft size={30}/>
             </button>

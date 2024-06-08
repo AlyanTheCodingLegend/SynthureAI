@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import supabase from "./ClientInstance";
 import { toast } from "react-toastify";
 import toast_style from "./ToastStyle";
@@ -9,21 +9,35 @@ import { FaPlus } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { BeatLoader } from "react-spinners";
-import "./noscrollbar.css"
+import "./NoScrollbar.css"
 
-export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlaylistID, playlistid, setOpenPlaylist, isUniversallyPlaying, setIsUniversallyPlaying, setSongArray, setImageArray, setIndex, username, index}) {
-    const [name, setName] = useState(null)
-    const [songnames, setSongnames] = useState([])
-    const [images, setImages] = useState([])
-    const [artists, setArtists] = useState([])
-    const [indexes, setIndexes] = useState([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [backupSongs, setBackupSongs] = useState([])
+type ShowPlaylistModelProps = {
+    isOpen: boolean;
+    playPlaylistID: number | null;
+    setPlayPlaylistID: (value: number) => void;
+    playlistid: number;
+    setOpenPlaylist: (value: boolean) => void;
+    isUniversallyPlaying: boolean;
+    setIsUniversallyPlaying: (value: boolean) => void;
+    setSongArray: (value: string[]) => void;
+    setIndex: (value: number) => void;
+    username: string;
+    index: number;
+}
+
+export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlaylistID, playlistid, setOpenPlaylist, isUniversallyPlaying, setIsUniversallyPlaying, setSongArray, setIndex, username, index}: ShowPlaylistModelProps): JSX.Element {
+    const [name, setName] = useState<Array<string> | null>(null)
+    const [songnames, setSongnames] = useState<Array<string>>([])
+    const [images, setImages] = useState<Array<string>>([])
+    const [artists, setArtists] = useState<Array<string>>([])
+    const [indexes, setIndexes] = useState<Array<string>>([])
+    const [isLoading, setIsLoading] = useState<boolean>(true)
+    const [backupSongs, setBackupSongs] = useState<Array<string>>([])
 
     const navigate = useNavigate()
 
     useEffect(() => {
-        async function loadSongsFromPlaylist(playlistID) {
+        async function loadSongsFromPlaylist(playlistID: number) {
             try {    
                 let songArray=[]
                 let songNameArray=[]
@@ -51,14 +65,15 @@ export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlayli
                     }
 
                     setBackupSongs(songArray)
-                    setImageArray(imageArray)
                     setIndexes(indexArray)
                     setSongnames(songNameArray)
                     setImages(imageArray)
                     setArtists(artistArray)
                 }
-            } catch (error) {
-                toast.error(error.message, toast_style)
+            } catch (error: unknown) {
+                if (error instanceof Error) {
+                    toast.error(error.message, toast_style)
+                }    
             } finally {
                 setIsLoading(false)
             }    
@@ -69,12 +84,13 @@ export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlayli
     }, [])
 
     useEffect(() => {
-        if (playPlaylistID===playlistid && isUniversallyPlaying===false) {
+        if (playPlaylistID===playlistid && isUniversallyPlaying===true) {
             setSongArray(backupSongs)
         }
+    // eslint-disable-next-line    
     }, [playPlaylistID, isUniversallyPlaying])   
     
-    const removeFromPlaylist = async (songindex) => {
+    const removeFromPlaylist = async (songindex: number) => {
         const {error} = await supabase.from("playlistsong_information").delete().eq('playlist_id', playlistid).eq('song_id', indexes[songindex])
         if (error) {
             toast.error(error.message, toast_style)
@@ -97,6 +113,16 @@ export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlayli
             toast.success('Playlist deleted successfully!', toast_style)
             setOpenPlaylist(false)
         }
+    }
+
+    const handlePlay = (songindex: number) => {
+        setIndex(songindex); 
+        if (playPlaylistID!==playlistid) {
+            setPlayPlaylistID(playlistid);
+        }     
+        if (isUniversallyPlaying===false) {
+            setIsUniversallyPlaying(true);
+        }    
     }
 
     if (isLoading) {
@@ -133,7 +159,7 @@ export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlayli
                                 <div className="text-sm">By: {artists[songindex]}</div>
                             </div>
                         </div>
-                        <div className={(index===songindex && playPlaylistID===playlistid)? "flex flex-row justify-end text-white mr-4" : "flex flex-row justify-end text-green-500 hover:text-white mr-4"} onClick={() => {setIndex(songindex); if (playPlaylistID!==playlistid) setPlayPlaylistID(playlistid); if (isUniversallyPlaying===false) setIsUniversallyPlaying(true);}}>
+                        <div className={(index===songindex && playPlaylistID===playlistid)? "flex flex-row justify-end text-white mr-4" : "flex flex-row justify-end text-green-500 hover:text-white mr-4"} onClick={() => handlePlay(songindex)}>
                             {(index===songindex && playPlaylistID===playlistid)? <FaRegCirclePause size={30}/> : <FaRegCirclePlay size={30} />}
                         </div>
                         <div className="flex flex-row justify-end text-green-500 hover:text-white" onClick={() => removeFromPlaylist(songindex)}>

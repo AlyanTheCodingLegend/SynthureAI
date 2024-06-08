@@ -1,14 +1,12 @@
-import React from "react";
 import { AuthUser, CreateUser } from "./components/UserAuthModel";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import AddSongModel from "./components/AddSongModel";
 import { ProfilePage } from "./components/ProfilePage";
 import Home from "./components/Home";
-import ShowPlaylistModel from "./components/ShowPlaylistModel";
 import AIGeneration from "./components/AIGeneration";
 import Navigator from "./components/Navigator";
 
-function App() {
+function App(): JSX.Element {
   const router=createBrowserRouter([
     {
       path: '/',
@@ -29,10 +27,6 @@ function App() {
     {
       path: '/:username/:playlistid/addsongs',
       element: <AddSongModel />
-    },
-    {
-      path: '/:username/playlists/:playlistid',
-      element: <ShowPlaylistModel />
     },
     {
       path: '/profile/:username',

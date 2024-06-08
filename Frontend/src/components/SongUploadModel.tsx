@@ -1,5 +1,3 @@
-"use client"
-
 import supabase from './ClientInstance';
 import React, { useState } from 'react';
 import { ToastContainer, toast} from "react-toastify";
@@ -7,15 +5,20 @@ import toast_style from './ToastStyle';
 import { IoMdClose } from "react-icons/io";
 import { FadeLoader } from 'react-spinners';
 
-export default function SongUploadModel ({username, onClick}) {
-    const [selectedFile, setSelectedFile] = useState(null)
-    const [filename, setFilename] = useState("")
-    const [initialFilename, setInitialFilename] = useState("")
-    const [isProcessing, setIsProcessing] = useState(false)
-    const [artistName, setArtistName] = useState("")
-    const [imageFile, setImageFile] = useState(null)
+type SongUploadModelProps = {
+    username: string;
+    onClick: () => void;
+}
 
-    const handleArtistRowUpdate = async (songID) => {
+export default function SongUploadModel ({username, onClick}: SongUploadModelProps): JSX.Element {
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const [filename, setFilename] = useState<string>("")
+    const [initialFilename, setInitialFilename] = useState<string>("")
+    const [isProcessing, setIsProcessing] = useState<boolean>(false)
+    const [artistName, setArtistName] = useState<string>("")
+    const [imageFile, setImageFile] = useState<File | null>(null)
+
+    const handleArtistRowUpdate = async (songID: number) => {
         try {
             const { data, error } = await supabase.from('artist_information').select('artist_id').eq('name', artistName)
             if (error) throw error;
@@ -30,12 +33,14 @@ export default function SongUploadModel ({username, onClick}) {
                 const { error: errorThree } = await supabase.from('artistsong_information').insert({artist_id: data[0].artist_id, song_id: songID})
                 if (errorThree) throw errorThree;
             }
-        } catch (error) {
-            toast.error(error.message, toast_style);
+        } catch (error: unknown) {
+            if  (error instanceof Error) {
+                toast.error(error.message, toast_style);
+            }    
         }
     }
 
-    const handleFileUpload = async (event) => {
+    const handleFileUpload = async (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault()
 
         if (!selectedFile || !imageFile) {
@@ -61,8 +66,10 @@ export default function SongUploadModel ({username, onClick}) {
             await handleArtistRowUpdate(data[0].id);
 
             toast.success("Song has been uploaded successfully!", toast_style)
-        } catch (error) {
-            toast.error(error.message, toast_style);
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                toast.error(error.message, toast_style);
+            }    
         } finally {
             setIsProcessing(false)
             resetForm();
@@ -77,22 +84,22 @@ export default function SongUploadModel ({username, onClick}) {
         setImageFile(null)
     };
 
-    const handleNameChange = (event) => {
+    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setInitialFilename(event.target.value)
         setFilename(event.target.value.replace(/\s+/g, '').toLowerCase());
     }
 
-    const handleFileChange = (event) => {
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files) {
             setSelectedFile(event.target.files[0])
         }    
     }
 
-    const handleArtistChange = (event) => {
+    const handleArtistChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setArtistName(event.target.value)
     }
 
-    const handleImageChange = (event) => {
+    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files) {
             setImageFile(event.target.files[0])
         }    

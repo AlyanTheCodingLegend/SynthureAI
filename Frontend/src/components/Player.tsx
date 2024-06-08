@@ -1,34 +1,33 @@
-"use client";
-
 import { Howl } from 'howler';
-import React, { useEffect, useState } from 'react';
-//import { LiveAudioVisualizer } from 'react-audio-visualize';
-import { toast, ToastContainer } from "react-toastify";
+import { useEffect, useState } from 'react';
 import ReactSlider from 'react-slider';
-import supabase from "./ClientInstance";
-import toast_style from './ToastStyle';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaPlay, FaPause, FaForwardStep, FaBackwardStep } from "react-icons/fa6";
 import { FaVolumeMute, FaVolumeUp, FaRandom } from "react-icons/fa";
 import { MdOutlineLoop } from "react-icons/md";
 
+type PlayerProps = {
+    isOpen: boolean;
+    songs: string[];
+    index: number;
+    setIndex: (value: number) => void;
+}
 
-export default function Player ({isOpen, songs, index, setIndex}) {
-    const [isPlaying, setIsPlaying] = useState(false)
-    const [song, setSong] = useState(null)
-    const [duration, setDuration] = useState(0)
-    const [progress, setProgress] = useState(0)
-    const [volume, setVolume] = useState(1)
-    const [repeat, setRepeat] = useState(false)
-    const [isMuted, setIsMuted] = useState(false)
-    const [prevVol, setPrevVol] = useState(0)
-    const [mins, setMins] = useState(0)
-    const [secs, setSecs] = useState(0)
-    const [Tmins, setTMins] = useState(0)
-    const [Tsecs, setTSecs] = useState(0)
-    const [randomize, setRandomize] = useState(false)
-    // const [mediaRecorder, setMediaRecorder] = useState(null)
-    const [disabled, setDisabled] = useState(false)
+export default function Player ({isOpen, songs, index, setIndex}: PlayerProps): JSX.Element {
+    const [isPlaying, setIsPlaying] = useState<boolean>(false)
+    const [song, setSong] = useState<Howl | null>(null)
+    const [duration, setDuration] = useState<number>(0)
+    const [progress, setProgress] = useState<number>(0)
+    const [volume, setVolume] = useState<number>(1)
+    const [repeat, setRepeat] = useState<boolean>(false)
+    const [isMuted, setIsMuted] = useState<boolean>(false)
+    const [prevVol, setPrevVol] = useState<number>(0)
+    const [mins, setMins] = useState<number>(0)
+    const [secs, setSecs] = useState<number>(0)
+    const [Tmins, setTMins] = useState<number>(0)
+    const [Tsecs, setTSecs] = useState<number>(0)
+    const [randomize, setRandomize] = useState<boolean>(false)
+    const [disabled, setDisabled] = useState<boolean>(false)
 
     useEffect(() => {
         if (isPlaying) {
@@ -39,33 +38,7 @@ export default function Player ({isOpen, songs, index, setIndex}) {
         }
     // eslint-disable-next-line    
     }, [progress, isPlaying, duration])    
-
-    // useEffect(() => {
-        
-    //     if (songs && songs.length > 0 && index !== null && index !== undefined) {
-    //         fetch(songs[index])
-    //             .then(response => response.blob())
-    //             .then(blob => {
-                    
-    //                 return blob.arrayBuffer();
-    //             })
-    //             .then(arrayBuffer => {
-    //                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-    //                 audioContext.decodeAudioData(arrayBuffer, audioBuffer => {
-    //                     const audioTrack = audioContext.createMediaStreamDestination().stream.getAudioTracks()[0];
-    //                     const mediaStream = new MediaStream([audioTrack]);
-    //                     const mediaRecorderRef = new MediaRecorder(mediaStream);
-    //                     setMediaRecorder(mediaRecorderRef)
-    //                 });
-    //             })
-    //             .catch(error => {
-    //                 toast.error('Error fetching audio',toast_style);
-    //             });
-    //     }
-        
-    // }, [songs, index]);
-       
+ 
     useEffect(() => {
         if (songs.length>0) {
             var newSong = new Howl({
@@ -82,7 +55,6 @@ export default function Player ({isOpen, songs, index, setIndex}) {
                 onload: () => {
                     setDuration(newSong.duration());
                     setDisabled(false);
-                    //updateCounter();
                 },
                 onend: () => {
                     setIsPlaying(false);
@@ -100,7 +72,7 @@ export default function Player ({isOpen, songs, index, setIndex}) {
                 }
             })
             setSong(newSong)
-
+            
             return () => {
                 newSong.unload()
             }
@@ -112,28 +84,12 @@ export default function Player ({isOpen, songs, index, setIndex}) {
         if (isPlaying) {
             if (song) {
                 song.pause()
-            }
-            // if (mediaRecorder) {    
-            //     if (mediaRecorder.state==="inactive") {
-            //         mediaRecorder.stop()
-            //     }
-            //     else {
-            //         mediaRecorder.pause()
-            //     }
-            // }    
+            }   
         }
         else {
             if (song) {
                 song.play()
-            }
-            // if (mediaRecorder) {
-            //     if (mediaRecorder.state==="inactive") {    
-            //         mediaRecorder.start()
-            //     }
-            //     else {
-            //         mediaRecorder.resume()
-            //     }    
-            // }    
+            }   
         }
     }
 
@@ -146,53 +102,43 @@ export default function Player ({isOpen, songs, index, setIndex}) {
 
         return () => clearInterval(interval);
     }, [song, isPlaying]);
-
-    // async function updateCounter() {
-    //     try {
-    //         const {data, error} = await supabase.from('playcount_information').select("*").eq('song_id',indexes[index])
-    //         if (error) throw error
-    //         if (data.length===0) { // no row
-    //             const {error: errorTwo} = await supabase.from('playcount_information').insert({song_id: indexes[index], dailycount: 1, monthlycount: 1, alltimecount: 1})
-
-    //             if (errorTwo) throw errorTwo
-    //         } else { // song has row
-    //             const {error: errorThree} = await supabase.from('playcount_information').update({dailycount: data[0].dailycount+1, monthlycount: data[0].monthlycount+1, alltimecount: data[0].alltimecount+1}).eq('song_id',indexes[index])
-
-    //             if (errorThree) throw errorThree
-    //         }
-    //     } catch (error) {
-    //         toast.error(error.message, toast_style)
-    //     }
-    // }
-    
-    const handleSeek = (position) => {
+ 
+    const handleSeek = (position: number) => {
         if (position<=duration) {
-            song.seek(position)
+            if (song) {
+                song.seek(position)
+            }    
             setProgress(position)
         }
     }
 
-    const handleVolumeSeek = (vol) => {
-        song.volume(vol)
+    const handleVolumeSeek = (vol: number) => {
+        if (song) {
+            song.volume(vol)
+        }    
         setVolume(vol)
     }
 
     const handleVolumeMute = () => {
         if (!isMuted) {
             setPrevVol(volume)
-            song.volume(0)
+            if (song) {
+                song.volume(0)
+            }    
             setVolume(0)
         } else {
-            song.volume(prevVol)
+            if (song) {
+                song.volume(prevVol)
+            }    
             setVolume(prevVol)
         }
         setIsMuted(!isMuted)
     }
 
     useEffect(() => {
-        if (index!==0) {
+        if (song) {
             song.play()
-        }  
+        }      
     // eslint-disable-next-line   
     }, [duration])
 
@@ -222,7 +168,7 @@ export default function Player ({isOpen, songs, index, setIndex}) {
         }
     }
 
-    const randomizeSong = (min,max) => {
+    const randomizeSong = (min: number, max: number) => {
         min = Math.ceil(min)
         max = Math.ceil(max)
         setIndex(Math.floor(Math.random()*(max-min+1)) + min)
@@ -248,7 +194,6 @@ export default function Player ({isOpen, songs, index, setIndex}) {
                             {mins}:{secs < 10 ? "0" + secs : secs}
                         </div>
                         <ReactSlider
-                            id="song-slider"
                             className="flex-grow h-2 bg-gray-700 rounded-md mx-1 cursor-pointer"
                             onAfterChange={handleSeek}
                             value={progress}
@@ -286,7 +231,6 @@ export default function Player ({isOpen, songs, index, setIndex}) {
                                 {isMuted ? <FaVolumeMute size={15} /> : <FaVolumeUp size={15} />}
                             </button>
                             <ReactSlider
-                                id="volume-slider"
                                 className="h-2 rounded-md w-full"
                                 value={volume}
                                 onChange={handleVolumeSeek}
@@ -299,7 +243,6 @@ export default function Player ({isOpen, songs, index, setIndex}) {
                         </div>
                     </div>
                 </div>
-                <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark' />
             </div>
         )}
     </>

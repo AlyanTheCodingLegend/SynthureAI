@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import supabase from "./ClientInstance"
 import { ToastContainer, toast } from "react-toastify"
@@ -7,9 +7,9 @@ import { IoMdClose } from "react-icons/io"
 import { FaPlus } from "react-icons/fa6"
 import { BeatLoader } from "react-spinners"
 
-export default function AIGeneration() {
-    const [songs, setSongs] = useState(null)
-    const [isLoading, setIsLoading] = useState(false)
+export default function AIGeneration(): JSX.Element {
+    const [songs, setSongs] = useState<Array<Song>>([])
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
     const {username} = useParams()
     
@@ -21,8 +21,10 @@ export default function AIGeneration() {
                 if (error) throw error
 
                 setSongs(data)
-            } catch (error) {
-                toast.error(error.message, toast_style)
+            } catch (error: unknown) {
+                if (error instanceof Error) {
+                    toast.error(error.message, toast_style)
+                }    
             } finally {
                 setIsLoading(false)
             }   
@@ -31,7 +33,7 @@ export default function AIGeneration() {
         loadSongs()
     }, [username])
 
-    const handleClick = async (songID) => {
+    const handleClick = async (songID: number) => {
         console.log(songID)   
     }
     

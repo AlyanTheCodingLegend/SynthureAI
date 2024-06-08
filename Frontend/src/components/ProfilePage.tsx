@@ -8,26 +8,39 @@ import { Link, useNavigate, useParams } from "react-router-dom"
 import { SlEye } from "react-icons/sl"
 import { BounceLoader } from "react-spinners"
 
-export function ProfilePage() {
-    const [popup, setPopup] = useState(false)
-    const [showPass, setShowPass]= useState(false)
-    const [isLoading, setIsLoading] = useState(false)
-    const [signOut, setSignOut] = useState(false)
-    const [pass, setPass] = useState('')
-    const [userID, setUserID] = useState(null)
-    const [pfp, setPfp] = useState(null)
-    const [playlists, setPlaylists] = useState(null)
+export function ProfilePage(): JSX.Element {
+    const [popup, setPopup] = useState<boolean>(false)
+    const [showPass, setShowPass]= useState<boolean>(false)
+    const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [signOut, setSignOut] = useState<boolean>(false)
+    const [pass, setPass] = useState<string>("")
+    const [userID, setUserID] = useState<string | null>(null)
+    const [pfp, setPfp] = useState<Array<File>>([])
+    const [playlists, setPlaylists] = useState<Array<string>>([])
+    const [pfpPath, setPfpPath] = useState<string>("")
+    const [newPfpPath, setNewPfpPath] = useState<string>("")
 
     const navigate = useNavigate()
 
     const { username } = useParams()
 
-    // useEffect(() => {
-    //   if (login) {
-    //     navigate('/login')
-    //   }  
-    // }, [login])  
+    useEffect(() => {
+      const loadPfp = async () => {
+        if (username) {
+          const {data, error} = await supabase.from('user_information').select('pfp_path').eq('username', username)
+          if (error) {
+            toast.error(error.message, toast_style)
+          } else {
+            if (data.length !== 0) {
+              setPfpPath(data[0].pfp_path)
+            }
+          }
+        }
+      }
 
+      loadPfp()
+    }, [username])
+    
     const handleClick = async () => {
         setSignOut(true)
         const {error} = await supabase.auth.signOut()
@@ -37,9 +50,13 @@ export function ProfilePage() {
         navigate('/login')
     }
 
-    const handleProfilePicChange = (event) => {
+    const handleProfilePicChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       if (event.target.files) {
-        setPfp(event.target.files[0])
+        setPfp([event.target.files[0]])
+        if (newPfpPath!=="") {
+          URL.revokeObjectURL(newPfpPath)
+        }
+        setNewPfpPath(URL.createObjectURL(event.target.files[0]))
       }  
     }
 
@@ -63,11 +80,11 @@ export function ProfilePage() {
     }, [username])  
 
     const handleSubmit = async () => {
-      const {error} = await supabase.storage.from('images').upload(`${username}/pfp.${pfp.type.replace('image/', '')}`, pfp, { cacheControl: '3600', upsert: true, contentType: pfp.type})
+      const {error} = await supabase.storage.from('images').upload(`${username}/pfp.${pfp[0]?.type.replace('image/', '')}`, pfp[0], { cacheControl: '3600', upsert: true, contentType: pfp[0] ? pfp[0].type: "image/jpeg"})
       if (error) {
         toast.error(error.message, toast_style)
       } else {
-        const {error: errorOne} = await supabase.from('user_information').update({pfp_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/pfp.${pfp.type.replace('image/','')}`}).eq('username', username)
+        const {error: errorOne} = await supabase.from('user_information').update({pfp_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/pfp.${pfp[0]?.type.replace('image/','')}`}).eq('username', username)
         if (errorOne) {
           toast.error(errorOne.message, toast_style)
         } else {
@@ -97,20 +114,22 @@ export function ProfilePage() {
               const storedHash = data[0].hashpass;
 
               // Compare hashed passwords
-              bcrypt.compare(pass, storedHash, async function(compareErr, result) {
+              bcrypt.compare(pass, storedHash, async function(compareErr: Error | null, result: boolean) {
                   if (compareErr) {
                     setIsLoading(false);
                     toast.error(compareErr.message, toast_style);
                   } else {
                       if (result) {
-                        const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userID);
-                        if (deleteUserError) {
-                          setIsLoading(false);
-                          toast.error(deleteUserError.message, toast_style);
-                        } else {
-                            toast.success('Account has been successfully deleted', toast_style);
-                            setSignOut(true)
-                        }
+                        if (userID !== null) {
+                          const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userID);
+                          if (deleteUserError) {
+                            setIsLoading(false);
+                            toast.error(deleteUserError.message, toast_style);
+                          } else {
+                              toast.success('Account has been successfully deleted', toast_style);
+                              setSignOut(true)
+                          }
+                        }  
                       } else {
                         setIsLoading(false);
                         toast.error('Wrong password!', toast_style);
@@ -188,7 +207,7 @@ export function ProfilePage() {
                 <div className="flex flex-col md:flex-row items-center md:items-start mb-4">
                     <div className="relative w-24 h-24 overflow-hidden rounded-full bg-gray-200 mb-4 md:mb-0 md:mr-4">
                         <input type="file" accept="image/*" onChange={handleProfilePicChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                        <img src={pfp ? pfp : "https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/defaultpfp.jpg"} alt="Profile" className="absolute inset-0 w-full h-full object-cover" />
+                        <img src={pfp[0] ? newPfpPath : pfpPath} alt="Profile" className="absolute inset-0 w-full h-full object-cover" />
                     </div>
                     <button onClick={handleSubmit} disabled={!pfp} className="rounded-full bg-blue-950 w-24 h-10 text-center text-xl text-white hover:bg-blue-300 disabled:bg-gray-500">Save</button>
                 </div>

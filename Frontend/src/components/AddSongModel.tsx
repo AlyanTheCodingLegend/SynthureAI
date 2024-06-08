@@ -1,15 +1,15 @@
 import { ToastContainer, toast } from "react-toastify";
 import supabase from "./ClientInstance";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import toast_style from "./ToastStyle";
 import { BeatLoader } from "react-spinners";
 import { Link, useParams } from "react-router-dom";
 import { IoMdClose } from "react-icons/io";
 import { FaPlus } from "react-icons/fa6";
 
-export default function AddSongModel () {
-    const [isLoading, setIsLoading] = useState(true)
-    const [songs, setSongs] = useState(null)
+export default function AddSongModel(): JSX.Element {
+    const [isLoading, setIsLoading] = useState<boolean>(true)
+    const [songs, setSongs] = useState<Array<Song>>([])
 
     const {username, playlistid} = useParams()
     
@@ -47,8 +47,10 @@ export default function AddSongModel () {
                 setIsLoading(false)
 
                 
-            } catch (error) {
-                toast.error(error.message, toast_style)
+            } catch (error: unknown) {
+                if (error instanceof Error) {
+                    toast.error(error.message, toast_style)
+                }    
             }    
         }
 
@@ -56,7 +58,7 @@ export default function AddSongModel () {
     // eslint-disable-next-line    
     }, [])    
 
-    const handleClick = async (song) => {
+    const handleClick = async (song: Song) => {
         const {error} = await supabase.from('playlistsong_information').insert({playlist_id: playlistid, song_id: song.id})
 
         if (error) {
