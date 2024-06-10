@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import bcrypt from 'bcryptjs'
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { SlEye } from "react-icons/sl"
-import { BounceLoader } from "react-spinners"
+import { BounceLoader, ClipLoader } from "react-spinners"
 
 export function ProfilePage(): JSX.Element {
     const [popup, setPopup] = useState<boolean>(false)
@@ -120,16 +120,24 @@ export function ProfilePage(): JSX.Element {
                     toast.error(compareErr.message, toast_style);
                   } else {
                       if (result) {
+                        console.log(userID)
                         if (userID !== null) {
+                          console.log("yes2")
                           const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userID);
                           if (deleteUserError) {
                             setIsLoading(false);
                             toast.error(deleteUserError.message, toast_style);
                           } else {
-                              toast.success('Account has been successfully deleted', toast_style);
-                              setSignOut(true)
+                            console.log("yes3")
+                            toast.success('Account has been successfully deleted', toast_style);
+                            navigate('/login');
+                            setIsLoading(false)
+                            setSignOut(true)
                           }
-                        }  
+                        } else {
+                          setIsLoading(false);
+                          toast.error('Unexpected error!', toast_style);
+                        }
                       } else {
                         setIsLoading(false);
                         toast.error('Wrong password!', toast_style);
@@ -206,9 +214,18 @@ export function ProfilePage(): JSX.Element {
                 <h2 className="text-3xl font-bold mb-4">Welcome, {username} 😎</h2>
                 <div className="flex flex-col md:flex-row items-center md:items-start mb-4">
                     <div className="relative w-24 h-24 overflow-hidden rounded-full bg-gray-200 mb-4 md:mb-0 md:mr-4">
-                        <input type="file" accept="image/*" onChange={handleProfilePicChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                        <img src={pfp[0] ? newPfpPath : pfpPath} alt="Profile" className="absolute inset-0 w-full h-full object-cover" />
-                    </div>
+                      {(pfpPath==="") ? 
+                      (
+                      <div className="bg-blue-600 h-full w-full flex items-center justify-center">
+                        <ClipLoader size={45} color="white"/>
+                      </div>
+                      ) : (
+                        <>
+                          <input type="file" accept="image/*" onChange={handleProfilePicChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                          <img src={pfp[0] ? newPfpPath : pfpPath} alt="Profile" className="absolute inset-0 w-full h-full object-cover" />
+                        </>
+                      )}
+                        </div>
                     <button onClick={handleSubmit} disabled={!pfp} className="rounded-full bg-blue-950 w-24 h-10 text-center text-xl text-white hover:bg-blue-300 disabled:bg-gray-500">Save</button>
                 </div>
                 <div className="flex justify-between items-center mb-4">
@@ -229,13 +246,13 @@ export function ProfilePage(): JSX.Element {
                     <div className="flex flex-col space-y-2">
                         {playlists && playlists.length !== 0 ? (
                             playlists.map((playlist, index) => (
-                                <div key={index} className="flex items-center justify-between bg-blue-700 rounded-lg p-2">
+                                <div key={index} className="flex items-center justify-between bg-blue-700 hover:bg-blue-900 hover:cursor-pointer rounded-lg p-2" onClick={()=>navigate(`/${username}`)}>
                                     <div className="text-lg">{playlist}</div>
                                     <div className="text-xl">🎵</div>
                                 </div>
                             ))
                         ) : (
-                            <div className="text-lg">No playlists to show</div>
+                            <div className="text-lg">No playlists to show!</div>
                         )}
                     </div>
                 </div>

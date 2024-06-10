@@ -150,8 +150,8 @@ export default function SongUploadModel ({username, onClick}: SongUploadModelPro
                 />
                 <div className='-mt-4 text-white ml-1'>Upload Image</div>
                 <button 
-                    disabled={filename==="" || selectedFile===null || isProcessing || imageFile===null} 
-                    className={(!(filename!=="" && selectedFile!==null && imageFile!==null) || isProcessing)? "w-full bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-not-allowed": "w-full bg-red-700 hover:bg-red-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
+                    disabled={filename==="" || selectedFile===null || isProcessing || imageFile===null || artistName==="" || initialFilename===""} 
+                    className={(!(filename!=="" && selectedFile!==null && imageFile!==null) || isProcessing)? "w-full bg-gray-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-not-allowed": "w-full bg-red-700 hover:bg-red-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
                     onClick={handleFileUpload}
                 >
                     {isProcessing ? <FadeLoader color='#ffffff' radius={1}/> : "Upload Song"}

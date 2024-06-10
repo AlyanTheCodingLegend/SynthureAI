@@ -13,6 +13,7 @@ import { CgOptions } from "react-icons/cg";
 import { ImLab } from "react-icons/im";
 import PlaylistModel from "./PlaylistModel";
 import SongUploadModel from "./SongUploadModel";
+import { ClipLoader } from "react-spinners";
 
 type SidebarProps = {
   isOpen: boolean;
@@ -22,7 +23,7 @@ type SidebarProps = {
 
 export default function Sidebar ({isOpen, toggleSidebar, setSignOut}: SidebarProps): JSX.Element {
     
-    const [pfpPath, setPfpPath] = useState<string>("https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/defaultpfp.jpg")
+    const [pfpPath, setPfpPath] = useState<string | null>(null)
     const [isPlaylistModalOpen, setPlaylistModalOpen] = useState<boolean>(false)
     const [isUploadModelOpen, setUploadModelOpen] = useState<boolean>(false)
 
@@ -81,17 +82,21 @@ export default function Sidebar ({isOpen, toggleSidebar, setSignOut}: SidebarPro
         )}
         {isOpen && (
           <>
-            {pfpPath && (
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-700 to-purple-700 rounded-full blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
-                <img
-                  onClick={() => navigate(`/profile/${username}`)}
-                  src={pfpPath}
-                  alt="Profile"
-                  className="relative pfp rounded-full cursor-pointer w-10 h-10"
-                />
+                {pfpPath ? ( 
+                  <img
+                    onClick={() => navigate(`/profile/${username}`)}
+                    src={pfpPath}
+                    alt="Profile"
+                    className="relative pfp rounded-full cursor-pointer w-10 h-10"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <ClipLoader size={50} color="white"/>
+                  </div>
+                )}   
               </div>
-            )}
             <div className="text-xl text-center ml-4">{username}</div>
             <button onClick={toggleSidebar} className="ml-auto">
               <BiArrowToLeft size={30}/>

@@ -28,7 +28,6 @@ export default function Layout({isOpen, username, setOpenPlaylist, setSongArray,
     const [filteredSongs, setFilteredSongs] = useState<Array<Song>>([])
     const [songPlaying, setSongPlaying] = useState<number>(-1)
     
-
     useEffect(() => {
         async function loadPlaylists() {
             setIsLoading(true)
@@ -45,8 +44,6 @@ export default function Layout({isOpen, username, setOpenPlaylist, setSongArray,
             try {
                 const {data, error} = await supabase.from('song_information').select('*').eq('uploaded_by', username)
                 if (error) throw error
-
-                if (data.length===0) throw new Error("No songs found!")
 
                 setSongs(data)
             } catch (error: unknown) {
@@ -118,13 +115,16 @@ export default function Layout({isOpen, username, setOpenPlaylist, setSongArray,
                     <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-700 to-purple-400 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
                     <div className="relative flex flex-col justify-center items-center h-40 w-40 bg-black rounded-lg text-gray-200 hover:text-white hover:cursor-pointer" onClick={() => { setPlaylistID(Number(playlist.playlist_id)); setOpenPlaylist(true); }}>
                         <img src="https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/anonymous-man-graphic-good-pfp-1y0csvb81cmqaggg.jpg" alt="default playlist" className="w-4/5 h-4/5 rounded-lg" />
-                        <div className="text-lg">{playlist.playlist_name}</div>
+                        <div className="text-lg px-2 text-center overflow-hidden text-overflow-ellipsis whitespace-nowrap" style={{ maxWidth: '90%' }}>{playlist.playlist_name}</div>
                     </div>
                 </div>
                     ))}
                 </div>
-                   
-                ) : (<div className="text-sm ml-4">Please create playlists to listen to them and view them here 😊</div>)}
+                ) : (
+                    <div className="text-sm ml-4">
+                        Please create playlists to listen to them and view them here 😊
+                    </div>
+                )}
             </div>
         </div>
     )

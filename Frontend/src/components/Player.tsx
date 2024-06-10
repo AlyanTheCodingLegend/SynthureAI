@@ -28,6 +28,7 @@ export default function Player ({isOpen, songs, index, setIndex}: PlayerProps): 
     const [Tsecs, setTSecs] = useState<number>(0)
     const [randomize, setRandomize] = useState<boolean>(false)
     const [disabled, setDisabled] = useState<boolean>(false)
+    const [socket, setSocket] = useState<WebSocket | null>(null)
 
     useEffect(() => {
         if (isPlaying) {
@@ -48,9 +49,15 @@ export default function Player ({isOpen, songs, index, setIndex}: PlayerProps): 
                 loop: repeat,
                 onplay: () => {
                     setIsPlaying(true);
+                    if (socket) {
+                        socket.send(JSON.stringify({ type: "play", songs: songs, songid: index }))
+                    }    
                 },
                 onpause: () => {
                     setIsPlaying(false);
+                    if (socket) {
+                        socket.send(JSON.stringify({ type: "pause" }))
+                    }
                 },
                 onload: () => {
                     setDuration(newSong.duration());
@@ -142,6 +149,26 @@ export default function Player ({isOpen, songs, index, setIndex}: PlayerProps): 
     // eslint-disable-next-line   
     }, [duration])
 
+    useEffect(() => {
+        if (socket) {
+            socket.onopen = () => {
+                console.log("Connected to server")
+            }
+            
+            socket.onmessage = (event) => {
+                console.log("Received message: ", event.data)
+            }
+
+            socket.onclose = () => {
+                console.log("Disconnected from server")
+            }
+
+            socket.onerror = (error) => {
+                console.error("Error: ", error)
+            }
+        }    
+    }, [socket])    
+
     const handlePlayNextSong = () => {
         setDisabled(true)
         if (song) {
@@ -172,6 +199,11 @@ export default function Player ({isOpen, songs, index, setIndex}: PlayerProps): 
         min = Math.ceil(min)
         max = Math.ceil(max)
         setIndex(Math.floor(Math.random()*(max-min+1)) + min)
+    }
+
+    const handleCollab = () => {
+        const socket = new WebSocket("ws://localhost:8080")
+        setSocket(socket)
     }
 
     useEffect(() => {
@@ -208,9 +240,20 @@ export default function Player ({isOpen, songs, index, setIndex}: PlayerProps): 
                     </div>
 
                     <div className='flex flex-row items-center w-full justify-end'>
+                    <div className='flex mr-auto ml-4 items-center justify-center'>   
+                        <div className={randomize ? 'text-green-400 hover:cursor-pointer' : 'text-white hover:cursor-pointer'} onClick={() => setRandomize(!randomize)}>
+                            <FaRandom size={22} />
+                        </div>
+                        <div className={repeat ? 'text-green-400 hover:cursor-pointer ml-2' : 'text-white hover:cursor-pointer ml-2'} onClick={() => setRepeat(!repeat)}>
+                            <MdOutlineLoop size={24} />
+                        </div>
+                        <button className='bg-red-800 hover:bg-red-600 text-white' onClick={handleCollab}>
+                            Hey
+                        </button>
+                    </div>     
                     <div className='flex items-center mr-10 w-2/5 justify-center'>
+                    
                         <button className="text-white mr-4 hover:text-green-500" onClick={handlePlayPrevSong}><FaBackwardStep size={20}/></button>
-                        
                             <button
                                 disabled={disabled}
                                 onClick={handleClick}
@@ -219,12 +262,6 @@ export default function Player ({isOpen, songs, index, setIndex}: PlayerProps): 
                                 {isPlaying ? <FaPause size={20} /> : <FaPlay size={20} />}
                             </button>
                             <button className="text-white ml-2 hover:text-green-500" onClick={handlePlayNextSong}><FaForwardStep size={20}/></button>
-                        </div>
-                        <div className={randomize ? 'text-white hover:cursor-pointer' : 'text-green-400 hover:cursor-pointer'} onClick={() => setRandomize(!randomize)}>
-                            <FaRandom size={20} />
-                        </div>
-                        <div className={repeat ? 'text-white hover:cursor-pointer' : 'text-green-400 hover:cursor-pointer'} onClick={() => setRepeat(!repeat)}>
-                            <MdOutlineLoop size={20} />
                         </div>
                         <div className="flex items-center w-1/5 justify-end">
                             <button className="flex justify-center items-center text-white mr-1 rounded-full bg-blue-900 hover:bg-blue-800 w-10 h-6 text-xs text-center" onClick={handleVolumeMute}>
@@ -238,7 +275,7 @@ export default function Player ({isOpen, songs, index, setIndex}: PlayerProps): 
                                 max={1}
                                 step={0.01}
                                 thumbClassName="w-4 h-4 bg-green-400 rounded-full -mt-1 outline-none focus:outline-none hover:bg-blue-400 cursor-pointer"
-                                trackClassName="h-full rounded-full bg-gradient-to-l from-blue-400 to-green-400"
+                                trackClassName="h-full hover:cursor-pointer rounded-full bg-gradient-to-l from-blue-400 to-green-400"
                             />
                         </div>
                     </div>
