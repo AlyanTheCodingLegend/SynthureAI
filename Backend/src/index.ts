@@ -1,14 +1,20 @@
-import { WebSocketServer } from 'ws';
+import { WebSocket } from 'ws';
+import http from 'http';
 import { SessionManager } from './SessionManager';
 
-const wss = new WebSocketServer({ port: 8080 });
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('WebSocket Server\n');
+})
+
+const wss = new WebSocket.Server({ server: server});
 
 const sessionManager = new SessionManager();
 
 wss.on('connection', function connection(ws) {
-  sessionManager.addUser(ws, 100);
+  sessionManager.addHandler(ws);
+});
 
-  ws.on('disconnect', () => {
-    sessionManager.removeUser(ws, 100);
-  });
+server.listen(5000, () => {
+  console.log('Server started on http://localhost:5000');
 });

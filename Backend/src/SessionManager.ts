@@ -1,77 +1,90 @@
-import { WebSocket } from "ws"
-import { Session } from "./Session"
+import { WebSocket, WebSocketServer } from "ws";
+import { User } from "./User";
+import { Session } from "./Session";
 
 export class SessionManager {
-    public sessions: Session[]
+    public sessions: Session[];
 
     constructor() {
-        this.sessions = []
+        this.sessions = [];
     }
 
-    addUser(socket: WebSocket, sessionID: number) {
-        let session = this.sessions.find((session: Session) => session.id === sessionID)
+    addUser(socket: WebSocket, sessionID: number, userID: string, isAdmin: boolean) {
+        const user = new User(userID, socket, isAdmin);
+        let session = this.sessions.find((session: Session) => session.id === sessionID);
         if (!session) {
-            session = new Session()
-            this.sessions.push(session)
+            session = new Session(sessionID);
+            this.sessions.push(session);
         }
-        session.addUser(socket)
+        session.addUser(user);
+        console.log(`User ${userID} joined session ${sessionID} as ${isAdmin ? "admin" : "user"}`)
     }
 
-    removeUser(socket: WebSocket, sessionID: number) {
-        let session = this.sessions.find((session: Session) => session.id === sessionID)
+    removeUser(socket: WebSocket, sessionID: number, userID: string) {
+        let session = this.sessions.find((session: Session) => session.id === sessionID);
         if (!session) {
-            return
+            return;
         }
-        session.removeUser(socket)
+        const user = session.users.find((user: User) => (user.id === userID) && (user.socket === socket));
+        if (user) {
+            session.removeUser(user);
+        }
         if (session.users.length === 0) {
-            this.sessions = this.sessions.filter((session: Session) => session.id !== sessionID)
+            this.sessions = this.sessions.filter((session: Session) => session.id !== sessionID);
         }
+        console.log(`User ${userID} left session ${sessionID}`)
     }
 
-    private addHandler(socket: WebSocket) {
+    addHandler(socket: WebSocket) {
         socket.on('message', (data) => {
-            const message = JSON.parse(data.toString())
-
-            if (message.type === "play") {
-                const session = this.sessions.find((session: Session) => session.id === message.sessionID)
-                if (!session) {
-                    return
-                } else {
-                    session.users.forEach((user: WebSocket) => {
-                        if (user !== socket) {
-                            user.send(JSON.stringify({ type: "play", songs: message.songs, songid: message.songid}))
-                        }
-                    })
-                }
-            } else if (message.type === "pause") {
-                const session = this.sessions.find((session: Session) => session.id === message.sessionID)
-                if (!session) {
-                    return
-                } else {
-                    session.users.forEach((user: WebSocket) => {
-                        if (user !== socket) {
-                            user.send(JSON.stringify({ type: "pause"}))
-                        }
-                    })
-                }
-            } else if (message.type === "seek") {
-                const session = this.sessions.find((session: Session) => session.id === message.sessionID)
-                if (!session) {
-                    return
-                } else {
-                    session.users.forEach((user: WebSocket) => {
-                        if (user !== socket) {
-                            user.send(JSON.stringify({ type: "seek", time: message.time }))
-                        }
-                    })
-                }
-            } else if (message.type === "join") {
-                this.addUser(socket, message.sessionID)
-            } else if (message.type === "leave") {
-                this.removeUser(socket, message.sessionID)
-            } else {
-                console.error("Unknown message type")
+            const message = JSON.parse(data.toString());
+            switch (message.type) {
+                case "sync":
+                    this.broadcast(socket, message.sessionID, JSON.stringify({ type: "sync", songs: message.songs, index: message.index}));
+                    break;
+                case "play":
+                    this.broadcast(socket, message.sessionID, JSON.stringify({ type: "play" }));
+                    break;
+                case "pause":
+                    this.broadcast(socket, message.sessionID, JSON.stringify({ type: "pause" }));
+                    break;
+                case "seek":
+                    this.broadcast(socket, message.sessionID, JSON.stringify({ type: "seek", time: message.time }));
+                    break;
+                case "join":
+                    this.addUser(socket, message.sessionID, message.userID, message.isAdmin);
+                    break;
+                case "leave":
+                    this.removeUser(socket, message.sessionID, message.userID);
+                    break;
+                default:
+                    console.error("Unknown message type");
             }
-        })
+        });
+
+        socket.on('close', () => {
+            this.sessions.forEach(session => {
+                const user = session.users.find(u => u.socket === socket);
+                if (user) {
+                    session.removeUser(user);
+                    if (session.users.length === 0) {
+                        this.sessions = this.sessions.filter(s => s !== session);
+                    }
+                }
+            });
+        });
+    }
+
+    private broadcast(socket: WebSocket, sessionID: number, message: string) {
+        const session = this.sessions.find((session: Session) => session.id === sessionID);
+        if (!session) {
+            return;
+        }
+        session.users.forEach((user: User) => {
+            if (user.socket !== socket) {
+                user.socket.send(message);
+            }
+        });
     }
 }
+

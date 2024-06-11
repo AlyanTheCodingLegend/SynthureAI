@@ -1,19 +1,19 @@
-import { WebSocket } from "ws";
+import { User } from "./User";
 
 export class Session {
-    public id : number;
-    public users : WebSocket[];
+    public id: number;
+    public users: User[];
 
-    constructor() {
-        this.id = Math.floor(Math.random() * 900) + 100;
+    constructor(id: number) {
+        this.id = id;
         this.users = [];
     }
 
-    addUser(socket: WebSocket) {
-        this.users.push(socket)
+    addUser(user: User) {
+        this.users.push(user);
     }
 
-    removeUser(socket: WebSocket) {
-        this.users = this.users.filter((user: WebSocket ) => user !== socket)
+    removeUser(user: User) {
+        this.users = this.users.filter((u: User) => u.id !== user.id);
     }
 }

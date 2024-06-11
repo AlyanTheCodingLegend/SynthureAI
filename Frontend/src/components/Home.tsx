@@ -61,7 +61,7 @@ export default function Home(): JSX.Element | undefined {
             <div className="flex h-screen overflow-none">
                 <Sidebar isOpen={isOpen} toggleSidebar={toggleSidebar} setSignOut={setSignOut}/>
                 {openPlaylist ? <ShowPlaylistModel isOpen={isOpen} playPlaylistID={playPlaylistID} setPlayPlaylistID={setPlayPlaylistID} playlistid={playlistID} setOpenPlaylist={setOpenPlaylist} isUniversallyPlaying={isUniversallyPlaying} setIsUniversallyPlaying={setIsUniversallyPlaying} setSongArray={setSongArray} setIndex={setIndex} username={username} index={index}/> : <Layout isOpen={isOpen} setSongArray={setSongArray} username={username} setOpenPlaylist={setOpenPlaylist} setPlaylistID={setPlaylistID}/>}
-                <Player isOpen={isOpen} songs={songArray} index={index} setIndex={setIndex}/>
+                <Player isOpen={isOpen} songs={songArray} setSongs={setSongArray} index={index} setIndex={setIndex}/>
             </div>    
         )
     }
