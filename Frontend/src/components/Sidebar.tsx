@@ -9,7 +9,7 @@ import { PiPlaylistDuotone, PiSignOut } from "react-icons/pi";
 import { LuUpload } from "react-icons/lu";
 import { RiRobot2Line } from "react-icons/ri";
 import { LiaSpotify } from "react-icons/lia";
-import { CgOptions } from "react-icons/cg";
+import { CgMediaLive, CgOptions } from "react-icons/cg";
 import { ImLab } from "react-icons/im";
 import PlaylistModel from "./PlaylistModel";
 import SongUploadModel from "./SongUploadModel";
@@ -17,15 +17,25 @@ import { ClipLoader } from "react-spinners";
 
 type SidebarProps = {
   isOpen: boolean;
+  socket: WebSocket | null;
+  sessionID: number;
+  userID: string;
+  isAdmin: boolean;
+  songs: Array<string>;
+  index: number;
+  setSessionID: (value: number) => void;
+  setSocket: (value: WebSocket | null) => void;
   toggleSidebar: () => void;
   setSignOut: (value: boolean) => void;
+  setIsAdmin: (value: boolean) => void;
 }
 
-export default function Sidebar ({isOpen, toggleSidebar, setSignOut}: SidebarProps): JSX.Element {
+export default function Sidebar ({isOpen, isAdmin, socket, userID, songs, index, sessionID, setSessionID, setSocket, toggleSidebar, setSignOut, setIsAdmin}: SidebarProps): JSX.Element {
     
     const [pfpPath, setPfpPath] = useState<string | null>(null)
     const [isPlaylistModalOpen, setPlaylistModalOpen] = useState<boolean>(false)
     const [isUploadModelOpen, setUploadModelOpen] = useState<boolean>(false)
+    const [tempSessionID, setTempSessionID] = useState<number>(-1)
 
     const usernameData = useParams()
     const username = usernameData.username || ""
@@ -35,7 +45,29 @@ export default function Sidebar ({isOpen, toggleSidebar, setSignOut}: SidebarPro
     function addTimestampToUrl(url: string) {
       var timestamp = new Date().getTime();
       return url + (url.indexOf('?') === -1 ? '?' : '&') + 'timestamp=' + timestamp;
-    } 
+    }
+    
+    function generateSessionID() {
+      return (Math.floor(Math.random() * 900) + 100);
+    }
+
+    const startSession = async () => {
+      setIsAdmin(true)
+
+      const sessionId = generateSessionID()
+      setSessionID(sessionId)
+    
+      const socket = new WebSocket("ws://localhost:5000")
+      setSocket(socket)
+    }
+
+    const endSession = () => {
+      socket?.send(JSON.stringify({ type: "leave", sessionID: sessionID, userID: userID }))
+      socket?.close()
+      setSessionID(-1)
+      setIsAdmin(false)
+      setSocket(null)
+    }
 
     const togglePlaylistModal = () => {
       setPlaylistModalOpen(!isPlaylistModalOpen);
@@ -43,6 +75,20 @@ export default function Sidebar ({isOpen, toggleSidebar, setSignOut}: SidebarPro
 
     const toggleUploadModal = () => {
       setUploadModelOpen(!isUploadModelOpen);
+    }  
+
+    const handleSyncing = () => {
+      if (isAdmin) {
+        socket?.send(JSON.stringify({ type: "sync", sessionID: sessionID, songs: songs, index: index }))
+      } else {
+        toast.error("Only the session admin can sync songs", toast_style)
+      }  
+    }
+
+    const handleSessionID = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (Number(e.target.value) >= 100 && Number(e.target.value) <= 999){
+        setTempSessionID(Number(e.target.value))
+      }  
     }  
 
     const handleClick = async () => {
@@ -54,6 +100,19 @@ export default function Sidebar ({isOpen, toggleSidebar, setSignOut}: SidebarPro
         navigate('/login')
       }
       setSignOut(false)
+    }
+
+    const joinSession = () => {
+      if (tempSessionID !== -1) {
+        setIsAdmin(false)
+
+        setSessionID(tempSessionID)
+      
+        const socket = new WebSocket("ws://localhost:5000")
+        setSocket(socket)
+      } else {
+        toast.error("Please enter a valid session ID", toast_style)
+      }  
     }
 
     useEffect(() => {
@@ -138,6 +197,44 @@ export default function Sidebar ({isOpen, toggleSidebar, setSignOut}: SidebarPro
               <RiRobot2Line size={30} className="mr-2" />
               Create AI-Generated Songs
             </div>
+          </div>
+          {(!socket) ? (
+          <div className="relative group">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-700 to-purple-700 rounded-xl blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>  
+            <div
+              className="relative flex items-center justify-center p-4 text-gray-400 cursor-pointer transition duration-300 rounded-xl bg-black hover:text-white text-center"
+              onClick={startSession}
+            >
+              <CgMediaLive size={30} className="mr-2" />
+              Create a real-time collaborative session
+            </div>
+          </div>) : (
+            <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-700 to-purple-700 rounded-xl blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>  
+              <div
+                className="relative flex items-center justify-center p-4 text-gray-400 cursor-pointer transition duration-300 rounded-xl bg-black hover:text-white text-center"
+              >
+                <CgMediaLive size={30} className="mr-2" />
+                {`Connected to session: ${sessionID}`}
+                <div>
+                  <button className="bg-green-800 hover:bg-green-600 text-white rounded-lg mb-1" onClick={handleSyncing}>Sync songs</button>
+                  <button className="bg-red-800 hover:bg-red-600 text-white rounded-lg" onClick={endSession}>Disconnect</button>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-700 to-purple-700 rounded-xl blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+              <div
+                className="relative flex items-center justify-center p-4 text-gray-400 cursor-pointer transition duration-300 rounded-xl bg-black group-hover:text-white text-center text-xl"
+              >
+                <PiPlaylistDuotone size={30} className="mr-2" />
+                <div>
+                  <div className="text-lg">Join A Collaborative Session</div>
+                  <input type="number" onChange={handleSessionID} min={100} max ={999} className="text-white rounded-md text-center bg-black border border-white "/>
+                </div>
+                <button className={socket!==null ? "cursor-not-allowed bg-gray-600 text-white rounded-lg" :"bg-green-800 text-white hover:bg-green-600 rounded-lg"} onClick={joinSession} disabled={socket!==null}>Join</button>
+              </div>
           </div>
           <div>
             <div className="border border-opacity-100 border-gray-300"></div>

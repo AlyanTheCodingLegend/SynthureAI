@@ -120,15 +120,15 @@ export function ProfilePage(): JSX.Element {
                     toast.error(compareErr.message, toast_style);
                   } else {
                       if (result) {
-                        console.log(userID)
+              
                         if (userID !== null) {
-                          console.log("yes2")
+            
                           const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userID);
                           if (deleteUserError) {
                             setIsLoading(false);
                             toast.error(deleteUserError.message, toast_style);
                           } else {
-                            console.log("yes3")
+                            
                             toast.success('Account has been successfully deleted', toast_style);
                             navigate('/login');
                             setIsLoading(false)
