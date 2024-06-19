@@ -3,7 +3,7 @@ import { BiArrowToLeft, BiArrowToRight } from "react-icons/bi";
 import './Sidebar.css';
 import { useNavigate, useParams } from "react-router-dom";
 import supabase from "./ClientInstance";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import toast_style from "./ToastStyle";
 import { PiPlaylistDuotone, PiSignOut } from "react-icons/pi";
 import { LuUpload } from "react-icons/lu";
@@ -14,6 +14,7 @@ import { ImLab } from "react-icons/im";
 import PlaylistModel from "./PlaylistModel";
 import SongUploadModel from "./SongUploadModel";
 import { ClipLoader } from "react-spinners";
+import usePfp from "../hooks/usePfp";
 
 type SidebarProps = {
   isOpen: boolean;
@@ -42,6 +43,16 @@ export default function Sidebar ({isOpen, isAdmin, socket, userID, songs, index,
 
     const navigate = useNavigate()
 
+    const {data: pfpData, error: pfpError} = usePfp(username)
+    
+    useEffect(() => {
+      if (pfpError) {
+        toast.error(pfpError, toast_style)
+      } else if (pfpData) {
+        setPfpPath(addTimestampToUrl(pfpData))
+      }
+    }, [pfpData, pfpError])  
+
     function addTimestampToUrl(url: string) {
       var timestamp = new Date().getTime();
       return url + (url.indexOf('?') === -1 ? '?' : '&') + 'timestamp=' + timestamp;
@@ -63,10 +74,6 @@ export default function Sidebar ({isOpen, isAdmin, socket, userID, songs, index,
 
     const endSession = () => {
       socket?.send(JSON.stringify({ type: "leave", sessionID: sessionID, userID: userID }))
-      socket?.close()
-      setSessionID(-1)
-      setIsAdmin(false)
-      setSocket(null)
     }
 
     const togglePlaylistModal = () => {
@@ -114,22 +121,6 @@ export default function Sidebar ({isOpen, isAdmin, socket, userID, songs, index,
         toast.error("Please enter a valid session ID", toast_style)
       }  
     }
-
-    useEffect(() => {
-      const loadPfp = async () => {
-        if (username) {
-          const {data, error} = await supabase.from('user_information').select('pfp_path').eq('username', username)
-          if (error) {
-            toast.error(error.message, toast_style)
-          } else {
-            if (data[0].pfp_path) {
-              setPfpPath(addTimestampToUrl(data[0].pfp_path))
-            }
-          }
-        } 
-      }
-      loadPfp()  
-    },[username])
 
   return (
     <div className={`sidebar ${isOpen ? '' : 'collapsed'} transition-width`}>
@@ -270,7 +261,6 @@ export default function Sidebar ({isOpen, isAdmin, socket, userID, songs, index,
           <SongUploadModel username={username} onClick={toggleUploadModal}/>
         </div>
       )}
-      <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark' />
     </div> 
   );
 };

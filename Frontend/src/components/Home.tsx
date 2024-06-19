@@ -5,7 +5,7 @@ import Layout from "./Layout";
 import { useNavigate, useParams } from "react-router-dom";
 import ShowPlaylistModel from "./ShowPlaylistModel";
 import { BounceLoader } from "react-spinners";
-import supabase from "./ClientInstance";
+import useVerifyUsername from "../hooks/useVerifyUsername";
 
 export default function Home(): JSX.Element | undefined {
     const [isOpen, setIsOpen] = useState<boolean>(true);
@@ -28,28 +28,20 @@ export default function Home(): JSX.Element | undefined {
     const userData = useParams()
     const navigate = useNavigate()
 
+    const {data, error} = useVerifyUsername(userData.username)
+    
     useEffect(() => {
-        async function verifyUsername() {
-            const tempUsername = userData.username || ""
-            if (tempUsername!=="") {
-                const {data, error} = await supabase.from('user_information').select('*').eq('username', tempUsername)
-                if (error) {
-                    navigate('/login')
-                } else {
-                    if (data.length===0) {
-                        navigate('/login')
-                    } else {
-                        setUserID(data[0].userid)
-                        setUsername(tempUsername)
-                        setVerified(true)
-                    }
-                }
+        if (error) {
+            navigate('/login')
+        } else {
+            if (data) {
+                setUsername(data.verifusername)
+                setUserID(data.userid)
+                setVerified(true)
             }
         }
-        verifyUsername()
-    // eslint-disable-next-line    
-    }, [userData])        
-
+    }, [data, error])    
+        
     if (signOut) {
         return (
         <div className="w-screen h-screen flex flex-col items-center justify-center bg-gradient-to-b from-black to-slate-700 z-40">
@@ -66,7 +58,7 @@ export default function Home(): JSX.Element | undefined {
             <div className="flex h-screen overflow-none">
                 <Sidebar isAdmin={isAdmin} isOpen={isOpen} userID={userID} songs={songArray} index={index} setIsAdmin={setIsAdmin} socket={socket} sessionID={sessionID} setSessionID={setSessionID} setSocket={setSocket} toggleSidebar={toggleSidebar} setSignOut={setSignOut}/>
                 {openPlaylist ? <ShowPlaylistModel isOpen={isOpen} playPlaylistID={playPlaylistID} setPlayPlaylistID={setPlayPlaylistID} playlistid={playlistID} setOpenPlaylist={setOpenPlaylist} isUniversallyPlaying={isUniversallyPlaying} setIsUniversallyPlaying={setIsUniversallyPlaying} setSongArray={setSongArray} setIndex={setIndex} username={username} index={index}/> : <Layout isOpen={isOpen} setSongArray={setSongArray} username={username} setOpenPlaylist={setOpenPlaylist} setPlaylistID={setPlaylistID}/>}
-                <Player isOpen={isOpen} isAdmin={isAdmin} userID={userID} songs={songArray} setSongs={setSongArray} index={index} setIndex={setIndex} sessionID={sessionID} socket={socket}/>
+                <Player isOpen={isOpen} setSessionID={setSessionID} setSocket={setSocket} setIsAdmin={setIsAdmin} isAdmin={isAdmin} userID={userID} songs={songArray} setSongs={setSongArray} index={index} setIndex={setIndex} sessionID={sessionID} socket={socket}/>
             </div>    
         )
     }

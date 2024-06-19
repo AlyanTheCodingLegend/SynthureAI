@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import supabase from "./ClientInstance"
-import { ToastContainer, toast } from "react-toastify"
+import { toast } from "react-toastify"
 import toast_style from "./ToastStyle"
 import { useNavigate } from "react-router-dom"
 import { IoMdClose } from "react-icons/io";
@@ -58,7 +58,7 @@ export default function PlaylistModel ({username, onClick}: PlaylistModelProps):
                     Create Playlist
                 </button>
             </div>
-            <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
+            
         </div>
 
     )

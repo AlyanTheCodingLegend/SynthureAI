@@ -5,3 +5,8 @@ type Song = {
     artist_name: string;
     image_path: string;
 }
+
+type Playlist = {
+    playlist_id: string;
+    playlist_name: string;
+}

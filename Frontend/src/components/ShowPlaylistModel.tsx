@@ -10,6 +10,7 @@ import { MdDeleteForever } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { BeatLoader } from "react-spinners";
 import "./NoScrollbar.css"
+import useSongsFromPlaylist from "../hooks/useSongsFromPlaylist";
 
 type ShowPlaylistModelProps = {
     isOpen: boolean;
@@ -26,7 +27,7 @@ type ShowPlaylistModelProps = {
 }
 
 export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlaylistID, playlistid, setOpenPlaylist, isUniversallyPlaying, setIsUniversallyPlaying, setSongArray, setIndex, username, index}: ShowPlaylistModelProps): JSX.Element {
-    const [name, setName] = useState<Array<string> | null>(null)
+    const [name, setName] = useState<string | null>(null)
     const [songnames, setSongnames] = useState<Array<string>>([])
     const [images, setImages] = useState<Array<string>>([])
     const [artists, setArtists] = useState<Array<string>>([])
@@ -36,53 +37,21 @@ export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlayli
 
     const navigate = useNavigate()
 
+    const {data, error} = useSongsFromPlaylist(playlistid, setIsLoading)
+
     useEffect(() => {
-        async function loadSongsFromPlaylist(playlistID: number) {
-            try {    
-                let songArray=[]
-                let songNameArray=[]
-                let imageArray=[]
-                let indexArray=[]
-                let artistArray=[]
-                let songDataArray=[]
-                const {data: playlistData, error: playlistError} = await supabase.from('playlist_information').select('playlist_name').eq('playlist_id', playlistID)
-                if (playlistError) throw playlistError
-                setName(playlistData[0].playlist_name)   
-                const {data, error} = await supabase.from('playlistsong_information').select('song_id').eq('playlist_id', playlistID)
-                if (error) throw error
-                if (data.length!==0) {
-                    for (let i=0;i<data.length;i++) {
-                        songDataArray.push(data[i].song_id)
-                    }
-                    const {data: songData, error: songError} = await supabase.from('song_information').select('*').in('id', songDataArray)
-                    if (songError) throw songError
-                    for (let j=0;j<songData.length;j++) {
-                        songArray.push(songData[j].song_path)
-                        songNameArray.push(songData[j].song_name)
-                        imageArray.push(songData[j].image_path)
-                        indexArray.push(songData[j].id)
-                        artistArray.push(songData[j].artist_name)
-                    }
-
-                    setBackupSongs(songArray)
-                    setIndexes(indexArray)
-                    setSongnames(songNameArray)
-                    setImages(imageArray)
-                    setArtists(artistArray)
-                }
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    toast.error(error.message, toast_style)
-                }    
-            } finally {
-                setIsLoading(false)
-            }    
+        if (error) {
+            toast.error(error, toast_style)
+        } else if (data) {
+            setName(data.name)
+            setSongnames(data.songnames)
+            setImages(data.images)
+            setArtists(data.artists)
+            setIndexes(data.indexes)
+            setBackupSongs(data.backupsongs)
         }
-
-        loadSongsFromPlaylist(playlistid)
-    // eslint-disable-next-line
-    }, [])
-
+    }, [data, error])    
+      
     const removeFromPlaylist = async (songindex: number) => {
         const {error} = await supabase.from("playlistsong_information").delete().eq('playlist_id', playlistid).eq('song_id', indexes[songindex])
         if (error) {
@@ -94,7 +63,6 @@ export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlayli
             setArtists(prevArtists => prevArtists.filter(s => s !== artists[songindex]))
             setIndexes(prevIndexes => prevIndexes.filter(s => s !== indexes[songindex]))
         }
-        
     }
 
     const deletePlaylist = async () => {

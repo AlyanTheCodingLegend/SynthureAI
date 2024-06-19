@@ -13,16 +13,23 @@ export class SessionManager {
         const user = new User(userID, socket, isAdmin);
         let session = this.sessions.find((session: Session) => session.id === sessionID);
         if (!session) {
-            session = new Session(sessionID);
-            this.sessions.push(session);
+            if (isAdmin) {
+                session = new Session(sessionID);
+                this.sessions.push(session);
+            } else {
+                socket.send(JSON.stringify({ type: "joinerror", message: "Session does not exist!" }));
+                return;
+            }    
         }
         session.addUser(user);
-        console.log(`User ${userID} joined session ${sessionID} as ${isAdmin ? "admin" : "user"}`)
+        socket.send(JSON.stringify({ type: "joinsuccess", message: `Joined the session ${(isAdmin) ? "as an admin" : "as a member"}` }));
+        console.log(`User ${userID} joined session ${sessionID} as ${isAdmin ? "admin" : "member"}`);
     }
 
     removeUser(socket: WebSocket, sessionID: number, userID: string) {
         let session = this.sessions.find((session: Session) => session.id === sessionID);
         if (!session) {
+            socket.send(JSON.stringify({ type: "leaveerror", message: "Session does not exist!" }));
             return;
         }
         const user = session.users.find((user: User) => (user.id === userID) && (user.socket === socket));
@@ -32,6 +39,7 @@ export class SessionManager {
         if (session.users.length === 0) {
             this.sessions = this.sessions.filter((session: Session) => session.id !== sessionID);
         }
+        socket.send(JSON.stringify({ type: "leavesuccess", message: "Left the session" }));
         console.log(`User ${userID} left session ${sessionID}`)
     }
 
@@ -42,6 +50,9 @@ export class SessionManager {
                 case "sync":
                     this.broadcast(socket, message.sessionID, JSON.stringify({ type: "sync", songs: message.songs, index: message.index}));
                     break;
+                case "nextsong":
+                    this.broadcast(socket, message.sessionID, JSON.stringify({ type: "nextsong", index: message.index }));
+                    break;    
                 case "play":
                     this.broadcast(socket, message.sessionID, JSON.stringify({ type: "play" }));
                     break;

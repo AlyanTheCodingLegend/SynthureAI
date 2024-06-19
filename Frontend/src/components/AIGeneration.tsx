@@ -1,37 +1,29 @@
 import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
-import supabase from "./ClientInstance"
-import { ToastContainer, toast } from "react-toastify"
+import { toast } from "react-toastify"
 import toast_style from "./ToastStyle"
 import { IoMdClose } from "react-icons/io"
 import { FaPlus } from "react-icons/fa6"
 import { BeatLoader } from "react-spinners"
+import useSongs from "../hooks/useSongs"
 
 export default function AIGeneration(): JSX.Element {
     const [songs, setSongs] = useState<Array<Song>>([])
     const [isLoading, setIsLoading] = useState<boolean>(false)
 
-    const {username} = useParams()
+    const paramData = useParams()
+    const username = paramData.username || ""
     
+    const {data: songData, error: songError} = useSongs(username)
+
     useEffect(() => {
-        async function loadSongs() {   
-            setIsLoading(true)
-            try {
-                const {data, error} = await supabase.from('song_information').select('*').eq('uploaded_by', username)
-                if (error) throw error
-
-                setSongs(data)
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    toast.error(error.message, toast_style)
-                }    
-            } finally {
-                setIsLoading(false)
-            }   
+        if (songError) {
+            toast.error(songError.message, toast_style)
+        } else if (songData) {
+            setSongs(songData)
         }
-
-        loadSongs()
-    }, [username])
+        setIsLoading(false)
+    }, [songData, songError]) 
 
     const handleClick = async (songID: number) => {
         console.log(songID)   
@@ -70,7 +62,6 @@ export default function AIGeneration(): JSX.Element {
                 <div className="text-white text-lg">Loading...</div>
             )}
             </div>
-            <ToastContainer position="top-right" autoClose={700} hideProgressBar={true} closeOnClick pauseOnHover draggable theme='dark'/>
         </div>
     )
 }

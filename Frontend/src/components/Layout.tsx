@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import toast_style from "./ToastStyle";
-import supabase from "./ClientInstance";
 import "./NoScrollbar.css"
 import "./InputCustom.css"
 import { BeatLoader } from "react-spinners";
 import { FaRegCirclePause, FaRegCirclePlay } from "react-icons/fa6";
+import useSongs from "../hooks/useSongs";
+import usePlaylists from "../hooks/usePlaylists";
 
 type LayoutProps = {
     isOpen: boolean;
@@ -15,47 +16,31 @@ type LayoutProps = {
     setPlaylistID: React.Dispatch<React.SetStateAction<number>>;
 }
 
-type Playlist = {
-    playlist_id: string;
-    playlist_name: string;
-}
-
 export default function Layout({isOpen, username, setOpenPlaylist, setSongArray, setPlaylistID}: LayoutProps): JSX.Element {
     const [playlists, setPlaylists] = useState<Array<Playlist>>([])
-    const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [isLoading, setIsLoading] = useState<boolean>(true)
     const [songs, setSongs] = useState<Array<Song>>([])
     const [songName, setSongName] = useState<string>("")
     const [filteredSongs, setFilteredSongs] = useState<Array<Song>>([])
     const [songPlaying, setSongPlaying] = useState<number>(-1)
     
+    const {data: playlistData, error: playlistError} = usePlaylists(username)
+    const {data: songData, error: songError} = useSongs(username)
+
     useEffect(() => {
-        async function loadPlaylists() {
-            setIsLoading(true)
-            const {data, error} = await supabase.from('playlist_information').select('playlist_id, playlist_name').eq('created_by', username)
-            if (error) {
-                toast.error(error.message, toast_style)
-            } else {
-                setPlaylists(data)
-            }
+        if (playlistError) {
+            toast.error(playlistError, toast_style)
+        } else if (playlistData) {
+            setPlaylists(playlistData)
             setIsLoading(false)
         }
 
-        async function loadSongs() {
-            try {
-                const {data, error} = await supabase.from('song_information').select('*').eq('uploaded_by', username)
-                if (error) throw error
-
-                setSongs(data)
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    toast.error(error.message, toast_style)
-                }
-            }
+        if (songError) {
+            toast.error(songError.message, toast_style)
+        } else if (songData) {
+            setSongs(songData)
         }
-
-        loadPlaylists()
-        loadSongs()
-    }, [username])
+    }, [playlistData, playlistError, songData, songError])
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSongName(e.target.value)

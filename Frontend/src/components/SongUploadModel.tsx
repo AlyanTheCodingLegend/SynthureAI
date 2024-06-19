@@ -1,6 +1,6 @@
 import supabase from './ClientInstance';
 import React, { useState } from 'react';
-import { ToastContainer, toast} from "react-toastify";
+import { toast} from "react-toastify";
 import toast_style from './ToastStyle';
 import { IoMdClose } from "react-icons/io";
 import { FadeLoader } from 'react-spinners';
@@ -157,7 +157,7 @@ export default function SongUploadModel ({username, onClick}: SongUploadModelPro
                     {isProcessing ? <FadeLoader color='#ffffff' radius={1}/> : "Upload Song"}
                 </button>
             </div>
-            <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
+            
         </form>
     )
 }

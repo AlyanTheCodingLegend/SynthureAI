@@ -1,64 +1,33 @@
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import supabase from "./ClientInstance";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import toast_style from "./ToastStyle";
 import { BeatLoader } from "react-spinners";
 import { Link, useParams } from "react-router-dom";
 import { IoMdClose } from "react-icons/io";
 import { FaPlus } from "react-icons/fa6";
 import "./NoScrollbar.css"
+import useFilteredSongs from "../hooks/useFilteredSongs";
 
 export default function AddSongModel(): JSX.Element {
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [songs, setSongs] = useState<Array<Song>>([])
 
-    const {username, playlistid} = useParams()
+    const paramData = useParams()
+    const username = paramData.username || ""
+    const playlistid = paramData.playlistid || ""
+
+    const {data: songData, error: songError} = useFilteredSongs(username, playlistid)
     
     useEffect(() => {
-        const loadSongs = async () => {   
-            try {
-                let songIDs=[]
-                let filteredSongs=[]
-                let playlistsongIDs=[]
-                const {data, error} = await supabase.from('song_information').select('*').eq('uploaded_by', username)
-                if (error) throw error
-
-                for (let i=0;i<data.length;i++) {
-                    songIDs.push(data[i].id)
-                }
-
-                const {data: playlistSongs, error: playlistError} = await supabase.from('playlistsong_information').select('song_id').eq('playlist_id', playlistid).in('song_id', songIDs)
-                if (playlistError) throw playlistError
-
-                for (let i=0;i<playlistSongs.length;i++) {
-                    playlistsongIDs.push(playlistSongs[i].song_id)
-                }
-
-                for (let i=0;i<songIDs.length;i++) {
-                    if (!playlistsongIDs.includes(songIDs[i])) {
-                        filteredSongs.push(songIDs[i])
-                    }
-                }        
-
-                const {data: songsData, error: songsError} = await supabase.from('song_information').select('*').in('id', filteredSongs)
-                if (songsError) throw songsError
-
-                setSongs(songsData)
-
-                setIsLoading(false)
-
-                
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    toast.error(error.message, toast_style)
-                }    
-            }    
+        if (songError) {
+            toast.error(songError.message, toast_style)
+        } else if (songData) {
+            setSongs(songData)
         }
-
-        loadSongs()
-    // eslint-disable-next-line    
-    }, [])    
-
+        setIsLoading(false)
+    }, [songData, songError])    
+    
     const handleClick = async (song: Song) => {
         const {error} = await supabase.from('playlistsong_information').insert({playlist_id: playlistid, song_id: song.id})
 
@@ -95,7 +64,7 @@ export default function AddSongModel(): JSX.Element {
                         <div className="text-xl">{song.song_name}</div>
                         <div className="text-sm">By: {song.artist_name}</div>
                     </div>
-                    <div className="flex flex-row text-green-500 hover:text-white ml-auto mr-4" onClick={()=>handleClick(song)}><FaPlus size={30}/></div>
+                    <div className="flex flex-row text-green-500 hover:text-white ml-auto mr-4 cursor-pointer" onClick={()=>handleClick(song)}><FaPlus size={30}/></div>
                 </div>
             )))) : (
                 <div className="text-white text-lg">No songs to add, try uploading some to add them to this playlist!</div>
@@ -103,7 +72,7 @@ export default function AddSongModel(): JSX.Element {
                 <div className="text-white text-lg w-full h-full flex justify-center items-center">Loading...</div>
             )}
             </div>
-            <ToastContainer position="top-right" autoClose={700} hideProgressBar={true} closeOnClick pauseOnHover draggable theme='dark'/>
+            
         </div>
     )
 }

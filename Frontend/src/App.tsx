@@ -5,6 +5,7 @@ import { ProfilePage } from "./components/ProfilePage";
 import Home from "./components/Home";
 import AIGeneration from "./components/AIGeneration";
 import Navigator from "./components/Navigator";
+import { ToastContainer } from "react-toastify";
 
 function App(): JSX.Element {
   const router=createBrowserRouter([
@@ -41,7 +42,10 @@ function App(): JSX.Element {
     basename: '/SynthureAI'
   })
   return (
-    <RouterProvider router={router}/>
+    <>
+      <RouterProvider router={router}/>
+      <ToastContainer containerId={1} position="top-right" autoClose={1000} hideProgressBar={false} theme='dark'/>
+    </>
   )
 }
 

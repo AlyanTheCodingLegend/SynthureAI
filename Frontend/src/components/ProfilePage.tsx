@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { ToastContainer, toast } from "react-toastify"
+import { toast } from "react-toastify"
 import toast_style from "./ToastStyle"
 import supabase from "./ClientInstance"
 import 'react-toastify/dist/ReactToastify.css'
@@ -7,6 +7,8 @@ import bcrypt from 'bcryptjs'
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { SlEye } from "react-icons/sl"
 import { BounceLoader, ClipLoader } from "react-spinners"
+import usePfp from "../hooks/usePfp"
+import usePlaylists from "../hooks/usePlaylists"
 
 export function ProfilePage(): JSX.Element {
     const [popup, setPopup] = useState<boolean>(false)
@@ -16,30 +18,30 @@ export function ProfilePage(): JSX.Element {
     const [pass, setPass] = useState<string>("")
     const [userID, setUserID] = useState<string | null>(null)
     const [pfp, setPfp] = useState<Array<File>>([])
-    const [playlists, setPlaylists] = useState<Array<string>>([])
+    const [playlists, setPlaylists] = useState<Array<Playlist>>([])
     const [pfpPath, setPfpPath] = useState<string>("")
     const [newPfpPath, setNewPfpPath] = useState<string>("")
 
     const navigate = useNavigate()
 
-    const { username } = useParams()
+    const userData = useParams()
+    const username = userData.username || ""
+
+    const {data: pfpData, error: pfpError} = usePfp(username)
+    const {data: playlistData, error: playlistError} = usePlaylists(username)
 
     useEffect(() => {
-      const loadPfp = async () => {
-        if (username) {
-          const {data, error} = await supabase.from('user_information').select('pfp_path').eq('username', username)
-          if (error) {
-            toast.error(error.message, toast_style)
-          } else {
-            if (data.length !== 0) {
-              setPfpPath(data[0].pfp_path)
-            }
-          }
-        }
+      if (pfpError) {
+          toast.error(pfpError, toast_style)
+      } else if (pfpData) {
+          setPfpPath(pfpData)
       }
-
-      loadPfp()
-    }, [username])
+      if (playlistError) {
+          toast.error(playlistError, toast_style)
+      } else if (playlistData) {
+          setPlaylists(playlistData)
+      }
+    }, [pfpData, pfpError, playlistData, playlistError])  
     
     const handleClick = async () => {
         setSignOut(true)
@@ -60,24 +62,24 @@ export function ProfilePage(): JSX.Element {
       }  
     }
 
-    useEffect(() => {
-      const loadPlaylists = async () => {
-        let userplaylists=[]
-        const {data, error} = await supabase.from('playlist_information').select("playlist_name").eq('created_by', username)
-        if (error) {
-          toast.error("Error loading playlists!", toast_style)
-        } else {
-          if (data.length !== 0) {
-            for (let i = 0; i < data.length; i++) {
-              userplaylists.push(data[i].playlist_name)
-            }
-            setPlaylists(userplaylists)
-          }
-        }
-      }
+    // useEffect(() => {
+    //   const loadPlaylists = async () => {
+    //     let userplaylists=[]
+    //     const {data, error} = await supabase.from('playlist_information').select("playlist_name").eq('created_by', username)
+    //     if (error) {
+    //       toast.error("Error loading playlists!", toast_style)
+    //     } else {
+    //       if (data.length !== 0) {
+    //         for (let i = 0; i < data.length; i++) {
+    //           userplaylists.push(data[i].playlist_name)
+    //         }
+    //         setPlaylists(userplaylists)
+    //       }
+    //     }
+    //   }
 
-      loadPlaylists()
-    }, [username])  
+    //   loadPlaylists()
+    // }, [username])  
 
     const handleSubmit = async () => {
       const {error} = await supabase.storage.from('images').upload(`${username}/pfp.${pfp[0]?.type.replace('image/', '')}`, pfp[0], { cacheControl: '3600', upsert: true, contentType: pfp[0] ? pfp[0].type: "image/jpeg"})
@@ -247,7 +249,7 @@ export function ProfilePage(): JSX.Element {
                         {playlists && playlists.length !== 0 ? (
                             playlists.map((playlist, index) => (
                                 <div key={index} className="flex items-center justify-between bg-blue-700 hover:bg-blue-900 hover:cursor-pointer rounded-lg p-2" onClick={()=>navigate(`/${username}`)}>
-                                    <div className="text-lg">{playlist}</div>
+                                    <div className="text-lg">{playlist.playlist_name}</div>
                                     <div className="text-xl">🎵</div>
                                 </div>
                             ))
@@ -256,7 +258,7 @@ export function ProfilePage(): JSX.Element {
                         )}
                     </div>
                 </div>
-                <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme="dark" />
+                
             </div>
         </div>
     );

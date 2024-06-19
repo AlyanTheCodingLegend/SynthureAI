@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
 import { BounceLoader } from "react-spinners";
 import { SlEye } from "react-icons/sl";
@@ -163,7 +163,7 @@ export function CreateUser(): JSX.Element {
                     <p className="text-xl">🤘 Vibe On! 🤘</p>
                 </div>
             </div>
-            <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark' />
+            
         </div>
     )
 }
@@ -316,7 +316,7 @@ export function AuthUser(): JSX.Element {
                     <p className="text-xl">🤘 Vibe On 😎 🤘</p>
                 </div>
             </div>
-            <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} closeOnClick pauseOnHover draggable theme='dark'/>
+            
         </div>
     )
 }

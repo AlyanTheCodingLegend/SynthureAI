@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { FaPlay, FaPause, FaForwardStep, FaBackwardStep } from "react-icons/fa6";
 import { FaVolumeMute, FaVolumeUp, FaRandom } from "react-icons/fa";
 import { MdOutlineLoop } from "react-icons/md";
+import { toast } from 'react-toastify';
 
 type PlayerProps = {
     isOpen: boolean;
@@ -16,9 +17,12 @@ type PlayerProps = {
     socket: WebSocket | null;
     setSongs: (value: string[]) => void;
     setIndex: (value: number) => void;
+    setSocket: (value: WebSocket | null) => void;
+    setIsAdmin: (value: boolean) => void;
+    setSessionID: (value: number) => void;
 }
 
-export default function Player ({isOpen, songs, index, sessionID, userID, isAdmin, socket, setSongs, setIndex}: PlayerProps): JSX.Element {
+export default function Player ({isOpen, songs, index, sessionID, userID, isAdmin, socket, setSongs, setIndex, setSessionID, setIsAdmin, setSocket}: PlayerProps): JSX.Element {
     const [isPlaying, setIsPlaying] = useState<boolean>(false)
     const [song, setSong] = useState<Howl | null>(null)
     const [duration, setDuration] = useState<number>(0)
@@ -66,9 +70,9 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
                 onload: () => {
                     setDuration(newSong.duration());
                     setDisabled(false);
-                    // if (socket?.readyState===WebSocket.OPEN && isAdmin) {
-                    //     socket?.send(JSON.stringify({ type: "play", sessionID: sessionID }))
-                    // } 
+                    if (socket!==null && isAdmin) {
+                        socket?.send(JSON.stringify({ type: "nextsong", sessionID: sessionID, index: index }))
+                    } 
                 },
                 onend: () => {
                     setIsPlaying(false);
@@ -118,13 +122,12 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
     }, [song, isPlaying]);
  
     const handleSeek = (position: number) => {
-        console.log(position, duration)
         if (position<=duration) {
             if (song) {
                 song.seek(position)
             }    
             setProgress(position)
-            if (socket?.readyState===WebSocket.OPEN && isAdmin) {
+            if (socket!==null && isAdmin) {
                 socket?.send(JSON.stringify({ type: "seek", sessionID: sessionID, time: position }))
             }
         }
@@ -163,7 +166,6 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
     useEffect(() => {
         if (socket) {
             socket.onopen = () => {
-                console.log(`Connected to server ${(isAdmin) ? "as admin" : ""}`)
                 socket.send(JSON.stringify({ type: "join", sessionID: sessionID, userID: userID, isAdmin: isAdmin }))
             }
             
@@ -172,11 +174,13 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
             }
 
             socket.onclose = () => {
-                console.log("Disconnected from server")
+                setSessionID(-1)
+                setIsAdmin(false)
+                setSocket(null)
             }
 
             socket.onerror = (error) => {
-                console.error("Error: ", error)
+                toast.error("Oops, an error occured!")
             }
         }    
     }, [socket])    
@@ -194,6 +198,11 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
                     setIndex(message.index)
                 }
                 break;
+            case 'nextsong':
+                if (message.index) {
+                    setIndex(message.index)
+                }
+                break;    
             case 'play':
                 if (song) {
                     song.play();
@@ -207,8 +216,23 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
             case 'seek':
                 handleSeek(message.time);
                 break;
+            case 'joinsuccess':
+                toast.success(message.message)
+                break;
+            case 'joinerror':
+                socket?.close()
+                toast.error(message.message)
+                break;
+            case 'leavesuccess':
+                toast.success(message.message)
+                socket?.close()
+                break;
+            case 'leaveerror':
+                toast.error(message.message)
+                break;            
             default:
                 console.log("Unknown message type: ", message.type);
+                break;
         }
     }
 
