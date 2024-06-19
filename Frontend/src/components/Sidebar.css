@@ -7,15 +7,14 @@
     left: 0;
     background-color: #111;
     overflow-x: hidden;
-    overflow-y: hidden;
-    transition: 0.2s;
+    overflow-y: auto;
+    transition: width 0.2s;
     padding-top: 5px;
     position: fixed;
   }
   
   .sidebar.collapsed {
     width: 50px;
-    position: fixed;
   }
   
   .sidebar-header {

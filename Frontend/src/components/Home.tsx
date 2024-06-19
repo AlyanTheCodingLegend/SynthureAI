@@ -22,6 +22,8 @@ export default function Home(): JSX.Element | undefined {
     const [sessionID, setSessionID] = useState<number>(-1)
     const [userID, setUserID] = useState<string>("")
     const [isAdmin, setIsAdmin] = useState<boolean>(false)
+    const [duration, setDuration] = useState<number>(0)
+    const [progress, setProgress] = useState<number>(0)
 
     const toggleSidebar = () => setIsOpen(!isOpen);
 
@@ -56,9 +58,9 @@ export default function Home(): JSX.Element | undefined {
     if (verified) {
         return (
             <div className="flex h-screen overflow-none">
-                <Sidebar isAdmin={isAdmin} isOpen={isOpen} userID={userID} songs={songArray} index={index} setIsAdmin={setIsAdmin} socket={socket} sessionID={sessionID} setSessionID={setSessionID} setSocket={setSocket} toggleSidebar={toggleSidebar} setSignOut={setSignOut}/>
+                <Sidebar progress={progress} duration={duration} isAdmin={isAdmin} isOpen={isOpen} userID={userID} songs={songArray} index={index} setIsAdmin={setIsAdmin} socket={socket} sessionID={sessionID} setSessionID={setSessionID} setSocket={setSocket} toggleSidebar={toggleSidebar} setSignOut={setSignOut}/>
                 {openPlaylist ? <ShowPlaylistModel isOpen={isOpen} playPlaylistID={playPlaylistID} setPlayPlaylistID={setPlayPlaylistID} playlistid={playlistID} setOpenPlaylist={setOpenPlaylist} isUniversallyPlaying={isUniversallyPlaying} setIsUniversallyPlaying={setIsUniversallyPlaying} setSongArray={setSongArray} setIndex={setIndex} username={username} index={index}/> : <Layout isOpen={isOpen} setSongArray={setSongArray} username={username} setOpenPlaylist={setOpenPlaylist} setPlaylistID={setPlaylistID}/>}
-                <Player isOpen={isOpen} setSessionID={setSessionID} setSocket={setSocket} setIsAdmin={setIsAdmin} isAdmin={isAdmin} userID={userID} songs={songArray} setSongs={setSongArray} index={index} setIndex={setIndex} sessionID={sessionID} socket={socket}/>
+                <Player progress={progress} duration={duration} setProgress={setProgress} setDuration={setDuration} isOpen={isOpen} setSessionID={setSessionID} setSocket={setSocket} setIsAdmin={setIsAdmin} isAdmin={isAdmin} userID={userID} songs={songArray} setSongs={setSongArray} index={index} setIndex={setIndex} sessionID={sessionID} socket={socket}/>
             </div>    
         )
     }

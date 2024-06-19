@@ -88,7 +88,7 @@ export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlayli
         setIndex(songindex)  
     }
 
-    if (!songnames) {
+    if (songnames===null) {
         return (
             <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-gradient-to-b from-black to-slate-700 w-screen min-h-screen overflow-x-hidden flex items-center justify-center`}>
                 <BeatLoader size={30} color="purple"/>

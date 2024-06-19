@@ -48,7 +48,7 @@ export class SessionManager {
             const message = JSON.parse(data.toString());
             switch (message.type) {
                 case "sync":
-                    this.broadcast(socket, message.sessionID, JSON.stringify({ type: "sync", songs: message.songs, index: message.index}));
+                    this.broadcast(socket, message.sessionID, JSON.stringify({ type: "sync", songs: message.songs, index: message.index, duration: message.duration, progress: message.progress}));
                     break;
                 case "nextsong":
                     this.broadcast(socket, message.sessionID, JSON.stringify({ type: "nextsong", index: message.index }));

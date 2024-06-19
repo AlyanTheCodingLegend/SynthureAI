@@ -37,6 +37,14 @@ export default function AddSongModel(): JSX.Element {
         }
     }
 
+    if (!songs) {
+        return (
+            <div className='flex w-screen h-screen justify-center bg-gradient-to-b from-black to-blue-600 items-center my-auto'>
+                <BeatLoader size={30} color="purple"/>
+            </div> 
+        )
+    }
+
     return (
         <div className="no-scrollbar min-w-screen min-h-screen overflow-x-hidden bg-gradient-to-b from-black to-blue-600 shadow-lg p-8">
             <div className="absolute flex flex-col top-0 right-0 m-2 text-red-700 hover:text-red-500 text-lg font-bold focus:outline-none">
@@ -47,7 +55,7 @@ export default function AddSongModel(): JSX.Element {
             <div className="text-white text-4xl text-center">Add your uploaded songs to this playlist</div>
             <div className="mt-2 border-white border-t-2 mb-10"></div>
             <div className="flex flex-col flex-wrap h-screen justify-start items-center">
-            {songs!==null ? (songs.length!==0 ? ((songs.map((song, index) => (
+            {songs.length!==0 ? ((songs.map((song, index) => (
                 <div key={index} className="flex flex-row items-center w-2/3 h-1/6 bg-blue-600 rounded-lg mb-5 text-white">
                     <img src={song.image_path} className="h-2/3 w-1/5 rounded-lg ml-2" alt="song cover art"/>
                     <div className="flex flex-col flex-wrap ml-4">
@@ -58,10 +66,6 @@ export default function AddSongModel(): JSX.Element {
                 </div>
             )))) : (
                 <div className="text-white text-lg">No songs to add, try uploading some to add them to this playlist!</div>
-            )) : (
-                <div className='flex w-screen h-screen justify-center bg-gradient-to-b from-black to-blue-600 items-center my-auto'>
-                    <BeatLoader size={30} color="purple"/>
-                </div>
             )}
             </div>
         </div>

@@ -54,7 +54,7 @@ export default function AIGeneration(): JSX.Element {
                         <div className="text-xl">{song.song_name}</div>
                         <div className="text-sm">By: {song.artist_name}</div>
                     </div>
-                    <div className="flex flex-row text-green-500 hover:text-white ml-auto mr-4" onClick={()=>handleClick(song.id)}><FaPlus size={30}/></div>
+                    <div className="flex flex-row text-green-500 hover:text-white ml-auto mr-4 hover:cursor-pointer" onClick={()=>handleClick(song.id)}><FaPlus size={30}/></div>
                 </div>
             )))) : (
                 <div className="text-white text-lg">No songs to add, try uploading some to add them to this playlist!</div>

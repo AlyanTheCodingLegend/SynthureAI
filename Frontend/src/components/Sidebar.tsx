@@ -24,6 +24,8 @@ type SidebarProps = {
   isAdmin: boolean;
   songs: Array<string>;
   index: number;
+  duration: number;
+  progress: number;
   setSessionID: (value: number) => void;
   setSocket: (value: WebSocket | null) => void;
   toggleSidebar: () => void;
@@ -31,7 +33,7 @@ type SidebarProps = {
   setIsAdmin: (value: boolean) => void;
 }
 
-export default function Sidebar ({isOpen, isAdmin, socket, userID, songs, index, sessionID, setSessionID, setSocket, toggleSidebar, setSignOut, setIsAdmin}: SidebarProps): JSX.Element {
+export default function Sidebar ({isOpen, isAdmin, socket, userID, songs, index, sessionID, setSessionID, setSocket, toggleSidebar, setSignOut, setIsAdmin, duration, progress}: SidebarProps): JSX.Element {
     
     const [pfpPath, setPfpPath] = useState<string | null>(null)
     const [isPlaylistModalOpen, setPlaylistModalOpen] = useState<boolean>(false)
@@ -86,7 +88,7 @@ export default function Sidebar ({isOpen, isAdmin, socket, userID, songs, index,
 
     const handleSyncing = () => {
       if (isAdmin) {
-        socket?.send(JSON.stringify({ type: "sync", sessionID: sessionID, songs: songs, index: index }))
+        socket?.send(JSON.stringify({ type: "sync", sessionID: sessionID, songs: songs, index: index, duration: duration, progress: progress}))
       } else {
         toast.error("Only the session admin can sync songs", toast_style)
       }  
@@ -123,7 +125,7 @@ export default function Sidebar ({isOpen, isAdmin, socket, userID, songs, index,
     }
 
   return (
-    <div className={`sidebar ${isOpen ? '' : 'collapsed'} transition-width`}>
+    <div className={`sidebar ${isOpen ? '' : 'collapsed'} transition-width no-scrollbar`}>
       <div className="sidebar-header flex items-center p-4">
         {!isOpen && (
           <button onClick={toggleSidebar} className="">

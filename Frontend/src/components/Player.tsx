@@ -6,6 +6,7 @@ import { FaPlay, FaPause, FaForwardStep, FaBackwardStep } from "react-icons/fa6"
 import { FaVolumeMute, FaVolumeUp, FaRandom } from "react-icons/fa";
 import { MdOutlineLoop } from "react-icons/md";
 import { toast } from 'react-toastify';
+import toast_style from './ToastStyle';
 
 type PlayerProps = {
     isOpen: boolean;
@@ -15,6 +16,10 @@ type PlayerProps = {
     userID: string;
     isAdmin: boolean;
     socket: WebSocket | null;
+    progress: number;
+    duration: number;
+    setDuration: (value: number) => void;
+    setProgress: (value: number) => void;
     setSongs: (value: string[]) => void;
     setIndex: (value: number) => void;
     setSocket: (value: WebSocket | null) => void;
@@ -22,11 +27,9 @@ type PlayerProps = {
     setSessionID: (value: number) => void;
 }
 
-export default function Player ({isOpen, songs, index, sessionID, userID, isAdmin, socket, setSongs, setIndex, setSessionID, setIsAdmin, setSocket}: PlayerProps): JSX.Element {
+export default function Player ({isOpen, songs, index, sessionID, userID, isAdmin, socket, setSongs, setIndex, setSessionID, setIsAdmin, setSocket, progress, duration, setDuration, setProgress}: PlayerProps): JSX.Element {
     const [isPlaying, setIsPlaying] = useState<boolean>(false)
     const [song, setSong] = useState<Howl | null>(null)
-    const [duration, setDuration] = useState<number>(0)
-    const [progress, setProgress] = useState<number>(0)
     const [volume, setVolume] = useState<number>(1)
     const [repeat, setRepeat] = useState<boolean>(false)
     const [isMuted, setIsMuted] = useState<boolean>(false)
@@ -50,7 +53,7 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
  
     useEffect(() => {
         if (songs.length>0) {
-            var newSong = new Howl({
+            const newSong = new Howl({
                 src: [songs[index]],
                 format: ["mp3"],
                 volume: volume,
@@ -92,7 +95,16 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
             setSong(newSong)
             
             return () => {
-                newSong.unload()
+                try {
+                    if (newSong.playing()) {
+                        newSong.stop(); // Ensure the song is stopped before unloading
+                    }
+                    newSong.unload(); // Unload the song to free up resources
+                } catch (error: unknown) {
+                    if (error instanceof Error) {
+                        toast.error(error.message, toast_style);
+                    }    
+                }
             }
         }
     // eslint-disable-next-line
@@ -122,6 +134,7 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
     }, [song, isPlaying]);
  
     const handleSeek = (position: number) => {
+        console.log(position, duration)
         if (position<=duration) {
             if (song) {
                 song.seek(position)
@@ -196,6 +209,12 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
                 }
                 if (message.index) {
                     setIndex(message.index)
+                }
+                if (message.duration) {
+                    setDuration(message.duration)
+                }
+                if (message.progress) {
+                    setProgress(message.progress)
                 }
                 break;
             case 'nextsong':
