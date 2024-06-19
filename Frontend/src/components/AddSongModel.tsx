@@ -10,8 +10,7 @@ import "./NoScrollbar.css"
 import useFilteredSongs from "../hooks/useFilteredSongs";
 
 export default function AddSongModel(): JSX.Element {
-    const [isLoading, setIsLoading] = useState<boolean>(true)
-    const [songs, setSongs] = useState<Array<Song>>([])
+    const [songs, setSongs] = useState<Array<Song> | null>(null)
 
     const paramData = useParams()
     const username = paramData.username || ""
@@ -25,7 +24,6 @@ export default function AddSongModel(): JSX.Element {
         } else if (songData) {
             setSongs(songData)
         }
-        setIsLoading(false)
     }, [songData, songError])    
     
     const handleClick = async (song: Song) => {
@@ -35,16 +33,8 @@ export default function AddSongModel(): JSX.Element {
             toast.error(error.message, toast_style)
         } else {
             toast.success("Song added successfully!")
-            setSongs(prevSongs => prevSongs.filter(s => s.id !== song.id))
+            setSongs(prevSongs => (prevSongs ?? []).filter(s => s.id !== song.id))    
         }
-    }
-
-    if (isLoading) {
-        return (
-            <div className='flex w-screen h-screen justify-center bg-gradient-to-b from-black to-blue-600 items-center my-auto'>
-                <BeatLoader size={30} color="purple"/>
-            </div>
-        )
     }
 
     return (
@@ -69,10 +59,11 @@ export default function AddSongModel(): JSX.Element {
             )))) : (
                 <div className="text-white text-lg">No songs to add, try uploading some to add them to this playlist!</div>
             )) : (
-                <div className="text-white text-lg w-full h-full flex justify-center items-center">Loading...</div>
+                <div className='flex w-screen h-screen justify-center bg-gradient-to-b from-black to-blue-600 items-center my-auto'>
+                    <BeatLoader size={30} color="purple"/>
+                </div>
             )}
             </div>
-            
         </div>
     )
 }

@@ -15,15 +15,9 @@ type SongInformation = {
     artists: Array<string>
 }        
 
-function useSongsFromPlaylist(playlist_id: number, setIsLoading: (value: boolean)=> void): useSongsFromPlaylistReturn {
+function useSongsFromPlaylist(playlist_id: number): useSongsFromPlaylistReturn {
     const [data, setData] = useState<SongInformation | null>(null)
     const [error, setError] = useState<string | null>(null)
-    const [name, setName] = useState<string | null>(null)
-    const [backupSongs, setBackupSongs] = useState<Array<string>>([])
-    const [indexes, setIndexes] = useState<Array<string>>([])
-    const [songnames, setSongnames] = useState<Array<string>>([])
-    const [images, setImages] = useState<Array<string>>([])
-    const [artists, setArtists] = useState<Array<string>>([])
 
     useEffect(() => {
         async function loadSongsFromPlaylist(playlistID: number) {
@@ -36,7 +30,7 @@ function useSongsFromPlaylist(playlist_id: number, setIsLoading: (value: boolean
                 let songDataArray=[]
                 const {data: playlistData, error: playlistError} = await supabase.from('playlist_information').select('playlist_name').eq('playlist_id', playlistID)
                 if (playlistError) throw playlistError
-                setName(playlistData[0].playlist_name)   
+                 
                 const {data: dataP, error: errorP2} = await supabase.from('playlistsong_information').select('song_id').eq('playlist_id', playlistID)
                 if (errorP2) throw errorP2
                 if (dataP.length!==0) {
@@ -53,28 +47,20 @@ function useSongsFromPlaylist(playlist_id: number, setIsLoading: (value: boolean
                         artistArray.push(songData[j].artist_name)
                     }
 
-                    setBackupSongs(songArray)
-                    setIndexes(indexArray)
-                    setSongnames(songNameArray)
-                    setImages(imageArray)
-                    setArtists(artistArray)
+                    setData({
+                        name: playlistData[0].playlist_name,
+                        backupsongs: songArray,
+                        indexes: indexArray,
+                        songnames: songNameArray,
+                        images: imageArray,
+                        artists: artistArray
+                    })
                 }
             } catch (errorP: unknown) {
                 if (errorP instanceof Error) {
                     setError(errorP.message)
                     setData(null)
                 }    
-            } finally {
-                setData({
-                    name: name,
-                    backupsongs: backupSongs,
-                    indexes: indexes,
-                    songnames: songnames,
-                    images: images,
-                    artists: artists
-                })
-
-                setIsLoading(false)
             }
         }
 

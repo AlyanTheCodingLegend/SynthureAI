@@ -28,16 +28,15 @@ type ShowPlaylistModelProps = {
 
 export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlaylistID, playlistid, setOpenPlaylist, isUniversallyPlaying, setIsUniversallyPlaying, setSongArray, setIndex, username, index}: ShowPlaylistModelProps): JSX.Element {
     const [name, setName] = useState<string | null>(null)
-    const [songnames, setSongnames] = useState<Array<string>>([])
+    const [songnames, setSongnames] = useState<Array<string> | null>(null)
     const [images, setImages] = useState<Array<string>>([])
     const [artists, setArtists] = useState<Array<string>>([])
     const [indexes, setIndexes] = useState<Array<string>>([])
-    const [isLoading, setIsLoading] = useState<boolean>(true)
     const [backupSongs, setBackupSongs] = useState<Array<string>>([])
 
     const navigate = useNavigate()
 
-    const {data, error} = useSongsFromPlaylist(playlistid, setIsLoading)
+    const {data, error} = useSongsFromPlaylist(playlistid)
 
     useEffect(() => {
         if (error) {
@@ -58,10 +57,12 @@ export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlayli
             toast.error(error.message, toast_style)
         } else {
             toast.success('Song removed from playlist!')
-            setSongnames(prevSongs => prevSongs.filter(s => s !== songnames[songindex]))
-            setImages(prevImages => prevImages.filter(s => s !== images[songindex]))
-            setArtists(prevArtists => prevArtists.filter(s => s !== artists[songindex]))
-            setIndexes(prevIndexes => prevIndexes.filter(s => s !== indexes[songindex]))
+            if (songnames) {
+                setSongnames(prevSongs => (prevSongs ?? []).filter(s => s !== songnames[songindex]))
+                setImages(prevImages => prevImages.filter(s => s !== images[songindex]))
+                setArtists(prevArtists => prevArtists.filter(s => s !== artists[songindex]))
+                setIndexes(prevIndexes => prevIndexes.filter(s => s !== indexes[songindex]))
+            }    
         }
     }
 
@@ -87,7 +88,7 @@ export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlayli
         setIndex(songindex)  
     }
 
-    if (isLoading) {
+    if (!songnames) {
         return (
             <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-gradient-to-b from-black to-slate-700 w-screen min-h-screen overflow-x-hidden flex items-center justify-center`}>
                 <BeatLoader size={30} color="purple"/>
@@ -110,7 +111,7 @@ export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlayli
             <div className="text-white text-2xl h-full -mt-1.5">
                 <div className="mt-1 border-gray-400 border-t-2 mb-16"></div>
                 <div  className="flex flex-col justify-center items-center">
-                {songnames && songnames.length!==0 ? songnames.map((songname, songindex)=> (
+                {songnames.length!==0 ? songnames.map((songname, songindex)=> (
                     <div key={songindex} className="relative group ml-4 mb-10 w-5/6">
                     <div className={(index===songindex && playPlaylistID===playlistid) ? "absolute -inset-0.5 bg-gradient-to-r from-green-700 to-green-400 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" : "absolute -inset-0.5 bg-gradient-to-r from-blue-700 to-purple-700 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"}></div>
                     <div className="relative bg-black rounded-lg flex flex-row items-center text-gray-400 hover:text-white hover:cursor-pointer">
