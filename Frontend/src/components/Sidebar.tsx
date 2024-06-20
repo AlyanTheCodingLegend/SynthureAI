@@ -15,6 +15,8 @@ import PlaylistModel from "./PlaylistModel";
 import SongUploadModel from "./SongUploadModel";
 import { ClipLoader } from "react-spinners";
 import usePfp from "../hooks/usePfp";
+import addTimestampToUrl from "../utils/addTimestampToUrl";
+import generateSessionID from "../utils/generateSessionID";
 
 type SidebarProps = {
   isOpen: boolean;
@@ -54,15 +56,6 @@ export default function Sidebar ({isOpen, isAdmin, socket, userID, songs, index,
         setPfpPath(addTimestampToUrl(pfpData))
       }
     }, [pfpData, pfpError])  
-
-    function addTimestampToUrl(url: string) {
-      var timestamp = new Date().getTime();
-      return url + (url.indexOf('?') === -1 ? '?' : '&') + 'timestamp=' + timestamp;
-    }
-    
-    function generateSessionID() {
-      return (Math.floor(Math.random() * 900) + 100);
-    }
 
     const startSession = async () => {
       setIsAdmin(true)

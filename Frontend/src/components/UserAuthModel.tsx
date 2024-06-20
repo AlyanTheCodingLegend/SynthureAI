@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 import toast_style from "./ToastStyle"
 import supabase from "./ClientInstance";
 import 'react-toastify/dist/ReactToastify.css';
+import useUsername from "../hooks/useUsername";
 
 export function CreateUser(): JSX.Element {
     const [email, setEmail] = useState<string>("");
@@ -180,6 +181,18 @@ export function AuthUser(): JSX.Element {
 
     const navigate = useNavigate()
 
+    const {data, error} = useUsername(verEmail)
+
+    useEffect(() => {
+        if (error) {
+            toast.error(error, toast_style)
+        } else if (data) {
+            setUsername(data)
+            setGotoprof(true)
+        }
+        setIsLoading(false)
+    }, [data, error])
+
     const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setEmail(event.target.value)
     }
@@ -223,29 +236,6 @@ export function AuthUser(): JSX.Element {
                 toast.error("An error occurred, please try again later!", toast_style)
                 setIsLoading(false)
             }
-        }
-    }
-
-    useEffect(() => {
-        if (verEmail) {
-            getUsername()
-        }
-    // eslint-disable-next-line    
-    }, [verEmail])
-
-    const getUsername = async () => {
-        const {data,error} = await supabase.from('user_information').select('username').eq('email',email)
-        if (error) {
-            setIsLoading(false)
-            toast.error(error.message, toast_style)
-        }
-        else if (data.length!==0) {
-            setUsername(data[0].username)
-            setIsLoading(false)
-            setGotoprof(true)
-        } else {
-            setIsLoading(false)
-            toast.error("An error occurred, please try again later!", toast_style)
         }
     }
 

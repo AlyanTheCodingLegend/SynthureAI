@@ -134,7 +134,7 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
     }, [song, isPlaying]);
  
     const handleSeek = (position: number) => {
-        console.log(position, duration)
+       
         if (position<=duration) {
             if (song) {
                 song.seek(position)

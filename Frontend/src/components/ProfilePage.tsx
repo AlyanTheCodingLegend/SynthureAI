@@ -62,25 +62,6 @@ export function ProfilePage(): JSX.Element {
       }  
     }
 
-    // useEffect(() => {
-    //   const loadPlaylists = async () => {
-    //     let userplaylists=[]
-    //     const {data, error} = await supabase.from('playlist_information').select("playlist_name").eq('created_by', username)
-    //     if (error) {
-    //       toast.error("Error loading playlists!", toast_style)
-    //     } else {
-    //       if (data.length !== 0) {
-    //         for (let i = 0; i < data.length; i++) {
-    //           userplaylists.push(data[i].playlist_name)
-    //         }
-    //         setPlaylists(userplaylists)
-    //       }
-    //     }
-    //   }
-
-    //   loadPlaylists()
-    // }, [username])  
-
     const handleSubmit = async () => {
       const {error} = await supabase.storage.from('images').upload(`${username}/pfp.${pfp[0]?.type.replace('image/', '')}`, pfp[0], { cacheControl: '3600', upsert: true, contentType: pfp[0] ? pfp[0].type: "image/jpeg"})
       if (error) {
