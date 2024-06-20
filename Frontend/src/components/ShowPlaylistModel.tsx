@@ -9,7 +9,7 @@ import { FaPlus } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { BeatLoader } from "react-spinners";
-import "./NoScrollbar.css"
+import "../styles/NoScrollbar.css"
 import useSongsFromPlaylist from "../hooks/useSongsFromPlaylist";
 
 type ShowPlaylistModelProps = {

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import toast_style from "./ToastStyle";
-import "./NoScrollbar.css"
-import "./InputCustom.css"
+import "../styles//NoScrollbar.css"
+import "../styles/InputCustom.css"
 import { BeatLoader } from "react-spinners";
 import { FaRegCirclePause, FaRegCirclePlay } from "react-icons/fa6";
 import useSongs from "../hooks/useSongs";

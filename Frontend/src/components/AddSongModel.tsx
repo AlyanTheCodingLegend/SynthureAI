@@ -6,7 +6,7 @@ import { BeatLoader } from "react-spinners";
 import { Link, useParams } from "react-router-dom";
 import { IoMdClose } from "react-icons/io";
 import { FaPlus } from "react-icons/fa6";
-import "./NoScrollbar.css"
+import "../styles/NoScrollbar.css"
 import useFilteredSongs from "../hooks/useFilteredSongs";
 
 export default function AddSongModel(): JSX.Element {
@@ -46,7 +46,7 @@ export default function AddSongModel(): JSX.Element {
     }
 
     return (
-        <div className="no-scrollbar min-w-screen min-h-screen overflow-x-hidden bg-gradient-to-b from-black to-blue-600 shadow-lg p-8">
+        <div className="no-scrollbar min-w-screen min-h-screen overflow-hidden bg-gradient-to-b from-black to-blue-600 shadow-lg p-8">
             <div className="absolute flex flex-col top-0 right-0 m-2 text-red-700 hover:text-red-500 text-lg font-bold focus:outline-none">
                 <Link to={`/${username}`}>
                     <IoMdClose size={40}/>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { BiArrowToLeft, BiArrowToRight } from "react-icons/bi";
-import './Sidebar.css';
+import '../styles/Sidebar.css';
 import { useNavigate, useParams } from "react-router-dom";
 import supabase from "./ClientInstance";
 import { toast } from "react-toastify";
