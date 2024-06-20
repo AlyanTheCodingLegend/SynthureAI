@@ -37,10 +37,11 @@ function App(): JSX.Element {
       path: '/:username/aigen',
       element: <AIGeneration />
     }
-  ],
-  {
-    basename: '/SynthureAI'
-  })
+  ]
+  // ,{
+  //   basename: '/SynthureAI'
+  // }
+  )
   return (
     <>
       <RouterProvider router={router}/>
