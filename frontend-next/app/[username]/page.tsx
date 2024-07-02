@@ -7,13 +7,9 @@ import Layout from "../_components/Layout";
 import ShowPlaylistModel from "../_components/ShowPlaylistModel";
 import { BounceLoader } from "react-spinners";
 import useVerifyUsername from "../_hooks/useVerifyUsername";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
-type Params = {
-    username: string;
-}
-
-export default function Home(params: Params): JSX.Element | undefined {
+export default function Home(): JSX.Element | undefined {
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [openPlaylist, setOpenPlaylist] = useState<boolean>(false)
     const [playlistID, setPlaylistID] = useState<number>(-1)
@@ -35,6 +31,8 @@ export default function Home(params: Params): JSX.Element | undefined {
 
     const router = useRouter();
 
+    const params = useParams<{username: string}>()
+    
     const {data, error} = useVerifyUsername(params.username)
     
     useEffect(() => {

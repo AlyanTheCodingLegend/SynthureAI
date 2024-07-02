@@ -7,17 +7,13 @@ import supabase from "@/app/_components/ClientInstance"
 import 'react-toastify/dist/ReactToastify.css'
 import bcrypt from 'bcryptjs'
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { SlEye } from "react-icons/sl"
 import { BounceLoader, ClipLoader } from "react-spinners"
 import usePfp from "@/app/_hooks/usePfp"
 import usePlaylists from "@/app/_hooks/usePlaylists"
 
-type Params = {
-    username: string
-}
-
-export function ProfilePage(params: Params): JSX.Element {
+export function ProfilePage(): JSX.Element {
     const [popup, setPopup] = useState<boolean>(false)
     const [showPass, setShowPass]= useState<boolean>(false)
     const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -30,6 +26,8 @@ export function ProfilePage(params: Params): JSX.Element {
     const [newPfpPath, setNewPfpPath] = useState<string>("")
 
     const router = useRouter()
+
+    const params = useParams<{username: string}>()
 
     const username = params.username
 
