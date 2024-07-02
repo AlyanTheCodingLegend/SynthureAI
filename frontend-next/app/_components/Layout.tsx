@@ -1,12 +1,14 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import toast_style from "./ToastStyle";
-import "../styles//NoScrollbar.css"
-import "../styles/InputCustom.css"
+import "../_styles/NoScrollbar.css"
+import "../_styles/InputCustom.css"
 import { BeatLoader } from "react-spinners";
 import { FaRegCirclePause, FaRegCirclePlay } from "react-icons/fa6";
-import useSongs from "../hooks/useSongs";
-import usePlaylists from "../hooks/usePlaylists";
+import useSongs from "../_hooks/useSongs";
+import usePlaylists from "../_hooks/usePlaylists";
 
 type LayoutProps = {
     isOpen: boolean;
