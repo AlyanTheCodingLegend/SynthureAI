@@ -13,7 +13,7 @@ import { BounceLoader, ClipLoader } from "react-spinners"
 import usePfp from "@/app/_hooks/usePfp"
 import usePlaylists from "@/app/_hooks/usePlaylists"
 
-export function ProfilePage(): JSX.Element {
+export default function ProfilePage(): JSX.Element {
     const [popup, setPopup] = useState<boolean>(false)
     const [showPass, setShowPass]= useState<boolean>(false)
     const [isLoading, setIsLoading] = useState<boolean>(false)

@@ -54,8 +54,12 @@ export default function Sidebar ({isOpen, isAdmin, socket, userID, songs, index,
     useEffect(() => {
       if (pfpError) {
         toast.error(pfpError, toast_style)
-      } else if (pfpData) {
-        setPfpPath(addTimestampToUrl(pfpData))
+      } else if (pfpData!==null) {
+        if (pfpData === "") {
+          setPfpPath("https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/defaultpfp.jpg")
+        } else { 
+          setPfpPath(addTimestampToUrl(pfpData))
+        }  
       }
     }, [pfpData, pfpError])  
 
