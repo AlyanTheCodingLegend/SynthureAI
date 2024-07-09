@@ -9,6 +9,7 @@ import supabase from "../_components/ClientInstance";
 import 'react-toastify/dist/ReactToastify.css';
 import bcrypt from "bcryptjs";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function CreateUser(): JSX.Element {
     const [email, setEmail] = useState<string>("");
@@ -159,7 +160,7 @@ export default function CreateUser(): JSX.Element {
                     </Link>
                 </div>
                 <div className="w-1/2 p-4 flex flex-col justify-center items-center text-center">
-                    <img src="https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/logo.png" alt="app logo" className="rounded-lg ml-5"/>
+                <Image src="https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/logo.png" alt="Logo" className="rounded-lg" width={250} height={250} priority={true}/>
                     <h2 className="texl-xl">😍 The only music application you'll ever need for your late night vibing sessions 😍</h2>
                     <div className="border-white border-t-2"></div>
                     <p className="text-xl">🤘 Vibe On! 🤘</p>
