@@ -13,7 +13,6 @@ export default function Home(): JSX.Element | undefined {
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [openPlaylist, setOpenPlaylist] = useState<boolean>(false)
     const [playlistID, setPlaylistID] = useState<number>(-1)
-    const [songArray, setSongArray] = useState<Array<string>>([])
     const [index, setIndex] = useState<number>(0)
     const [signOut, setSignOut] = useState<boolean>(false)
     const [playPlaylistID, setPlayPlaylistID] = useState<number | null>(null)
@@ -27,7 +26,8 @@ export default function Home(): JSX.Element | undefined {
     const [duration, setDuration] = useState<number>(0)
     const [progress, setProgress] = useState<number>(0)
 
-    const toggleSidebar = () => setIsOpen(!isOpen);
+    // const songArray = useSelector((state: RootState) => state.song.songs)
+    // const dispatch = useDispatch<AppDispatch>()
 
     const router = useRouter();
 
@@ -35,6 +35,8 @@ export default function Home(): JSX.Element | undefined {
     
     const {data, error} = useVerifyUsername(params.username)
     
+    const toggleSidebar = () => setIsOpen(!isOpen);
+
     useEffect(() => {
         if (error) {
             router.push('/login')
@@ -61,9 +63,9 @@ export default function Home(): JSX.Element | undefined {
     if (verified) {
         return (
             <div className="flex h-screen overflow-none">
-                <Sidebar progress={progress} duration={duration} isAdmin={isAdmin} isOpen={isOpen} userID={userID} songs={songArray} index={index} setIsAdmin={setIsAdmin} socket={socket} sessionID={sessionID} setSessionID={setSessionID} setSocket={setSocket} toggleSidebar={toggleSidebar} setSignOut={setSignOut}/>
-                {openPlaylist ? <ShowPlaylistModel isOpen={isOpen} playPlaylistID={playPlaylistID} setPlayPlaylistID={setPlayPlaylistID} playlistid={playlistID} setOpenPlaylist={setOpenPlaylist} isUniversallyPlaying={isUniversallyPlaying} setIsUniversallyPlaying={setIsUniversallyPlaying} setSongArray={setSongArray} setIndex={setIndex} username={username} index={index}/> : <Layout isOpen={isOpen} setSongArray={setSongArray} username={username} setOpenPlaylist={setOpenPlaylist} setPlaylistID={setPlaylistID}/>}
-                <Player progress={progress} duration={duration} setProgress={setProgress} setDuration={setDuration} isOpen={isOpen} setSessionID={setSessionID} setSocket={setSocket} setIsAdmin={setIsAdmin} isAdmin={isAdmin} userID={userID} songs={songArray} setSongs={setSongArray} index={index} setIndex={setIndex} sessionID={sessionID} socket={socket}/>
+                <Sidebar progress={progress} duration={duration} isAdmin={isAdmin} isOpen={isOpen} userID={userID} index={index} setIsAdmin={setIsAdmin} socket={socket} sessionID={sessionID} setSessionID={setSessionID} setSocket={setSocket} toggleSidebar={toggleSidebar} setSignOut={setSignOut}/>
+                {openPlaylist ? <ShowPlaylistModel isOpen={isOpen} playPlaylistID={playPlaylistID} setPlayPlaylistID={setPlayPlaylistID} playlistid={playlistID} setOpenPlaylist={setOpenPlaylist} isUniversallyPlaying={isUniversallyPlaying} setIsUniversallyPlaying={setIsUniversallyPlaying} setIndex={setIndex} username={username} index={index}/> : <Layout isOpen={isOpen} username={username} setOpenPlaylist={setOpenPlaylist} setPlaylistID={setPlaylistID}/>}
+                <Player progress={progress} duration={duration} setProgress={setProgress} setDuration={setDuration} isOpen={isOpen} setSessionID={setSessionID} setSocket={setSocket} setIsAdmin={setIsAdmin} isAdmin={isAdmin} userID={userID} index={index} setIndex={setIndex} sessionID={sessionID} socket={socket}/>
             </div>    
         )
     }

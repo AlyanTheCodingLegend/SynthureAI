@@ -1,9 +1,9 @@
 import { configureStore } from "@reduxjs/toolkit";
-import songReducer from "./songSlice";
+import songArrayReducer from "./songArraySlice";
 
 export const store = configureStore({
     reducer: {
-        song: songReducer,
+        songs: songArrayReducer,
     }
 });
 

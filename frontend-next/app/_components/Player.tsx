@@ -11,11 +11,10 @@ import { toast } from 'react-toastify';
 import toast_style from './ToastStyle';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../_states/store';
-import { setSong } from '../_states/songSlice';
+import { setSongArray as setSongs } from '../_states/songArraySlice';
 
 type PlayerProps = {
     isOpen: boolean;
-    songs: string[];
     index: number;
     sessionID: number;
     userID: string;
@@ -25,16 +24,16 @@ type PlayerProps = {
     duration: number;
     setDuration: (value: number) => void;
     setProgress: (value: number) => void;
-    setSongs: (value: string[]) => void;
     setIndex: (value: number) => void;
     setSocket: (value: WebSocket | null) => void;
     setIsAdmin: (value: boolean) => void;
     setSessionID: (value: number) => void;
 }
 
-export default function Player ({isOpen, songs, index, sessionID, userID, isAdmin, socket, setSongs, setIndex, setSessionID, setIsAdmin, setSocket, progress, duration, setDuration, setProgress}: PlayerProps): JSX.Element {
+export default function Player ({isOpen, index, sessionID, userID, isAdmin, socket, setIndex, setSessionID, setIsAdmin, setSocket, progress, duration, setDuration, setProgress}: PlayerProps): JSX.Element {
     const [isPlaying, setIsPlaying] = useState<boolean>(false)
     const [volume, setVolume] = useState<number>(1)
+    const [song, setSong] = useState<Howl | null>(null)
     const [repeat, setRepeat] = useState<boolean>(false)
     const [isMuted, setIsMuted] = useState<boolean>(false)
     const [prevVol, setPrevVol] = useState<number>(0)
@@ -45,7 +44,7 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
     const [randomize, setRandomize] = useState<boolean>(false)
     const [disabled, setDisabled] = useState<boolean>(false)
     
-    const song = useSelector((state: RootState) => state.song.song)
+    const songs = useSelector((state: RootState) => state.songs.songs)
     const dispatch = useDispatch<AppDispatch>()
 
     useEffect(() => {
@@ -99,7 +98,7 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
                     } 
                 }
             })
-            dispatch(setSong(newSong))
+            setSong(newSong)
             
             return () => {
                 try {
@@ -212,7 +211,7 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
         switch (message.type) {
             case 'sync':
                 if (message.songs) {
-                    setSongs(message.songs)
+                    dispatch(setSongs(message.songs))
                 }
                 if (message.index) {
                     setIndex(message.index)

@@ -20,6 +20,8 @@ import { ClipLoader } from "react-spinners";
 import usePfp from "../_hooks/usePfp";
 import addTimestampToUrl from "../_utils/addTimestampToUrl";
 import generateSessionID from "../_utils/generateSessionID";
+import { useSelector } from "react-redux";
+import { RootState } from "../_states/store";
 
 type SidebarProps = {
   isOpen: boolean;
@@ -27,7 +29,6 @@ type SidebarProps = {
   sessionID: number;
   userID: string;
   isAdmin: boolean;
-  songs: Array<string>;
   index: number;
   duration: number;
   progress: number;
@@ -38,12 +39,13 @@ type SidebarProps = {
   setIsAdmin: (value: boolean) => void;
 }
 
-export default function Sidebar ({isOpen, isAdmin, socket, userID, songs, index, sessionID, setSessionID, setSocket, toggleSidebar, setSignOut, setIsAdmin, duration, progress}: SidebarProps): JSX.Element {
-    
+export default function Sidebar ({isOpen, isAdmin, socket, userID, index, sessionID, setSessionID, setSocket, toggleSidebar, setSignOut, setIsAdmin, duration, progress}: SidebarProps): JSX.Element {
     const [pfpPath, setPfpPath] = useState<string | null>(null)
     const [isPlaylistModalOpen, setPlaylistModalOpen] = useState<boolean>(false)
     const [isUploadModelOpen, setUploadModelOpen] = useState<boolean>(false)
     const [tempSessionID, setTempSessionID] = useState<number>(-1)
+
+    const songs = useSelector((state: RootState) => state.songs.songs)
 
     const username = useParams<{username: string}>().username
 

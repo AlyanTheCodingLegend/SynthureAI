@@ -9,23 +9,28 @@ import { BeatLoader } from "react-spinners";
 import { FaRegCirclePause, FaRegCirclePlay } from "react-icons/fa6";
 import useSongs from "../_hooks/useSongs";
 import usePlaylists from "../_hooks/usePlaylists";
+import { Playlist, Song } from "../_types/types";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "../_states/store";
+import { setSongArray } from "../_states/songArraySlice";
 
 type LayoutProps = {
     isOpen: boolean;
     username: string;
     setOpenPlaylist: (value: boolean) => void;
-    setSongArray: (value: string[]) => void;
     setPlaylistID: React.Dispatch<React.SetStateAction<number>>;
 }
 
-export default function Layout({isOpen, username, setOpenPlaylist, setSongArray, setPlaylistID}: LayoutProps): JSX.Element {
+export default function Layout({isOpen, username, setOpenPlaylist, setPlaylistID}: LayoutProps): JSX.Element {
     const [playlists, setPlaylists] = useState<Array<Playlist>>([])
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [songs, setSongs] = useState<Array<Song>>([])
     const [songName, setSongName] = useState<string>("")
     const [filteredSongs, setFilteredSongs] = useState<Array<Song>>([])
     const [songPlaying, setSongPlaying] = useState<number>(-1)
-    
+
+    const dispatch = useDispatch<AppDispatch>()
+
     const {data: playlistData, error: playlistError} = usePlaylists(username)
     const {data: songData, error: songError} = useSongs(username)
 
@@ -57,7 +62,7 @@ export default function Layout({isOpen, username, setOpenPlaylist, setSongArray,
 
     const handlePlay = (song: Song) => {
         setSongPlaying(song.id)
-        setSongArray([song.song_path])
+        dispatch(setSongArray([song.song_path]))
     }
 
     if (isLoading) {

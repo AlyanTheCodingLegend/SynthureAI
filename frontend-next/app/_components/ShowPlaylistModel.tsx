@@ -13,6 +13,9 @@ import { useRouter } from "next/navigation";
 import { BeatLoader } from "react-spinners";
 import "../_styles/NoScrollbar.css"
 import useSongsFromPlaylist from "../_hooks/useSongsFromPlaylist";
+import { AppDispatch } from "../_states/store";
+import { useDispatch } from "react-redux";
+import { setSongArray } from "../_states/songArraySlice";
 
 type ShowPlaylistModelProps = {
     isOpen: boolean;
@@ -22,13 +25,12 @@ type ShowPlaylistModelProps = {
     setOpenPlaylist: (value: boolean) => void;
     isUniversallyPlaying: boolean;
     setIsUniversallyPlaying: (value: boolean) => void;
-    setSongArray: (value: string[]) => void;
     setIndex: (value: number) => void;
     username: string;
     index: number;
 }
 
-export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlaylistID, playlistid, setOpenPlaylist, isUniversallyPlaying, setIsUniversallyPlaying, setSongArray, setIndex, username, index}: ShowPlaylistModelProps): JSX.Element {
+export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlaylistID, playlistid, setOpenPlaylist, isUniversallyPlaying, setIsUniversallyPlaying, setIndex, username, index}: ShowPlaylistModelProps): JSX.Element {
     const [name, setName] = useState<string | null>(null)
     const [songnames, setSongnames] = useState<Array<string> | null>(null)
     const [images, setImages] = useState<Array<string>>([])
@@ -37,6 +39,8 @@ export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlayli
     const [backupSongs, setBackupSongs] = useState<Array<string>>([])
 
     const router = useRouter()
+
+    const dispatch = useDispatch<AppDispatch>()
 
     const {data, error} = useSongsFromPlaylist(playlistid)
 
@@ -83,7 +87,7 @@ export default function ShowPlaylistModel({isOpen, playPlaylistID, setPlayPlayli
         if (playPlaylistID!==playlistid) {
             setPlayPlaylistID(playlistid);
             if (isUniversallyPlaying===false) {
-                setSongArray(backupSongs)
+                dispatch(setSongArray(backupSongs))
                 setIsUniversallyPlaying(true)
             }
         }
