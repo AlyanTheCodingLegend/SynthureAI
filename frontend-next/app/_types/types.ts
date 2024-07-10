@@ -1,4 +1,4 @@
-type Song = {
+export type Song = {
     id: number;
     song_name: string;
     song_path: string;
@@ -6,7 +6,7 @@ type Song = {
     image_path: string;
 }
 
-type Playlist = {
+export type Playlist = {
     playlist_id: string;
     playlist_name: string;
 }

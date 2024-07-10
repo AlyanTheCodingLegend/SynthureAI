@@ -9,6 +9,9 @@ import { FaVolumeMute, FaVolumeUp, FaRandom } from "react-icons/fa";
 import { MdOutlineLoop } from "react-icons/md";
 import { toast } from 'react-toastify';
 import toast_style from './ToastStyle';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '../_states/store';
+import { setSong } from '../_states/songSlice';
 
 type PlayerProps = {
     isOpen: boolean;
@@ -31,7 +34,6 @@ type PlayerProps = {
 
 export default function Player ({isOpen, songs, index, sessionID, userID, isAdmin, socket, setSongs, setIndex, setSessionID, setIsAdmin, setSocket, progress, duration, setDuration, setProgress}: PlayerProps): JSX.Element {
     const [isPlaying, setIsPlaying] = useState<boolean>(false)
-    const [song, setSong] = useState<Howl | null>(null)
     const [volume, setVolume] = useState<number>(1)
     const [repeat, setRepeat] = useState<boolean>(false)
     const [isMuted, setIsMuted] = useState<boolean>(false)
@@ -42,6 +44,9 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
     const [Tsecs, setTSecs] = useState<number>(0)
     const [randomize, setRandomize] = useState<boolean>(false)
     const [disabled, setDisabled] = useState<boolean>(false)
+    
+    const song = useSelector((state: RootState) => state.song.song)
+    const dispatch = useDispatch<AppDispatch>()
 
     useEffect(() => {
         if (isPlaying) {
@@ -94,7 +99,7 @@ export default function Player ({isOpen, songs, index, sessionID, userID, isAdmi
                     } 
                 }
             })
-            setSong(newSong)
+            dispatch(setSong(newSong))
             
             return () => {
                 try {
