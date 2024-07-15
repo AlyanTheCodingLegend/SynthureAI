@@ -9,6 +9,7 @@ import { FaPlus } from "react-icons/fa6"
 import { BeatLoader } from "react-spinners"
 import useSongs from "@/app/_hooks/useSongs"
 import { useParams } from "next/navigation"
+import { Song } from "@/app/_types/types";
 
 export default function AIGeneration(): JSX.Element {
     const [songs, setSongs] = useState<Array<Song>>([])

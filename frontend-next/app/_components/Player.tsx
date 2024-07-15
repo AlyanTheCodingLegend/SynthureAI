@@ -11,26 +11,9 @@ import { toast } from 'react-toastify';
 import toast_style from './ToastStyle';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../_states/store';
-import { setSongArray as setSongs } from '../_states/songArraySlice';
+import { setDuration, setIndex, setIsAdmin, setProgress, setSessionID, setSocket, setSongArray as setSongs } from '../_states/songArraySlice';
 
-type PlayerProps = {
-    isOpen: boolean;
-    index: number;
-    sessionID: number;
-    userID: string;
-    isAdmin: boolean;
-    socket: WebSocket | null;
-    progress: number;
-    duration: number;
-    setDuration: (value: number) => void;
-    setProgress: (value: number) => void;
-    setIndex: (value: number) => void;
-    setSocket: (value: WebSocket | null) => void;
-    setIsAdmin: (value: boolean) => void;
-    setSessionID: (value: number) => void;
-}
-
-export default function Player ({isOpen, index, sessionID, userID, isAdmin, socket, setIndex, setSessionID, setIsAdmin, setSocket, progress, duration, setDuration, setProgress}: PlayerProps): JSX.Element {
+export default function Player (): JSX.Element {
     const [isPlaying, setIsPlaying] = useState<boolean>(false)
     const [volume, setVolume] = useState<number>(1)
     const [song, setSong] = useState<Howl | null>(null)
@@ -45,6 +28,15 @@ export default function Player ({isOpen, index, sessionID, userID, isAdmin, sock
     const [disabled, setDisabled] = useState<boolean>(false)
     
     const songs = useSelector((state: RootState) => state.songs.songs)
+    const isOpen = useSelector((state: RootState) => state.songs.isOpen)
+    const index = useSelector((state: RootState) => state.songs.index)
+    const sessionID = useSelector((state: RootState) => state.songs.sessionID)
+    const userID = useSelector((state: RootState) => state.songs.userID)
+    const isAdmin = useSelector((state: RootState) => state.songs.isAdmin)
+    const socket = useSelector((state: RootState) => state.songs.socket)
+    const progress = useSelector((state: RootState) => state.songs.progress)
+    const duration = useSelector((state: RootState) => state.songs.duration)
+
     const dispatch = useDispatch<AppDispatch>()
 
     useEffect(() => {
@@ -77,7 +69,7 @@ export default function Player ({isOpen, index, sessionID, userID, isAdmin, sock
                     }
                 },
                 onload: () => {
-                    setDuration(newSong.duration());
+                    dispatch(setDuration(newSong.duration()));
                     setDisabled(false);
                     if (socket!==null && isAdmin) {
                         socket?.send(JSON.stringify({ type: "nextsong", sessionID: sessionID, index: index }))
@@ -85,15 +77,15 @@ export default function Player ({isOpen, index, sessionID, userID, isAdmin, sock
                 },
                 onend: () => {
                     setIsPlaying(false);
-                    setProgress(0);
+                    dispatch(setProgress(0));
                     if (randomize) {
                         randomizeSong(0,songs.length-1)
                     } else {
                         if (index<songs.length-1) {
-                            setIndex(index+1)
+                            dispatch(setIndex(index+1))
                         }
                         else {
-                            setIndex(0)
+                            dispatch(setIndex(0))
                         }
                     } 
                 }
@@ -132,7 +124,7 @@ export default function Player ({isOpen, index, sessionID, userID, isAdmin, sock
     useEffect(() => {
         const interval = setInterval(() => {
             if (song && isPlaying) {
-                setProgress(song.seek() || 0);
+                dispatch(setProgress(song.seek() || 0));
             }
         }, 100);
 
@@ -145,7 +137,7 @@ export default function Player ({isOpen, index, sessionID, userID, isAdmin, sock
             if (song) {
                 song.seek(position)
             }    
-            setProgress(position)
+            dispatch(setProgress(position))
             if (socket!==null && isAdmin) {
                 socket?.send(JSON.stringify({ type: "seek", sessionID: sessionID, time: position }))
             }
@@ -193,9 +185,9 @@ export default function Player ({isOpen, index, sessionID, userID, isAdmin, sock
             }
 
             socket.onclose = () => {
-                setSessionID(-1)
-                setIsAdmin(false)
-                setSocket(null)
+                dispatch(setSessionID(-1))
+                dispatch(setIsAdmin(false))
+                dispatch(setSocket(null))
             }
 
             socket.onerror = (error) => {
@@ -214,18 +206,18 @@ export default function Player ({isOpen, index, sessionID, userID, isAdmin, sock
                     dispatch(setSongs(message.songs))
                 }
                 if (message.index) {
-                    setIndex(message.index)
+                    dispatch(setIndex(message.index))
                 }
                 if (message.duration) {
-                    setDuration(message.duration)
+                    dispatch(setDuration(message.duration))
                 }
                 if (message.progress) {
-                    setProgress(message.progress)
+                    dispatch(setProgress(message.progress))
                 }
                 break;
             case 'nextsong':
                 if (message.index) {
-                    setIndex(message.index)
+                    dispatch(setIndex(message.index))
                 }
                 break;    
             case 'play':
@@ -268,9 +260,9 @@ export default function Player ({isOpen, index, sessionID, userID, isAdmin, sock
             song.unload()
         }
         if (index<songs.length-1) {
-            setIndex(index+1)
+            dispatch(setIndex(index+1))
         } else{
-            setIndex(0)
+            dispatch(setIndex(0))
         }
     }
 
@@ -281,16 +273,16 @@ export default function Player ({isOpen, index, sessionID, userID, isAdmin, sock
             song.unload()
         }
         if (index>=1) {
-            setIndex(index-1)
+            dispatch(setIndex(index-1))
         } else {
-            setIndex(songs.length-1)
+            dispatch(setIndex(songs.length-1))
         }
     }
 
     const randomizeSong = (min: number, max: number) => {
         min = Math.ceil(min)
         max = Math.ceil(max)
-        setIndex(Math.floor(Math.random()*(max-min+1)) + min)
+        dispatch(setIndex(Math.floor(Math.random()*(max-min+1)) + min))
     }
 
     useEffect(() => {

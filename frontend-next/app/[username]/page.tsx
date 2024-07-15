@@ -1,33 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Sidebar from "../_components/Sidebar";
-import Player from "../_components/Player";
 import Layout from "../_components/Layout";
-import ShowPlaylistModel from "../_components/ShowPlaylistModel";
 import { BounceLoader } from "react-spinners";
 import useVerifyUsername from "../_hooks/useVerifyUsername";
 import { useParams, useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../_states/store";
+import { setUserID } from "../_states/songArraySlice";
 
 export default function Home(): JSX.Element | undefined {
-    const [isOpen, setIsOpen] = useState<boolean>(true);
-    const [openPlaylist, setOpenPlaylist] = useState<boolean>(false)
-    const [playlistID, setPlaylistID] = useState<number>(-1)
-    const [index, setIndex] = useState<number>(0)
-    const [signOut, setSignOut] = useState<boolean>(false)
-    const [playPlaylistID, setPlayPlaylistID] = useState<number | null>(null)
-    const [isUniversallyPlaying, setIsUniversallyPlaying] = useState<boolean>(false)
-    const [username, setUsername] = useState<string>("")
     const [verified, setVerified] = useState<boolean>(false)
-    const [socket, setSocket] = useState<WebSocket | null>(null)
-    const [sessionID, setSessionID] = useState<number>(-1)
-    const [userID, setUserID] = useState<string>("")
-    const [isAdmin, setIsAdmin] = useState<boolean>(false)
-    const [duration, setDuration] = useState<number>(0)
-    const [progress, setProgress] = useState<number>(0)
 
-    // const songArray = useSelector((state: RootState) => state.song.songs)
-    // const dispatch = useDispatch<AppDispatch>()
+    const signOut = useSelector((state: RootState) => state.songs.signOut)
+    const openPlaylist = useSelector((state: RootState) => state.songs.openPlaylist)
+    const playlistID = useSelector((state: RootState) => state.songs.playlistID)
+
+    const dispatch = useDispatch<AppDispatch>()
 
     const router = useRouter();
 
@@ -35,15 +24,12 @@ export default function Home(): JSX.Element | undefined {
     
     const {data, error} = useVerifyUsername(params.username)
     
-    const toggleSidebar = () => setIsOpen(!isOpen);
-
     useEffect(() => {
         if (error) {
             router.push('/login')
         } else {
             if (data) {
-                setUsername(data.verifusername)
-                setUserID(data.userid)
+                dispatch(setUserID(data.userid))
                 setVerified(true)
             }
         }
@@ -61,12 +47,11 @@ export default function Home(): JSX.Element | undefined {
     }
 
     if (verified) {
+        if (openPlaylist) {
+            router.push(`/${params.username}/${playlistID}`)
+        }
         return (
-            <div className="flex h-screen overflow-none">
-                <Sidebar progress={progress} duration={duration} isAdmin={isAdmin} isOpen={isOpen} userID={userID} index={index} setIsAdmin={setIsAdmin} socket={socket} sessionID={sessionID} setSessionID={setSessionID} setSocket={setSocket} toggleSidebar={toggleSidebar} setSignOut={setSignOut}/>
-                {openPlaylist ? <ShowPlaylistModel isOpen={isOpen} playPlaylistID={playPlaylistID} setPlayPlaylistID={setPlayPlaylistID} playlistid={playlistID} setOpenPlaylist={setOpenPlaylist} isUniversallyPlaying={isUniversallyPlaying} setIsUniversallyPlaying={setIsUniversallyPlaying} setIndex={setIndex} username={username} index={index}/> : <Layout isOpen={isOpen} username={username} setOpenPlaylist={setOpenPlaylist} setPlaylistID={setPlaylistID}/>}
-                <Player progress={progress} duration={duration} setProgress={setProgress} setDuration={setDuration} isOpen={isOpen} setSessionID={setSessionID} setSocket={setSocket} setIsAdmin={setIsAdmin} isAdmin={isAdmin} userID={userID} index={index} setIndex={setIndex} sessionID={sessionID} socket={socket}/>
-            </div>    
+            <Layout />  
         )
     }
     

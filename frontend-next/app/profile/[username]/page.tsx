@@ -12,6 +12,7 @@ import { SlEye } from "react-icons/sl"
 import { BounceLoader, ClipLoader } from "react-spinners"
 import usePfp from "@/app/_hooks/usePfp"
 import usePlaylists from "@/app/_hooks/usePlaylists"
+import { Playlist } from "@/app/_types/types";
 
 export default function ProfilePage(): JSX.Element {
     const [popup, setPopup] = useState<boolean>(false)
@@ -230,18 +231,20 @@ export default function ProfilePage(): JSX.Element {
                 </div>
                 <div className="border-t-4 border-white mt-4 pt-4">
                     <h3 className="text-2xl font-bold mb-2">Top Playlists</h3>
-                    <div className="flex flex-col space-y-2">
+                    <ul className="flex flex-col space-y-2">
                         {playlists && playlists.length !== 0 ? (
                             playlists.map((playlist, index) => (
-                                <div key={index} className="flex items-center justify-between bg-blue-700 hover:bg-blue-900 hover:cursor-pointer rounded-lg p-2" onClick={()=>router.push(`/${username}`)}>
-                                    <div className="text-lg">{playlist.playlist_name}</div>
-                                    <div className="text-xl">🎵</div>
-                                </div>
+                              <Link key={index} href={`/${username}/${playlist.playlist_id}`}>
+                                <li key={index} className="flex items-center justify-between bg-blue-700 hover:bg-blue-900 hover:cursor-pointer rounded-lg p-2">
+                                      <div className="text-lg">{playlist.playlist_name}</div>
+                                      <div className="text-xl">🎵</div>
+                                </li>
+                              </Link>
                             ))
                         ) : (
                             <div className="text-lg">No playlists to show!</div>
                         )}
-                    </div>
+                    </ul>
                 </div>
                 
             </div>

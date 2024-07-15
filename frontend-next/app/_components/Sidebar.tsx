@@ -20,38 +20,35 @@ import { ClipLoader } from "react-spinners";
 import usePfp from "../_hooks/usePfp";
 import addTimestampToUrl from "../_utils/addTimestampToUrl";
 import generateSessionID from "../_utils/generateSessionID";
-import { useSelector } from "react-redux";
-import { RootState } from "../_states/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../_states/store";
+import { setSessionID, setSocket, setSignOut, setIsAdmin, setIsOpen } from "../_states/songArraySlice";
 
-type SidebarProps = {
-  isOpen: boolean;
-  socket: WebSocket | null;
-  sessionID: number;
-  userID: string;
-  isAdmin: boolean;
-  index: number;
-  duration: number;
-  progress: number;
-  setSessionID: (value: number) => void;
-  setSocket: (value: WebSocket | null) => void;
-  toggleSidebar: () => void;
-  setSignOut: (value: boolean) => void;
-  setIsAdmin: (value: boolean) => void;
-}
-
-export default function Sidebar ({isOpen, isAdmin, socket, userID, index, sessionID, setSessionID, setSocket, toggleSidebar, setSignOut, setIsAdmin, duration, progress}: SidebarProps): JSX.Element {
+export default function Sidebar (): JSX.Element {
     const [pfpPath, setPfpPath] = useState<string | null>(null)
     const [isPlaylistModalOpen, setPlaylistModalOpen] = useState<boolean>(false)
     const [isUploadModelOpen, setUploadModelOpen] = useState<boolean>(false)
     const [tempSessionID, setTempSessionID] = useState<number>(-1)
 
     const songs = useSelector((state: RootState) => state.songs.songs)
+    const isOpen = useSelector((state: RootState) => state.songs.isOpen)
+    const socket = useSelector((state: RootState) => state.songs.socket)
+    const sessionID = useSelector((state: RootState) => state.songs.sessionID)
+    const userID = useSelector((state: RootState) => state.songs.userID)
+    const isAdmin = useSelector((state: RootState) => state.songs.isAdmin)
+    const index = useSelector((state: RootState) => state.songs.index)
+    const duration = useSelector((state: RootState) => state.songs.duration)
+    const progress = useSelector((state: RootState) => state.songs.progress)
+
+    const dispatch = useDispatch<AppDispatch>()
 
     const username = useParams<{username: string}>().username
 
     const router = useRouter()
 
     const {data: pfpData, error: pfpError} = usePfp(username)
+
+    const toggleSidebar = () => dispatch(setIsOpen(!isOpen));
     
     useEffect(() => {
       if (pfpError) {
@@ -66,13 +63,13 @@ export default function Sidebar ({isOpen, isAdmin, socket, userID, index, sessio
     }, [pfpData, pfpError])  
 
     const startSession = async () => {
-      setIsAdmin(true)
+      dispatch(setIsAdmin(true))
 
       const sessionId = generateSessionID()
-      setSessionID(sessionId)
+      dispatch(setSessionID(sessionId))
     
       const socket = new WebSocket("ws://localhost:5000")
-      setSocket(socket)
+      dispatch(setSocket(socket))
     }
 
     const endSession = () => {
@@ -102,24 +99,24 @@ export default function Sidebar ({isOpen, isAdmin, socket, userID, index, sessio
     }  
 
     const handleClick = async () => {
-      setSignOut(true)
+      dispatch(setSignOut(true))
       const {error} = await supabase.auth.signOut()
       if (error) {
         toast.error(error.message, toast_style)
       } else {
         router.push('/login')
       }
-      setSignOut(false)
+      dispatch(setSignOut(false))
     }
 
     const joinSession = () => {
       if (tempSessionID !== -1) {
-        setIsAdmin(false)
+        dispatch(setIsAdmin(false))
 
-        setSessionID(tempSessionID)
+        dispatch(setSessionID(tempSessionID))
       
         const socket = new WebSocket("ws://localhost:5000")
-        setSocket(socket)
+        dispatch(setSocket(socket))
       } else {
         toast.error("Please enter a valid session ID", toast_style)
       }  

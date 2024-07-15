@@ -10,24 +10,23 @@ import { FaRegCirclePause, FaRegCirclePlay } from "react-icons/fa6";
 import useSongs from "../_hooks/useSongs";
 import usePlaylists from "../_hooks/usePlaylists";
 import { Playlist, Song } from "../_types/types";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "../_states/store";
-import { setSongArray } from "../_states/songArraySlice";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../_states/store";
+import { setOpenPlaylist, setPlaylistID, setSongArray } from "../_states/songArraySlice";
+import { useParams } from "next/navigation";
 
-type LayoutProps = {
-    isOpen: boolean;
-    username: string;
-    setOpenPlaylist: (value: boolean) => void;
-    setPlaylistID: React.Dispatch<React.SetStateAction<number>>;
-}
-
-export default function Layout({isOpen, username, setOpenPlaylist, setPlaylistID}: LayoutProps): JSX.Element {
+export default function Layout(): JSX.Element {
     const [playlists, setPlaylists] = useState<Array<Playlist>>([])
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [songs, setSongs] = useState<Array<Song>>([])
     const [songName, setSongName] = useState<string>("")
     const [filteredSongs, setFilteredSongs] = useState<Array<Song>>([])
     const [songPlaying, setSongPlaying] = useState<number>(-1)
+
+    const isOpen = useSelector((state: RootState) => state.songs.isOpen)
+
+    const params = useParams<{username: string}>()
+    const username = params.username
 
     const dispatch = useDispatch<AppDispatch>()
 
@@ -105,7 +104,7 @@ export default function Layout({isOpen, username, setOpenPlaylist, setPlaylistID
                     {playlists && playlists.map((playlist, index) => (
                     <div key={index} className="relative group ml-4 mb-10">
                     <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-700 to-purple-400 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-                    <div className="relative flex flex-col justify-center items-center h-40 w-40 bg-black rounded-lg text-gray-200 hover:text-white hover:cursor-pointer" onClick={() => { setPlaylistID(Number(playlist.playlist_id)); setOpenPlaylist(true); }}>
+                    <div className="relative flex flex-col justify-center items-center h-40 w-40 bg-black rounded-lg text-gray-200 hover:text-white hover:cursor-pointer" onClick={() => { dispatch(setPlaylistID(Number(playlist.playlist_id))); dispatch(setOpenPlaylist(true)); }}>
                         <img src="https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/anonymous-man-graphic-good-pfp-1y0csvb81cmqaggg.jpg" alt="default playlist" className="w-4/5 h-4/5 rounded-lg" />
                         <div className="text-lg px-2 text-center overflow-hidden text-overflow-ellipsis whitespace-nowrap" style={{ maxWidth: '90%' }}>{playlist.playlist_name}</div>
                     </div>
