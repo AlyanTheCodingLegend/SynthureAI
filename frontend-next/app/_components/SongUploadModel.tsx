@@ -2,7 +2,7 @@
 
 import supabase from './ClientInstance';
 import React, { useState } from 'react';
-import { toast} from "react-toastify";
+import { toast } from "react-toastify";
 import toast_style from './ToastStyle';
 import { IoMdClose } from "react-icons/io";
 import { FadeLoader } from 'react-spinners';

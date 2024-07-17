@@ -14,7 +14,7 @@ export default function Layout({ children }: LayoutProps) {
 
     if (paths.length===2 || (paths.length===3 && paths[2] !== "aigen")) {
         return (
-            <div className="flex h-screen overflow-none">
+            <div className="flex h-screen overflow-hidden">
                 <Sidebar/>
                 {children}
                 <Player/>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import supabase from "../_components/ClientInstance"
 import useSongs from "./useSongs"
+import type { Song } from "../_types/types"
 
 type useSongReturn = {
     data: Array<Song> | null

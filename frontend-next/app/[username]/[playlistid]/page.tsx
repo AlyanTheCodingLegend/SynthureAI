@@ -39,7 +39,7 @@ export default function ShowPlaylistModel(): JSX.Element {
 
     const dispatch = useDispatch<AppDispatch>()
 
-    const {data, error} = useSongsFromPlaylist(playlistid)
+    const {data, error} = useSongsFromPlaylist(playlistid, username)
 
     useEffect(() => {
         if (error) {
@@ -95,6 +95,22 @@ export default function ShowPlaylistModel(): JSX.Element {
         dispatch(setOpenPlaylist(false))
     }
 
+    const handleAddSongs = () => {
+        if (playlistid===Number(process.env.NEXT_PUBLIC_MYSONGS_ID)) {
+            toast.warning("This is an automated playlist, no need to add songs to it!", toast_style)
+        } else {    
+            router.push(`/${username}/${playlistid}/addsongs`)
+        }    
+    }
+
+    const handleDeletePlaylist = () => {
+        if (playlistid===Number(process.env.NEXT_PUBLIC_MYSONGS_ID)) {
+            toast.warning("This is an automated playlist, you can't delete it!", toast_style)
+        } else {
+            deletePlaylist()
+        }    
+    }
+
     if (songnames===null) {
         return (
             <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-gradient-to-b from-black to-slate-700 w-screen min-h-screen overflow-x-hidden flex items-center justify-center`}>
@@ -111,8 +127,8 @@ export default function ShowPlaylistModel(): JSX.Element {
                 </div> 
                 <div className="w-1/3 flex flex-row justify-end items-center text-gray-400">
                     <Link href={`/${username}`}><div className="mr-2 mt-2 flex justify-end hover:text-white hover:cursor-pointer" onClick={handleGoBack}><IoMdArrowBack size={40}/></div></Link>
-                    <div className="mt-2 mr-2 hover:text-white hover:cursor-pointer" onClick={() => router.push(`/${username}/${playlistid}/addsongs`)}><FaPlus size={25}/></div>
-                    <div className="mt-2 mr-2 hover:text-white hover:cursor-pointer" onClick={() => deletePlaylist()}><MdDeleteForever size={30}/></div>
+                        <div className="mt-2 mr-2 hover:text-white hover:cursor-pointer" onClick={handleAddSongs}><FaPlus size={25}/></div>
+                        <div className="mt-2 mr-2 hover:text-white hover:cursor-pointer" onClick={handleDeletePlaylist}><MdDeleteForever size={30}/></div>
                 </div>
             </div>  
             <div className="text-white text-2xl h-full -mt-1.5">

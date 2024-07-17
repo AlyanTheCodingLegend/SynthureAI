@@ -9,7 +9,7 @@ import { BeatLoader } from "react-spinners";
 import { FaRegCirclePause, FaRegCirclePlay } from "react-icons/fa6";
 import useSongs from "../_hooks/useSongs";
 import usePlaylists from "../_hooks/usePlaylists";
-import { Playlist, Song } from "../_types/types";
+import type { Playlist, Song } from "../_types/types";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../_states/store";
 import { setOpenPlaylist, setPlaylistID, setSongArray } from "../_states/songArraySlice";
@@ -101,14 +101,21 @@ export default function Layout(): JSX.Element {
                 <div className="mb-5 ml-4">Your Playlists</div>
                 {playlists && playlists.length!==0 ? (
                 <div className="flex flex-wrap">
+                    <div key={process.env.NEXT_PUBLIC_MYSONGS_ID} className="relative group ml-4 mb-10">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-700 to-purple-400 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+                        <div className="relative flex flex-col justify-center items-center h-40 w-40 bg-black rounded-lg text-gray-200 hover:text-white hover:cursor-pointer" onClick={() => { dispatch(setPlaylistID(Number(process.env.NEXT_PUBLIC_MYSONGS_ID))); dispatch(setOpenPlaylist(true)); }}>
+                            <img src="https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/anonymous-man-graphic-good-pfp-1y0csvb81cmqaggg.jpg" alt="default playlist" className="w-4/5 h-4/5 rounded-lg" />
+                            <div className="text-lg px-2 text-center overflow-hidden text-overflow-ellipsis whitespace-nowrap" style={{ maxWidth: '90%' }}>{"My Songs"}</div>
+                        </div>
+                    </div>
                     {playlists && playlists.map((playlist, index) => (
                     <div key={index} className="relative group ml-4 mb-10">
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-700 to-purple-400 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-                    <div className="relative flex flex-col justify-center items-center h-40 w-40 bg-black rounded-lg text-gray-200 hover:text-white hover:cursor-pointer" onClick={() => { dispatch(setPlaylistID(Number(playlist.playlist_id))); dispatch(setOpenPlaylist(true)); }}>
-                        <img src="https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/anonymous-man-graphic-good-pfp-1y0csvb81cmqaggg.jpg" alt="default playlist" className="w-4/5 h-4/5 rounded-lg" />
-                        <div className="text-lg px-2 text-center overflow-hidden text-overflow-ellipsis whitespace-nowrap" style={{ maxWidth: '90%' }}>{playlist.playlist_name}</div>
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-700 to-purple-400 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+                        <div className="relative flex flex-col justify-center items-center h-40 w-40 bg-black rounded-lg text-gray-200 hover:text-white hover:cursor-pointer" onClick={() => { dispatch(setPlaylistID(Number(playlist.playlist_id))); dispatch(setOpenPlaylist(true)); }}>
+                            <img src="https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/anonymous-man-graphic-good-pfp-1y0csvb81cmqaggg.jpg" alt="default playlist" className="w-4/5 h-4/5 rounded-lg" />
+                            <div className="text-lg px-2 text-center overflow-hidden text-overflow-ellipsis whitespace-nowrap" style={{ maxWidth: '90%' }}>{playlist.playlist_name}</div>
+                        </div>
                     </div>
-                </div>
                     ))}
                 </div>
                 ) : (
