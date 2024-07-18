@@ -53,24 +53,27 @@ export default function CreateUser(): JSX.Element {
             return;
         } 
 
-        if (data.user) {
+        if (data.user && data.user.id) {
             bcrypt.hash(pass, 10, async function (err: Error | null, hash: string) {
                 if (err) {
                     toast.error(err.message);
                     setIsLoading(false);
                 }
-                const { error } = await supabase.from("user_information").insert({
-                    userid: data.user?.id,
-                    email: email,
-                    hashpass: hash,
-                    username: username,
-                });
 
-                if (error) {
-                    toast.error(error.message);
-                    setIsLoading(false);
+                if (data.user && data.user.id) {
+                    const { error } = await supabase.from("user_information").insert({
+                        userid: data.user.id,
+                        email: email,
+                        hashpass: hash,
+                        username: username,
+                    });
+
+                    if (error) {
+                        toast.error(error.message);
+                        setIsLoading(false);
+                    }
                 }
-
+                
                 setIsLoading(false);
                 setMsg(true);
             });

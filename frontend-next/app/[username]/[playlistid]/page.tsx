@@ -23,7 +23,7 @@ export default function ShowPlaylistModel(): JSX.Element {
     const [songnames, setSongnames] = useState<Array<string> | null>(null)
     const [images, setImages] = useState<Array<string>>([])
     const [artists, setArtists] = useState<Array<string>>([])
-    const [indexes, setIndexes] = useState<Array<string>>([])
+    const [indexes, setIndexes] = useState<Array<number>>([])
     const [backupSongs, setBackupSongs] = useState<Array<string>>([])
 
     const router = useRouter()

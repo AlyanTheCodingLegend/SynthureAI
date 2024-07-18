@@ -9,7 +9,7 @@ type useSongsFromPlaylistReturn = {
 type SongInformation = {
     name: string | null,
     backupsongs: Array<string>,
-    indexes: Array<string>,
+    indexes: Array<number>,
     songnames: Array<string>,
     images: Array<string>,
     artists: Array<string>

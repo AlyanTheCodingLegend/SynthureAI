@@ -11,6 +11,7 @@ import "@/app/_styles/NoScrollbar.css";
 import useFilteredSongs from "@/app/_hooks/useFilteredSongs";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { Song } from "@/app/_types/types";
 
 export default function AddSongModel(): JSX.Element {
     const [songs, setSongs] = useState<Array<Song> | null>(null)
@@ -30,7 +31,7 @@ export default function AddSongModel(): JSX.Element {
     }, [songData, songError])    
     
     const handleClick = async (song: Song) => {
-        const {error} = await supabase.from('playlistsong_information').insert({playlist_id: playlistid, song_id: song.id})
+        const {error} = await supabase.from('playlistsong_information').insert({playlist_id: parseInt(playlistid), song_id: song.id})
 
         if (error) {
             toast.error(error.message, toast_style)

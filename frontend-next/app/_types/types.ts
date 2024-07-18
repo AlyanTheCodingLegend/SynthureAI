@@ -7,6 +7,6 @@ export type Song = {
 }
 
 export type Playlist = {
-    playlist_id: string;
+    playlist_id: number;
     playlist_name: string;
 }
