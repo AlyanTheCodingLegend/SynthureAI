@@ -230,14 +230,16 @@ export default function ProfilePage(): JSX.Element {
                     </button>
                 </div>
                 <div className="border-t-4 border-white mt-4 pt-4">
-                    <h3 className="text-2xl font-bold mb-2">Top Playlists</h3>
-                    <ul className="flex flex-col space-y-2">
                       <Link key={process.env.NEXT_PUBLIC_MYSONGS_ID} href={`/${username}/${process.env.NEXT_PUBLIC_MYSONGS_ID}`}>
                         <li key={process.env.NEXT_PUBLIC_MYSONGS_ID} className="flex items-center justify-between bg-blue-700 hover:bg-blue-900 hover:cursor-pointer rounded-lg p-2">
                               <div className="text-lg">{"My Songs"}</div>
                               <div className="text-xl">🎵</div>
                         </li>
                       </Link>
+                      <div className="border-t-4 border-white mt-4 pt-4"></div>
+                    <h3 className="text-2xl font-bold mb-2">Top Playlists</h3>
+                    <ul className="flex flex-col space-y-2">
+                
                         {playlists && playlists.length !== 0 ? (
                             playlists.map((playlist, index) => (
                               <Link key={index} href={`/${username}/${playlist.playlist_id}`}>

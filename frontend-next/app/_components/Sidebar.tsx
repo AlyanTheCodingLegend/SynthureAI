@@ -22,7 +22,7 @@ import addTimestampToUrl from "../_utils/addTimestampToUrl";
 import generateSessionID from "../_utils/generateSessionID";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../_states/store";
-import { setSessionID, setSocket, setSignOut, setIsAdmin, setIsOpen } from "../_states/songArraySlice";
+import { setSessionID, setSocket, setSignOut, setIsAdmin, setIsOpen, setPlaylistID, setOpenPlaylist } from "../_states/songArraySlice";
 
 export default function Sidebar (): JSX.Element {
     const [pfpPath, setPfpPath] = useState<string | null>(null)
@@ -109,6 +109,11 @@ export default function Sidebar (): JSX.Element {
       dispatch(setSignOut(false))
     }
 
+    const toggleMySongs = () => {
+      dispatch(setPlaylistID(Number(process.env.NEXT_PUBLIC_MYSONGS_ID)));
+      dispatch(setOpenPlaylist(true));
+    }
+
     const joinSession = () => {
       if (tempSessionID !== -1) {
         dispatch(setIsAdmin(false))
@@ -177,6 +182,16 @@ export default function Sidebar (): JSX.Element {
             >
               <LuUpload size={30} className="mr-2" />
               Upload Songs
+            </div>
+          </div>
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-700 to-purple-700 rounded-xl blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+            <div
+              className="relative flex items-center justify-center p-4 text-gray-400 cursor-pointer transition duration-300 rounded-xl bg-black hover:text-white text-center text-xl"
+              onClick={toggleMySongs}
+            >
+              <LuUpload size={30} className="mr-2" />
+              My Songs
             </div>
           </div>
           <div className="relative group">
