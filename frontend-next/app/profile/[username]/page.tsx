@@ -67,6 +67,30 @@ export default function ProfilePage(): JSX.Element {
       }  
     }
 
+    const deleteUserFolders = async () => {
+      try {
+        const { data: list, error: listError } = await supabase.storage.from('songs').list(`${username}`);
+        if (listError) throw listError
+        const filesToRemove = list.map((x) => `${username}/${x.name}`);
+
+        const { data, error: deleteError } = await supabase.storage.from('songs').remove(filesToRemove);
+        if (deleteError) throw deleteError
+
+        const { data: listTwo, error: listTwoError } = await supabase.storage.from('images').list(`${username}`);
+        if (listTwoError) throw listTwoError
+        const filesToRemoveTwo = listTwo.map((y) => `${username}/${y.name}`);
+
+        const { data: dataTwo, error: deleteTwoError } = await supabase.storage.from('images').remove(filesToRemoveTwo);
+        if (deleteTwoError) throw deleteTwoError
+
+        return null
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          return error
+        }
+      }  
+    }
+
     const handleSubmit = async () => {
       const {error} = await supabase.storage.from('images').upload(`${username}/pfp.${pfp[0]?.type.replace('image/', '')}`, pfp[0], { cacheControl: '3600', upsert: true, contentType: pfp[0] ? pfp[0].type: "image/jpeg"})
       if (error) {
@@ -86,58 +110,62 @@ export default function ProfilePage(): JSX.Element {
     }
 
     const handlePassSubmit = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
       
       const { data, error } = await supabase
-          .from('user_information')
-          .select('userid, hashpass')
-          .eq('username', username);
-          
+        .from('user_information')
+        .select('userid, hashpass')
+        .eq('username', username);
+        
       if (error) {
         setIsLoading(false);
         toast.error(error.message, toast_style);
       } else {
-          if (data.length !== 0) {
-              setUserID(data[0].userid);
-              const storedHash = data[0].hashpass;
-
-              // Compare hashed passwords
-              bcrypt.compare(pass, storedHash, async function(compareErr: Error | null, result: boolean) {
-                  if (compareErr) {
+        if (data.length !== 0) {
+          setUserID(data[0].userid);
+          const storedHash = data[0].hashpass;
+    
+          // Compare hashed passwords
+          bcrypt.compare(pass, storedHash, async function(compareErr: Error | null, result: boolean) {
+            if (compareErr) {
+              setIsLoading(false);
+              toast.error(compareErr.message, toast_style);
+            } else {
+              if (result) {
+                if (userID !== null) {
+                  const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userID);
+                  if (deleteUserError) {
                     setIsLoading(false);
-                    toast.error(compareErr.message, toast_style);
+                    toast.error(deleteUserError.message, toast_style);
                   } else {
-                      if (result) {
-              
-                        if (userID !== null) {
-            
-                          const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userID);
-                          if (deleteUserError) {
-                            setIsLoading(false);
-                            toast.error(deleteUserError.message, toast_style);
-                          } else {
-                            
-                            toast.success('Account has been successfully deleted', toast_style);
-                            router.push('/login');
-                            setIsLoading(false)
-                            setSignOut(true)
-                          }
-                        } else {
-                          setIsLoading(false);
-                          toast.error('Unexpected error!', toast_style);
-                        }
-                      } else {
-                        setIsLoading(false);
-                        toast.error('Wrong password!', toast_style);
-                      }
+                    const deleteFolderError = await deleteUserFolders();
+                    if (deleteFolderError) {
+                      setIsLoading(false);
+                      toast.error(deleteFolderError.message, toast_style);
+                    } else {
+                      toast.success('Account has been successfully deleted', toast_style);
+                      router.push('/login');
+                      setIsLoading(false);
+                      setSignOut(true);
+                    }
                   }
-              });
-          } else {
-            setIsLoading(false);
-            toast.error('User not found', toast_style);
-          }
+                } else {
+                  setIsLoading(false);
+                  toast.error('Unexpected error!', toast_style);
+                }
+              } else {
+                setIsLoading(false);
+                toast.error('Wrong password!', toast_style);
+              }
+            }
+          });
+        } else {
+          setIsLoading(false);
+          toast.error('User not found', toast_style);
+        }
       }
-    }
+    };
+    
 
     if (signOut) {
       return (
