@@ -301,7 +301,7 @@ export default function Player (): JSX.Element {
             <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} fixed bg-gray-800 bottom-0 w-full justify-between items-center p-4`}>
                 <div className='flex flex-col justify-center items-center'>
                     <div className="flex flex-row w-full">
-                        <div id="timer" className='font-mono -mt-1.5 text-base text-white'>
+                        <div id="timer" className='font-mono -mt-1.5 text-base text-white tabular-nums'>
                             {mins}:{secs < 10 ? "0" + secs : secs}
                         </div>
                         <ReactSlider
@@ -313,7 +313,7 @@ export default function Player (): JSX.Element {
                             thumbClassName="w-4 h-4 bg-purple-400 hover:bg-purple-900 rounded-full -mt-1 outline-none focus:outline-none -top-1/6 cursor-pointer"
                             trackClassName="h-full rounded-full bg-gradient-to-r from-gray-300 to-purple-600"
                         />
-                        <div className='font-mono -mt-1.5 text-base text-center text-white mr-1'>
+                        <div className='font-mono -mt-1.5 text-base text-center text-white mr-1 tabular-nums'>
                             {Tmins}:{Tsecs < 10 ? "0" + Tsecs : Tsecs}
                         </div>
                     </div>
