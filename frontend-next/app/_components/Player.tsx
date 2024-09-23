@@ -30,6 +30,7 @@ export default function Player (): JSX.Element {
     const songs = useSelector((state: RootState) => state.songs.songs)
     const isOpen = useSelector((state: RootState) => state.songs.isOpen)
     const index = useSelector((state: RootState) => state.songs.index)
+    // const index = useSelector((state) => state.songs.index)
     const sessionID = useSelector((state: RootState) => state.songs.sessionID)
     const userID = useSelector((state: RootState) => state.songs.userID)
     const isAdmin = useSelector((state: RootState) => state.songs.isAdmin)
@@ -110,14 +111,10 @@ export default function Player (): JSX.Element {
 
     const handleClick = () => {
         if (isPlaying) {
-            if (song) {
-                song.pause()
-            }   
+            song?.pause()  
         }
         else {
-            if (song) {
-                song.play()
-            }   
+            song?.play()  
         }
     }
 
