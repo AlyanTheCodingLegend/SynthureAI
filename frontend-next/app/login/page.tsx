@@ -5,12 +5,12 @@ import { toast } from "react-toastify";
 import { BounceLoader } from "react-spinners";
 import { SlEye } from "react-icons/sl";
 import toast_style from "../_components/ToastStyle";
-import supabase from "../_components/ClientInstance";
 import 'react-toastify/dist/ReactToastify.css';
 import useUsername from "../_hooks/useUsername";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { signInServer } from "./actions";
 
 export default function AuthUser(): JSX.Element {
     const [email, setEmail] = useState<string>("")
@@ -56,10 +56,7 @@ export default function AuthUser(): JSX.Element {
     const handleClick = async () => {
         setIsLoading(true)
 
-        const {data,error} = await supabase.auth.signInWithPassword({
-            email: email,
-            password: pass
-        })
+        const { data, error } = await signInServer(email, pass)
 
         if (error) {
             toast.error(error.message, toast_style)

@@ -5,7 +5,6 @@ import { BiArrowToLeft, BiArrowToRight } from "react-icons/bi";
 import '../_styles/Sidebar.css';
 import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import supabase from "./ClientInstance";
 import { toast } from "react-toastify";
 import toast_style from "./ToastStyle";
 import { PiPlaylistDuotone, PiSignOut } from "react-icons/pi";
@@ -23,6 +22,7 @@ import generateSessionID from "../_utils/generateSessionID";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../_states/store";
 import { setSessionID, setSocket, setSignOut, setIsAdmin, setIsOpen, setPlaylistID, setOpenPlaylist } from "../_states/songArraySlice";
+import { signOutServer } from "../_actions/_actions";
 
 export default function Sidebar (): JSX.Element {
     const [pfpPath, setPfpPath] = useState<string | null>(null)
@@ -100,11 +100,9 @@ export default function Sidebar (): JSX.Element {
 
     const handleClick = async () => {
       dispatch(setSignOut(true))
-      const {error} = await supabase.auth.signOut()
-      if (error) {
-        toast.error(error.message, toast_style)
-      } else {
-        router.push('/login')
+      let signedOut = await signOutServer()
+      if (signedOut) {
+        router.push("/login")
       }
       dispatch(setSignOut(false))
     }

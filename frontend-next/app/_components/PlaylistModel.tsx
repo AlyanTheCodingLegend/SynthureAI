@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react"
-import supabase from "./ClientInstance"
-import { toast } from "react-toastify"
-import toast_style from "./ToastStyle"
 import { useRouter } from "next/navigation"
 import { IoMdClose } from "react-icons/io";
+import { createPlaylist } from "../_actions/_actions";
 
 type PlaylistModelProps = {
     username: string;
@@ -23,12 +21,11 @@ export default function PlaylistModel ({username, onClick}: PlaylistModelProps):
     }
 
     const handleClick = async () => {
-        const {data, error} = await supabase.from('playlist_information').insert({created_by: username, playlist_name: playlistname}).select("*")
-        if (error) {
-            toast.error(error.message, toast_style)
-        } else {
+        const data = await createPlaylist(username, playlistname)
+        
+        if (data) {
             setPlayid(data[0].playlist_id)
-        }
+        }    
     }
 
     useEffect(() => {

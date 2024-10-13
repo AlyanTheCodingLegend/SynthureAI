@@ -5,11 +5,11 @@ import { toast } from "react-toastify";
 import { BounceLoader } from "react-spinners";
 import { SlEye } from "react-icons/sl";
 import toast_style from "../_components/ToastStyle";
-import supabase from "../_components/ClientInstance";
 import 'react-toastify/dist/ReactToastify.css';
 import bcrypt from "bcryptjs";
 import Link from "next/link";
 import Image from "next/image";
+import { addUserToDB, signUpServer } from "./actions";
 
 export default function CreateUser(): JSX.Element {
     const [email, setEmail] = useState<string>("");
@@ -42,10 +42,7 @@ export default function CreateUser(): JSX.Element {
         }
         setIsLoading(true);
 
-        const { data, error: errorOne } = await supabase.auth.signUp({
-            email: email,
-            password: pass,
-        });
+        const { data, error: errorOne } = await signUpServer(email, pass);
 
         if (errorOne) {
             toast.error(errorOne.message, toast_style);
@@ -61,12 +58,7 @@ export default function CreateUser(): JSX.Element {
                 }
 
                 if (data.user && data.user.id) {
-                    const { error } = await supabase.from("user_information").insert({
-                        userid: data.user.id,
-                        email: email,
-                        hashpass: hash,
-                        username: username,
-                    });
+                    const { error } = await addUserToDB(data.user.id, email, hash, username);
 
                     if (error) {
                         toast.error(error.message);

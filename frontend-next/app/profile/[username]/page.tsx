@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 import toast_style from "@/app/_components/ToastStyle"
-import supabase from "@/app/_components/ClientInstance"
 import 'react-toastify/dist/ReactToastify.css'
 import bcrypt from 'bcryptjs'
 import Link from "next/link"
@@ -13,6 +12,7 @@ import { BounceLoader, ClipLoader } from "react-spinners"
 import usePfp from "@/app/_hooks/usePfp"
 import usePlaylists from "@/app/_hooks/usePlaylists"
 import { Playlist } from "@/app/_types/types";
+import { deleteUserFolders, deleteUserServer, getUserInfoServer, handleSubmit, signOutServer } from "./actions";
 
 export default function ProfilePage(): JSX.Element {
     const [popup, setPopup] = useState<boolean>(false)
@@ -50,7 +50,7 @@ export default function ProfilePage(): JSX.Element {
     
     const handleClick = async () => {
         setSignOut(true)
-        const {error} = await supabase.auth.signOut()
+        const {error} = await signOutServer()
         if (error) {
           toast.error(error.message, toast_style)
         }
@@ -67,44 +67,6 @@ export default function ProfilePage(): JSX.Element {
       }  
     }
 
-    const deleteUserFolders = async () => {
-      try {
-        const { data: list, error: listError } = await supabase.storage.from('songs').list(`${username}`);
-        if (listError) throw listError
-        const filesToRemove = list.map((x) => `${username}/${x.name}`);
-
-        const { data, error: deleteError } = await supabase.storage.from('songs').remove(filesToRemove);
-        if (deleteError) throw deleteError
-
-        const { data: listTwo, error: listTwoError } = await supabase.storage.from('images').list(`${username}`);
-        if (listTwoError) throw listTwoError
-        const filesToRemoveTwo = listTwo.map((y) => `${username}/${y.name}`);
-
-        const { data: dataTwo, error: deleteTwoError } = await supabase.storage.from('images').remove(filesToRemoveTwo);
-        if (deleteTwoError) throw deleteTwoError
-
-        return null
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return error
-        }
-      }  
-    }
-
-    const handleSubmit = async () => {
-      const {error} = await supabase.storage.from('images').upload(`${username}/pfp.${pfp[0]?.type.replace('image/', '')}`, pfp[0], { cacheControl: '3600', upsert: true, contentType: pfp[0] ? pfp[0].type: "image/jpeg"})
-      if (error) {
-        toast.error(error.message, toast_style)
-      } else {
-        const {error: errorOne} = await supabase.from('user_information').update({pfp_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/pfp.${pfp[0]?.type.replace('image/','')}`}).eq('username', username)
-        if (errorOne) {
-          toast.error(errorOne.message, toast_style)
-        } else {
-          toast.success('Profile Photo successfully updated!', toast_style)
-        }
-      }
-    }
-
     const handleClickFour = async () => {
       setPopup(true)
     }
@@ -112,10 +74,7 @@ export default function ProfilePage(): JSX.Element {
     const handlePassSubmit = async () => {
       setIsLoading(true);
       
-      const { data, error } = await supabase
-        .from('user_information')
-        .select('userid, hashpass')
-        .eq('username', username);
+      const { data, error } = await getUserInfoServer(username);
         
       if (error) {
         setIsLoading(false);
@@ -133,12 +92,12 @@ export default function ProfilePage(): JSX.Element {
             } else {
               if (result) {
                 if (userID !== null) {
-                  const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userID);
+                  const { error: deleteUserError } = await deleteUserServer(userID);
                   if (deleteUserError) {
                     setIsLoading(false);
                     toast.error(deleteUserError.message, toast_style);
                   } else {
-                    const deleteFolderError = await deleteUserFolders();
+                    const deleteFolderError = await deleteUserFolders(username);
                     if (deleteFolderError) {
                       setIsLoading(false);
                       toast.error(deleteFolderError.message, toast_style);
@@ -242,7 +201,7 @@ export default function ProfilePage(): JSX.Element {
                         </>
                       )}
                         </div>
-                    <button onClick={handleSubmit} disabled={!pfp} className="rounded-full bg-blue-950 w-24 h-10 text-center text-xl text-white hover:bg-blue-300 disabled:bg-gray-500">Save</button>
+                    <button onClick={()=>handleSubmit(username, pfp)} disabled={!pfp} className="rounded-full bg-blue-950 w-24 h-10 text-center text-xl text-white hover:bg-blue-300 disabled:bg-gray-500">Save</button>
                 </div>
                 <div className="flex justify-between items-center mb-4">
                     <Link href={`/${username}`}>

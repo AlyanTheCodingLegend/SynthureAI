@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import supabase from "@/app/_components/ClientInstance";
 import { toast } from "react-toastify";
 import toast_style from "@/app/_components/ToastStyle";
 import { IoMdArrowBack } from "react-icons/io";
@@ -17,6 +16,7 @@ import { AppDispatch, RootState } from "@/app/_states/store";
 import { useDispatch, useSelector } from "react-redux";
 import { setIndex, setIsUniversallyPlaying, setOpenPlaylist, setPlayPlaylistID, setSongArray } from "@/app/_states/songArraySlice";
 import Link from "next/link";
+import { deletePlaylistServer, removeFromPlaylistServer } from "./actions";
 
 export default function ShowPlaylistModel(): JSX.Element {
     const [name, setName] = useState<string | null>(null)
@@ -55,27 +55,20 @@ export default function ShowPlaylistModel(): JSX.Element {
     }, [data, error])    
       
     const removeFromPlaylist = async (songindex: number) => {
-        const {error} = await supabase.from("playlistsong_information").delete().eq('playlist_id', playlistid).eq('song_id', indexes[songindex])
-        if (error) {
-            toast.error(error.message, toast_style)
-        } else {
-            toast.success('Song removed from playlist!')
+        let removed = await removeFromPlaylistServer(playlistid, indexes[songindex])
+        if (removed) {
             if (songnames) {
                 setSongnames(prevSongs => (prevSongs ?? []).filter(s => s !== songnames[songindex]))
                 setImages(prevImages => prevImages.filter(s => s !== images[songindex]))
                 setArtists(prevArtists => prevArtists.filter(s => s !== artists[songindex]))
                 setIndexes(prevIndexes => prevIndexes.filter(s => s !== indexes[songindex]))
-            }    
+            }  
         }
     }
 
     const deletePlaylist = async () => {
-        const {error} = await supabase.from("playlist_information").delete().eq('playlist_id', playlistid)
-        if (error) {
-            toast.error(error.message, toast_style)
-            return
-        } else {
-            toast.success('Playlist deleted successfully!', toast_style)
+        let deleted = await deletePlaylistServer(playlistid)
+        if (deleted) {
             dispatch(setOpenPlaylist(false))
         }
     }

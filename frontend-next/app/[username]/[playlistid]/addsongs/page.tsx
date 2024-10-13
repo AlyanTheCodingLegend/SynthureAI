@@ -1,7 +1,6 @@
 "use client";
 
 import { toast } from "react-toastify";
-import supabase from "@/app/_components/ClientInstance";
 import { useEffect, useState } from "react";
 import toast_style from "@/app/_components/ToastStyle";
 import { BeatLoader } from "react-spinners";
@@ -12,6 +11,7 @@ import useFilteredSongs from "@/app/_hooks/useFilteredSongs";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Song } from "@/app/_types/types";
+import { addToPlaylist } from "./actions";
 
 export default function AddSongModel(): JSX.Element {
     const [songs, setSongs] = useState<Array<Song> | null>(null)
@@ -31,12 +31,8 @@ export default function AddSongModel(): JSX.Element {
     }, [songData, songError])    
     
     const handleClick = async (song: Song) => {
-        const {error} = await supabase.from('playlistsong_information').insert({playlist_id: parseInt(playlistid), song_id: song.id})
-
-        if (error) {
-            toast.error(error.message, toast_style)
-        } else {
-            toast.success("Song added successfully!")
+        let added = await addToPlaylist(parseInt(playlistid), song.id)
+        if (added) {
             setSongs(prevSongs => (prevSongs ?? []).filter(s => s.id !== song.id))    
         }
     }

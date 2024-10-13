@@ -1,11 +1,11 @@
 "use client";
 
-import supabase from './ClientInstance';
 import React, { useState } from 'react';
 import { toast } from "react-toastify";
 import toast_style from './ToastStyle';
 import { IoMdClose } from "react-icons/io";
 import { FadeLoader } from 'react-spinners';
+import { handleArtistRowUpdate, handleFileUploadServer } from '../_actions/_actions';
 
 type SongUploadModelProps = {
     username: string;
@@ -20,28 +20,6 @@ export default function SongUploadModel ({username, onClick}: SongUploadModelPro
     const [artistName, setArtistName] = useState<string>("")
     const [imageFile, setImageFile] = useState<File | null>(null)
 
-    const handleArtistRowUpdate = async (songID: number) => {
-        try {
-            const { data, error } = await supabase.from('artist_information').select('artist_id').eq('name', artistName)
-            if (error) throw error;
-
-            if (data.length === 0) {
-                const { data: dataOne, error: errorOne } = await supabase.from('artist_information').insert({ name: artistName }).select()
-                if (errorOne) throw errorOne;
-
-                const { error: errorTwo } = await supabase.from('artistsong_information').insert({artist_id: dataOne[0].artist_id, song_id: songID})
-                if (errorTwo) throw errorTwo;
-            } else {
-                const { error: errorThree } = await supabase.from('artistsong_information').insert({artist_id: data[0].artist_id, song_id: songID})
-                if (errorThree) throw errorThree;
-            }
-        } catch (error: unknown) {
-            if  (error instanceof Error) {
-                toast.error(error.message, toast_style);
-            }    
-        }
-    }
-
     const handleFileUpload = async (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault()
 
@@ -53,19 +31,10 @@ export default function SongUploadModel ({username, onClick}: SongUploadModelPro
         setIsProcessing(true)
 
         try {
-            const { error } = await supabase.storage.from("songs").upload(`${username}/${filename}.mp3`, selectedFile, { cacheControl: '3600', upsert: true, contentType: 'audio/mpeg' })
+            const { data, error } = await handleFileUploadServer(selectedFile, imageFile, artistName, username, filename, initialFilename);
             if (error) throw error;
 
-            const { error: errorOne } = await supabase.storage.from("images").upload(`${username}/${filename}.${imageFile.type.replace('image/', '')}`, imageFile, { cacheControl: '3600', upsert: true, contentType: imageFile.type })
-            if (errorOne) throw errorOne;
-
-            const { error: errorThree } = await supabase.from('image_information').insert({ uploaded_by: username, size: `${imageFile.size / (1024 * 1024)}`, format: `${imageFile.type}`, image_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` })
-            if (errorThree) throw errorThree;
-
-            const { data, error: errorTwo } = await supabase.from('song_information').insert({ song_name: initialFilename, song_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/songs/${username}/${filename}.mp3`, uploaded_by: username, artist_name: artistName, image_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` }).select()
-            if (errorTwo) throw errorTwo;
-
-            await handleArtistRowUpdate(data[0].id);
+            if (data!==null) await handleArtistRowUpdate(data, artistName);
 
             toast.success("Song has been uploaded successfully!", toast_style)
         } catch (error: unknown) {
