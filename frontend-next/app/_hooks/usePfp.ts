@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import supabase from "../_components/ClientInstance"
 
 function usePfp(username: string) {
     const [data, setData] = useState<string | null>(null)
@@ -7,7 +6,8 @@ function usePfp(username: string) {
 
     useEffect(() => {
         const loadPfp = async () => {
-            const {data: dataP, error: errorP} = await supabase.from('user_information').select('pfp_path').eq('username', username)
+            const response = await fetch(`/api/getPfp/${username}`)
+            const {data: dataP, error: errorP} = await response.json()
             if (errorP) {
                 setError(errorP.message)
             } else {

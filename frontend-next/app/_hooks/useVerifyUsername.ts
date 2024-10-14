@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import supabase from "../_components/ClientInstance"
 
 type useVerifyUsernameReturn = {
     data : UserInformation | null,
@@ -19,7 +18,8 @@ function useVerifyUsername(username: string | undefined) : useVerifyUsernameRetu
         async function verifyUsername() {
             const tempUsername = username || ""
             if (tempUsername!=="") {
-                const {data: dataP, error: errorP} = await supabase.from('user_information').select('*').eq('username', tempUsername)
+                const response = await fetch(`/api/getUserInformation/${tempUsername}`)
+                const {data: dataP, error: errorP} = await response.json()
                 if (errorP) {
                     setError(errorP.message)
                 } else {

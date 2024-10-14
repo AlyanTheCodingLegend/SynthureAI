@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import supabase from "../_components/ClientInstance"
 import type { Playlist } from "../_types/types"
 
 type usePlaylistsReturn = {
@@ -13,7 +12,8 @@ function usePlaylists(username: string): usePlaylistsReturn {
 
     useEffect(() => {
         async function loadPlaylists() {
-            const {data: dataP, error: errorP} = await supabase.from('playlist_information').select('playlist_id, playlist_name').eq('created_by', username)
+            const response = await fetch(`/api/getPlaylists/${username}`)
+            const {data: dataP, error: errorP} = await response.json()
             if (errorP) {
                 setError(errorP.message)
             } else {

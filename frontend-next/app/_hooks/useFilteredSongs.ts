@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import supabase from "../_components/ClientInstance"
 import useSongs from "./useSongs"
 import type { Song } from "../_types/types"
 
@@ -18,8 +17,6 @@ function useFilteredSongs(username: string, playlistid: string) : useSongReturn 
         async function loadFilteredSongs() {
             try {
                 let songIDs=[]
-                let filteredSongs=[]
-                let playlistsongIDs=[]
                 
                 if (errorP) throw errorP
 
@@ -29,21 +26,16 @@ function useFilteredSongs(username: string, playlistid: string) : useSongReturn 
                     }
                 }    
 
-                const {data: playlistSongs, error: playlistError} = await supabase.from('playlistsong_information').select('song_id').eq('playlist_id', playlistid).in('song_id', songIDs)
-                if (playlistError) throw playlistError
+                const response = await fetch(`/api/getFilteredSongs/${playlistid}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({array: JSON.stringify(songIDs)})
+                })
 
-                for (let i=0;i<playlistSongs.length;i++) {
-                    playlistsongIDs.push(playlistSongs[i].song_id)
-                }
-
-                for (let i=0;i<songIDs.length;i++) {
-                    if (!playlistsongIDs.includes(songIDs[i])) {
-                        filteredSongs.push(songIDs[i])
-                    }
-                }        
-
-                const {data: songsData, error: songsError} = await supabase.from('song_information').select('*').in('id', filteredSongs)
-                if (songsError) throw songsError
+                const {data: songsData, error} = await response.json()
+                if (error) throw error
 
                 setData(songsData)
 

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import supabase from "../_components/ClientInstance"
 import type { Song } from "../_types/types"
 
 type useSongReturn = {
@@ -14,7 +13,8 @@ function useSongs(username: string) : useSongReturn {
     useEffect(() => {
         async function loadSongs() {
             try {
-                const {data: dataP, error} = await supabase.from('song_information').select('*').eq('uploaded_by', username)
+                const response = await fetch(`/api/getSongs/${username}`)
+                const {data: dataP, error} = await response.json()
                 if (error) throw error
 
                 setData(dataP)

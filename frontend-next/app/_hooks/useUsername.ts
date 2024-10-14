@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import supabase from "../_components/ClientInstance"
 
 function useUsername(email: string) {
     const [data, setData] = useState<string | null>(null)
@@ -7,7 +6,8 @@ function useUsername(email: string) {
 
     useEffect(() => {
         const getUsername = async () => {
-            const {data: dataP, error: errorP} = await supabase.from('user_information').select('username').eq('email',email)
+            const response = await fetch(`/api/getUsername/${email}`)
+            const {data: dataP, error: errorP} = await response.json()
             if (errorP || dataP.length===0) {
                 setError("User not found")
             }

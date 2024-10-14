@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import supabase from "../_components/ClientInstance"
 
 type useSongsFromPlaylistReturn = {
     data: SongInformation | null,
@@ -24,46 +23,11 @@ function useSongsFromPlaylist(playlist_id: number, username: string): useSongsFr
             if (playlistID!==Number(process.env.NEXT_PUBLIC_MYSONGS_ID)) {
                 
                 try {    
-                    let songArray=[]
-                    let songNameArray=[]
-                    let imageArray=[]
-                    let indexArray=[]
-                    let artistArray=[]
-                    let songDataArray=[]
+                    const response = await fetch(`/api/getSongsFromPlaylist/${playlistID}`)
+                    const {data: dataP, error: errorP} = await response.json()
+                    if (errorP) throw errorP
 
-                    const {data: playlistData, error: playlistError} = await supabase.from('playlist_information').select('playlist_name').eq('playlist_id', playlistID)
-
-                    if (playlistError) throw playlistError
-
-                    const {data: dataP, error: errorP2} = await supabase.from('playlistsong_information').select('song_id').eq('playlist_id', playlistID)
-                    
-                    if (errorP2) throw errorP2
-                   
-                    if (dataP.length!==0) {
-                        
-                        for (let i=0;i<dataP.length;i++) {
-                            songDataArray.push(dataP[i].song_id)
-                        }
-                        const {data: songData, error: songError} = await supabase.from('song_information').select('*').in('id', songDataArray)
-                        if (songError) throw songError
-                        for (let j=0;j<songData.length;j++) {
-                            songArray.push(songData[j].song_path)
-                            songNameArray.push(songData[j].song_name)
-                            imageArray.push(songData[j].image_path)
-                            indexArray.push(songData[j].id)
-                            artistArray.push(songData[j].artist_name)
-                        }
-                        
-                        setData({
-                            name: playlistData[0].playlist_name,
-                            backupsongs: songArray,
-                            indexes: indexArray,
-                            songnames: songNameArray,
-                            images: imageArray,
-                            artists: artistArray
-                        })
-                        
-                    }
+                    setData(dataP)
                 } catch (errorP: unknown) {
                     
                     if (errorP instanceof Error) {
@@ -78,7 +42,8 @@ function useSongsFromPlaylist(playlist_id: number, username: string): useSongsFr
                     let imageArray=[]
                     let indexArray=[]
                     let artistArray=[]
-                    const {data: dataP, error: errorP2} = await supabase.from('song_information').select('*').eq('uploaded_by', username)
+                    const response = await fetch(`/api/getSongs/${username}`)
+                    const {data: dataP, error: errorP2} = await response.json()
                     if (errorP2) throw errorP2
                     for (let j=0;j<dataP.length;j++) {
                         songArray.push(dataP[j].song_path)
