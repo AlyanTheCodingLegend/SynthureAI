@@ -2,13 +2,13 @@ import supabase from "@/app/_components/ClientInstance";
 import { NextResponse } from "next/server";
 
 type ContextType = {
-    params: {
+    params: Promise<{
         playlistid: string
-    }
+    }>
 }
 
 export async function GET(request: Request, context: ContextType) {
-    const playlistid = context.params.playlistid
+    const playlistid = (await context.params).playlistid
 
     try {    
         let songArray=[]

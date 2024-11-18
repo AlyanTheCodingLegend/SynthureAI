@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import Layout from "../_components/Layout";
 import { BounceLoader } from "react-spinners";
 import useVerifyUsername from "../_hooks/useVerifyUsername";

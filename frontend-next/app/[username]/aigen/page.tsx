@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, type JSX } from "react";
 import Link from "next/link"
 import { toast } from "react-toastify"
 import toast_style from "@/app/_components/ToastStyle"

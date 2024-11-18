@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, type JSX } from "react";
 import { BiArrowToLeft, BiArrowToRight } from "react-icons/bi";
 import '../_styles/Sidebar.css';
 import { useParams } from "next/navigation";

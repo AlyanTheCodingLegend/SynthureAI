@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "react-toastify";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import toast_style from "@/app/_components/ToastStyle";
 import { BeatLoader } from "react-spinners";
 import { IoMdClose } from "react-icons/io";

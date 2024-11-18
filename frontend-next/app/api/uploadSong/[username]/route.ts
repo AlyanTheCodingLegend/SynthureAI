@@ -2,13 +2,13 @@ import supabase from "@/app/_components/ClientInstance";
 import { NextResponse } from "next/server";
 
 type ContextType = {
-    params: {
+    params: Promise<{
         username: string
-    }
+    }>
 }
 
 export async function POST(request: Request, context: ContextType) {
-    const username = context.params.username
+    const username = (await context.params).username
 
     const formData = await request.formData()
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { Howl } from 'howler';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 import ReactSlider from 'react-slider';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaPlay, FaPause, FaForwardStep, FaBackwardStep } from "react-icons/fa6";

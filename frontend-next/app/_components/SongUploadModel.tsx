@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, type JSX } from 'react';
 import { toast } from "react-toastify";
 import toast_style from './ToastStyle';
 import { IoMdClose } from "react-icons/io";
 import { FadeLoader } from 'react-spinners';
 import { handleArtistRowUpdate } from '../_actions/_actions';
+import { useRouter } from 'next/navigation';
 
 type SongUploadModelProps = {
     username: string;
@@ -19,6 +20,8 @@ export default function SongUploadModel ({username, onClick}: SongUploadModelPro
     const [isProcessing, setIsProcessing] = useState<boolean>(false)
     const [artistName, setArtistName] = useState<string>("")
     const [imageFile, setImageFile] = useState<File | null>(null)
+
+    const router = useRouter();
 
     const handleFileUpload = async (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault()
@@ -58,6 +61,7 @@ export default function SongUploadModel ({username, onClick}: SongUploadModelPro
             setIsProcessing(false);
             resetForm();
             onClick();
+            router.refresh();
         }
     };
 
