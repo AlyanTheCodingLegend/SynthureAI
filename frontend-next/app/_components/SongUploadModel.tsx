@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import toast_style from './ToastStyle';
 import { IoMdClose } from "react-icons/io";
 import { FadeLoader } from 'react-spinners';
-import { handleArtistRowUpdate, handleFileUploadServer } from '../_actions/_actions';
+import { handleArtistRowUpdate } from '../_actions/_actions';
 
 type SongUploadModelProps = {
     username: string;
@@ -31,7 +31,20 @@ export default function SongUploadModel ({username, onClick}: SongUploadModelPro
         setIsProcessing(true)
 
         try {
-            const { data, error } = await handleFileUploadServer(selectedFile, imageFile, artistName, username, filename, initialFilename);
+            const formData = new FormData();
+            formData.append("songfile", selectedFile);
+            formData.append("imagefile", imageFile);
+            formData.append("artistname", artistName);
+            formData.append("filename", filename);
+            formData.append("initialfilename", initialFilename);
+
+            const response = await fetch(`/api/uploadSong/${username}`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            const { data, error } = await response.json();
+
             if (error) throw error;
 
             if (data!==null) await handleArtistRowUpdate(data, artistName);
@@ -42,8 +55,9 @@ export default function SongUploadModel ({username, onClick}: SongUploadModelPro
                 toast.error(error.message, toast_style);
             }    
         } finally {
-            setIsProcessing(false)
+            setIsProcessing(false);
             resetForm();
+            onClick();
         }
     };
 
