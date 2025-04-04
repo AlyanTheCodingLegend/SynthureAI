@@ -155,7 +155,7 @@ export default function CreateUser(): JSX.Element {
                     </Link>
                 </div>
                 <div className="w-1/2 p-4 flex flex-col justify-center items-center text-center">
-                <Image src="https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/logo.png" alt="Logo" className="rounded-lg" width={250} height={250} priority={true}/>
+                <Image src="" alt="Logo" className="rounded-lg" width={250} height={250} priority={true}/>
                     <h2 className="texl-xl">😍 The only music application you'll ever need for your late night vibing sessions 😍</h2>
                     <div className="border-white border-t-2"></div>
                     <p className="text-xl">🤘 Vibe On! 🤘</p>

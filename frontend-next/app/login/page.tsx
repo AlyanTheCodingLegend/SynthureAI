@@ -140,7 +140,7 @@ export default function AuthUser(): JSX.Element {
                     </Link>
                 </div>
                 <div className="w-1/2 p-4 flex flex-col items-center justify-center text-center">
-                    <Image src="https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/logo.png" alt="Logo" className="rounded-lg" width={250} height={250} priority={true}/>
+                    <Image src="" alt="Logo" className="rounded-lg" width={250} height={250} priority={true}/>
                     <h1 className="text-4xl font-bold mb-2">SynthureAI</h1>
                     <h2 className="texl-xl">😍 The only music application you'll ever need for your late night vibing sessions 😍</h2>
                     <p className="text-xl">🤘 Vibe On 😎 🤘</p>

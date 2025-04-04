@@ -7,6 +7,8 @@ type ContextType = {
     }>
 }
 
+const supabaseUrl = process.env.SUPABASE_URL
+
 export async function POST(request: Request, context: ContextType) {
     const username = (await context.params).username
 
@@ -25,10 +27,10 @@ export async function POST(request: Request, context: ContextType) {
         const { error: errorOne } = await supabase.storage.from("images").upload(`${username}/${filename}.${imageFile.type.replace('image/', '')}`, imageFile, { cacheControl: '3600', upsert: true, contentType: imageFile.type })
         if (errorOne) throw errorOne;
 
-        const { error: errorThree } = await supabase.from('image_information').insert({ uploaded_by: username, size: `${imageFile.size / (1024 * 1024)}`, format: `${imageFile.type}`, image_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` })
+        const { error: errorThree } = await supabase.from('image_information').insert({ uploaded_by: username, size: `${imageFile.size / (1024 * 1024)}`, format: `${imageFile.type}`, image_path: `${supabaseUrl}/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` })
         if (errorThree) throw errorThree;
 
-        const { data, error: errorTwo } = await supabase.from('song_information').insert({ song_name: initialFilename, song_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/songs/${username}/${filename}.mp3`, uploaded_by: username, artist_name: artistName, image_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` }).select()
+        const { data, error: errorTwo } = await supabase.from('song_information').insert({ song_name: initialFilename, song_path: `${supabaseUrl}/storage/v1/object/public/songs/${username}/${filename}.mp3`, uploaded_by: username, artist_name: artistName, image_path: `${supabaseUrl}/storage/v1/object/public/images/${username}/${filename}.${imageFile.type.replace('image/','')}` }).select()
         if (errorTwo) throw errorTwo;
 
         return NextResponse.json({ data: data[0].id, error: null })

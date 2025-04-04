@@ -4,9 +4,10 @@ import supabase from "@/app/_components/ClientInstance";
 import toast_style from "@/app/_components/ToastStyle";
 import { toast } from "react-toastify";
 
+const supabaseUrl = process.env.SUPABASE_URL
+
 export const signOutServer = async () => {
     const response = await supabase.auth.signOut()
-
     return response
 }
 
@@ -39,7 +40,7 @@ export const handleSubmit = async (username: string, pfp: File[]) => {
     if (error) {
       toast.error(error.message, toast_style)
     } else {
-      const {error: errorOne} = await supabase.from('user_information').update({pfp_path: `https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/${username}/pfp.${pfp[0]?.type.replace('image/','')}`}).eq('username', username)
+      const {error: errorOne} = await supabase.from('user_information').update({pfp_path: `${supabaseUrl}/storage/v1/object/public/images/${username}/pfp.${pfp[0]?.type.replace('image/','')}`}).eq('username', username)
       if (errorOne) {
         toast.error(errorOne.message, toast_style)
       } else {

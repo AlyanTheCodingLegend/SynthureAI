@@ -55,7 +55,7 @@ export default function Sidebar (): JSX.Element {
         toast.error(pfpError, toast_style)
       } else if (pfpData!==null) {
         if (pfpData === "") {
-          setPfpPath("https://uddenmrxulkqkllfwxlp.supabase.co/storage/v1/object/public/images/assets/defaultpfp.jpg")
+          setPfpPath("")
         } else { 
           setPfpPath(addTimestampToUrl(pfpData))
         }  
