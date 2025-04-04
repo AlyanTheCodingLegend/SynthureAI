@@ -7,6 +7,31 @@ export type Json =
   | Json[]
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          operationName?: string
+          query?: string
+          variables?: Json
+          extensions?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       artist_information: {
@@ -87,7 +112,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "public_image_information_uploaded_by_fkey"
+            foreignKeyName: "image_information_uploaded_by_fkey"
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "user_information"
@@ -116,7 +141,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "public_playlist_information_created_by_fkey"
+            foreignKeyName: "playlist_information_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "user_information"
@@ -142,14 +167,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "public_playlistsong_information_playlist_id_fkey"
+            foreignKeyName: "playlistsong_information_playlist_id_fkey"
             columns: ["playlist_id"]
             isOneToOne: false
             referencedRelation: "playlist_information"
             referencedColumns: ["playlist_id"]
           },
           {
-            foreignKeyName: "public_playlistsong_information_song_id_fkey"
+            foreignKeyName: "playlistsong_information_song_id_fkey"
             columns: ["song_id"]
             isOneToOne: false
             referencedRelation: "song_information"
@@ -190,7 +215,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "public_song_information_uploaded_by_fkey"
+            foreignKeyName: "song_information_uploaded_by_fkey"
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "user_information"
@@ -220,15 +245,7 @@ export type Database = {
           userid?: string
           username?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_information_userid_fkey"
-            columns: ["userid"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
@@ -326,4 +343,19 @@ export type Enums<
   ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
     ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
