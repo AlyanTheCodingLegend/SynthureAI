@@ -5,13 +5,14 @@ import { useEffect, useState, type JSX } from 'react';
 import ReactSlider from 'react-slider';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaPlay, FaPause, FaForwardStep, FaBackwardStep } from "react-icons/fa6";
-import { FaVolumeMute, FaVolumeUp, FaRandom } from "react-icons/fa";
+import { FaVolumeMute, FaVolumeUp, FaRandom, FaSlidersH } from "react-icons/fa";
 import { MdOutlineLoop } from "react-icons/md";
 import { toast } from 'react-toastify';
 import toast_style from './ToastStyle';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../_states/store';
 import { setDuration, setIndex, setIsAdmin, setProgress, setSessionID, setSocket, setSongArray as setSongs } from '../_states/songArraySlice';
+import "../_styles/Player.css";
 
 export default function Player (): JSX.Element {
     const [isPlaying, setIsPlaying] = useState<boolean>(false)
@@ -26,11 +27,12 @@ export default function Player (): JSX.Element {
     const [Tsecs, setTSecs] = useState<number>(0)
     const [randomize, setRandomize] = useState<boolean>(false)
     const [disabled, setDisabled] = useState<boolean>(false)
+    const [showEqualizer, setShowEqualizer] = useState<boolean>(false)
+    const [soundProfile, setSoundProfile] = useState<string>("normal")
     
     const songs = useSelector((state: RootState) => state.songs.songs)
     const isOpen = useSelector((state: RootState) => state.songs.isOpen)
     const index = useSelector((state: RootState) => state.songs.index)
-    // const index = useSelector((state) => state.songs.index)
     const sessionID = useSelector((state: RootState) => state.songs.sessionID)
     const userID = useSelector((state: RootState) => state.songs.userID)
     const isAdmin = useSelector((state: RootState) => state.songs.isAdmin)
@@ -164,6 +166,13 @@ export default function Player (): JSX.Element {
         setIsMuted(!isMuted)
     }
 
+    const handleSoundProfileChange = (profile: string) => {
+        setSoundProfile(profile);
+        toast.info(`Sound profile changed to ${profile}`, toast_style);
+        // In a real implementation, this would apply audio effects
+        // For now, we're just changing the state
+    }
+
     useEffect(() => {
         if (song) {
             song.play()
@@ -295,63 +304,102 @@ export default function Player (): JSX.Element {
     return (
         <>
         {song && (
-            <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} fixed bg-gray-800 bottom-0 w-full justify-between items-center p-4`}>
-                <div className='flex flex-col justify-center items-center'>
-                    <div className="flex flex-row w-full">
-                        <div id="timer" className='font-mono -mt-1.5 text-base text-white tabular-nums'>
+            <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} player-container`}>
+                <div className='player-content'>
+                    <div className="progress-container">
+                        <div className="timer">
                             {mins}:{secs < 10 ? "0" + secs : secs}
                         </div>
                         <ReactSlider
-                            className="flex-grow h-2 bg-gray-700 rounded-md mx-1 cursor-pointer"
+                            className="progress-slider"
                             onAfterChange={handleSeek}
                             value={progress}
                             min={0}
                             max={duration}
-                            thumbClassName="w-4 h-4 bg-purple-400 hover:bg-purple-900 rounded-full -mt-1 outline-none focus:outline-none -top-1/6 cursor-pointer"
-                            trackClassName="h-full rounded-full bg-gradient-to-r from-gray-300 to-purple-600"
+                            thumbClassName="progress-thumb"
+                            trackClassName="progress-track"
                         />
-                        <div className='font-mono -mt-1.5 text-base text-center text-white mr-1 tabular-nums'>
+                        <div className='total-time'>
                             {Tmins}:{Tsecs < 10 ? "0" + Tsecs : Tsecs}
                         </div>
                     </div>
 
-                    <div className='flex flex-row items-center w-full justify-end'>
-                    <div className='flex mr-auto ml-4 items-center justify-center'>   
-                        <div className={randomize ? 'text-green-400 hover:cursor-pointer' : 'text-white hover:cursor-pointer'} onClick={() => setRandomize(!randomize)}>
-                            <FaRandom size={22} />
-                        </div>
-                        <div className={repeat ? 'text-green-400 hover:cursor-pointer ml-2' : 'text-white hover:cursor-pointer ml-2'} onClick={() => setRepeat(!repeat)}>
-                            <MdOutlineLoop size={24} />
-                        </div>
-                    </div>     
-                    <div className='flex items-center mr-10 w-2/5 justify-center'>
-                    
-                        <button disabled={(socket!==null && !isAdmin)} className="text-white mr-4 hover:text-green-500" onClick={handlePlayPrevSong}><FaBackwardStep size={20}/></button>
+                    <div className='controls-container'>
+                        <div className='player-left-controls'>   
+                            <div className={randomize ? 'shuffle-active' : 'shuffle-inactive'} onClick={() => setRandomize(!randomize)}>
+                                <FaRandom size={18} />
+                            </div>
+                            <div className={repeat ? 'repeat-active' : 'repeat-inactive'} onClick={() => setRepeat(!repeat)}>
+                                <MdOutlineLoop size={20} />
+                            </div>
+                        </div>     
+                        <div className='player-main-controls'>
+                            <button disabled={(socket!==null && !isAdmin)} className="prev-button" onClick={handlePlayPrevSong}>
+                                <FaBackwardStep size={16}/>
+                            </button>
                             <button
                                 disabled={(socket!==null && !isAdmin)}
                                 onClick={handleClick}
-                                className={disabled ? "text-white mr-2 rounded-full h-8 w-8 bg-slate-600 text-xs text-center cursor-not-allowed flex items-center justify-center" : "text-white mr-2 rounded-full h-8 w-8 bg-purple-900 text-xs text-center flex items-center justify-center"}
+                                className={disabled ? "play-button disabled" : "play-button"}
                             >
-                                {isPlaying ? <FaPause size={20} /> : <FaPlay size={20} />}
+                                {isPlaying ? <FaPause size={18} /> : <FaPlay size={18} className="play-icon" />}
                             </button>
-                            <button disabled={(socket!==null && !isAdmin)} className="text-white ml-2 hover:text-green-500" onClick={handlePlayNextSong}><FaForwardStep size={20}/></button>
+                            <button disabled={(socket!==null && !isAdmin)} className="next-button" onClick={handlePlayNextSong}>
+                                <FaForwardStep size={16}/>
+                            </button>
                         </div>
-                        <div className="flex items-center w-1/5 justify-end">
-                            <button className="flex justify-center items-center text-white mr-1 rounded-full bg-blue-900 hover:bg-blue-800 w-10 h-6 text-xs text-center" onClick={handleVolumeMute}>
-                                {isMuted ? <FaVolumeMute size={15} /> : <FaVolumeUp size={15} />}
+                        <div className="player-right-controls">
+                            <button className="equalizer-button" onClick={() => setShowEqualizer(!showEqualizer)}>
+                                <FaSlidersH size={16} />
+                            </button>
+                            <button className="mute-button" onClick={handleVolumeMute}>
+                                {isMuted ? <FaVolumeMute size={14} /> : <FaVolumeUp size={14} />}
                             </button>
                             <ReactSlider
-                                className="h-2 rounded-md w-full"
+                                className="volume-slider"
                                 value={volume}
                                 onChange={handleVolumeSeek}
                                 min={0}
                                 max={1}
                                 step={0.01}
-                                thumbClassName="w-4 h-4 bg-green-400 rounded-full -mt-1 outline-none focus:outline-none hover:bg-blue-400 cursor-pointer"
-                                trackClassName="h-full hover:cursor-pointer rounded-full bg-gradient-to-l from-blue-400 to-green-400"
+                                thumbClassName="volume-thumb"
+                                trackClassName="volume-track"
                             />
                         </div>
                     </div>
+                    
+                    {showEqualizer && (
+                        <div className="equalizer-panel">
+                            <div className="equalizer-title">Sound Profiles</div>
+                            <div className="sound-profiles">
+                                <button 
+                                    className={`profile-button ${soundProfile === 'normal' ? 'active' : ''}`}
+                                    onClick={() => handleSoundProfileChange('normal')}>
+                                    Normal
+                                </button>
+                                <button 
+                                    className={`profile-button ${soundProfile === 'bass' ? 'active' : ''}`}
+                                    onClick={() => handleSoundProfileChange('bass')}>
+                                    Bass Boost
+                                </button>
+                                <button 
+                                    className={`profile-button ${soundProfile === 'vocals' ? 'active' : ''}`}
+                                    onClick={() => handleSoundProfileChange('vocals')}>
+                                    Vocal Boost
+                                </button>
+                                <button 
+                                    className={`profile-button ${soundProfile === 'rock' ? 'active' : ''}`}
+                                    onClick={() => handleSoundProfileChange('rock')}>
+                                    Rock
+                                </button>
+                                <button 
+                                    className={`profile-button ${soundProfile === 'electronic' ? 'active' : ''}`}
+                                    onClick={() => handleSoundProfileChange('electronic')}>
+                                    Electronic
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         )}

@@ -1,70 +1,166 @@
 .sidebar {
-    height: 100%;
-    width: 250px;
-    position: fixed;
-    z-index: 1;
-    top: 0;
-    left: 0;
-    background-color: #111;
-    overflow-x: hidden;
-    overflow-y: auto;
-    transition: width 0.2s;
-    padding-top: 5px;
-    position: fixed;
-  }
-  
-  .sidebar.collapsed {
-    width: 50px;
-  }
-  
-  .sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    color: white;
-  }
-  
-  .sidebar-header .pfp {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    cursor: pointer;
-  }
-  
-  .sidebar-button {
-    padding: 10px;
-    color: #818181;
-    background-color: #1a1a1a;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: 0.3s;
-    
-  }
+  height: 100%;
+  width: 250px;
+  background-color: #000;
+  color: white;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
 
-  .spotify-button {
-    padding: 10px;
-    color: #ffffff;
-    background-color: #08c045;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-  
-  .spotify-button:hover {
-    color: #ffffff;
-    background-color: #147335;
-  }
+.collapsed {
+  width: 50px;
+}
 
-  .sidebar-button:hover {
-    color: #f1f1f1;
-    background-color: #000;
-  }
-  
-  .toggle-btn {
-    background-color: #000;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-  }
-  
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.pfp {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.username-label {
+  margin-left: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.sidebar-section {
+  margin-top: 20px;
+}
+
+.sidebar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #999;
+  margin-bottom: 10px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.logo-icon {
+  font-size: 22px;
+  color: #b266ff;
+  margin-right: 5px;
+}
+.sidebar-title-logo{
+  color: #b266ff;
+}
+
+.sidebar-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: #111;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  font-size: 14px;
+  gap: 8px;
+}
+
+.sidebar-button:hover {
+  background-color: #3d1c69;
+}
+
+.spotify-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to right, #7b2ff7, #f107a3);
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.spotify-button:hover {
+  opacity: 0.9;
+}
+
+.session-input {
+  margin-left: 5px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  border: 1px solid white;
+  background: #000;
+  color: white;
+  width: 90px;
+  font-size: 13px;
+}
+
+.join-btn {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-left: 5px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.join-btn:hover {
+  background-color: #059669;
+}
+
+.fixed-modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Custom scrollbar */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: #a855f7;
+  border-radius: 10px;
+}
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+/* Prevent content overflow horizontally */
+body, html, #__next {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}

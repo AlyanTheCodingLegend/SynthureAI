@@ -1,0 +1,321 @@
+/* Player.css */
+
+.player-container {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #0c0c0c;
+    border-top: 1px solid #2c2c2c;
+    padding: 0.75rem 1rem;
+    z-index: 50;
+    transition: all 0.3s ease;
+  }
+  
+  .player-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+  
+  /* Progress bar styling */
+  .progress-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  
+  .timer, .total-time {
+    font-family: monospace;
+    font-size: 0.875rem;
+    color: #d4d4d8;
+    min-width: 2.5rem;
+  }
+  
+  .timer {
+    margin-right: 0.5rem;
+    text-align: right;
+  }
+  
+  .total-time {
+    margin-left: 0.5rem;
+    text-align: left;
+  }
+  
+  .progress-slider {
+    flex-grow: 1;
+    height: 0.25rem;
+    background-color: #27272a;
+    border-radius: 9999px;
+    cursor: pointer;
+  }
+  
+  .progress-thumb {
+    width: 0.875rem;
+    height: 0.875rem;
+    background-color: #d946ef;
+    border-radius: 50%;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(217, 70, 239, 0.2);
+    margin-top: -0.35rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .progress-thumb:hover {
+    background-color: #e879f9;
+    transform: scale(1.1);
+  }
+  
+  .progress-track {
+    height: 100%;
+    border-radius: 9999px;
+    background: linear-gradient(to right, #d4d4d8, #d946ef);
+  }
+  
+  /* Controls styling */
+  .controls-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .player-left-controls {
+    display: flex;
+    margin-right: auto;
+    margin-left: 1rem;
+    align-items: center;
+  }
+  
+  .shuffle-inactive, .repeat-inactive {
+    color: #a1a1aa;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+    margin-right: 1rem;
+  }
+  
+  .shuffle-active, .repeat-active {
+    color: #10b981;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+    margin-right: 1rem;
+  }
+  
+  .shuffle-inactive:hover, .repeat-inactive:hover {
+    color: #d4d4d8;
+    transform: scale(1.1);
+  }
+  
+  .shuffle-active:hover, .repeat-active:hover {
+    transform: scale(1.1);
+  }
+  
+  .player-main-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+  }
+  
+  .prev-button, .next-button {
+    color: #d4d4d8;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+  }
+  
+  .prev-button:hover, .next-button:hover {
+    color: #d946ef;
+    transform: scale(1.1);
+  }
+  
+  .play-button {
+    color: #ffffff;
+    background-color: #d946ef;
+    border: none;
+    border-radius: 50%;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin: 0 1rem;
+    transition: background-color 0.2s, transform 0.2s;
+    box-shadow: 0 0 10px rgba(217, 70, 239, 0.5);
+  }
+  
+  .play-button:hover {
+    background-color: #e879f9;
+    transform: scale(1.05);
+  }
+  
+  .play-button.disabled {
+    background-color: #3f3f46;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  
+  .play-icon {
+    margin-left: 0.125rem;
+  }
+  
+  .player-right-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-left: auto;
+    width: 20%;
+  }
+  
+  .equalizer-button, .mute-button {
+    color: #d4d4d8;
+    background-color: rgba(37, 99, 235, 0.3);
+    border: none;
+    border-radius: 50%;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-right: 0.75rem;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  
+  .equalizer-button:hover, .mute-button:hover {
+    background-color: rgba(37, 99, 235, 0.5);
+    color: #ffffff;
+  }
+  
+  .volume-slider {
+    width: 100%;
+    max-width: 6rem;
+    height: 0.25rem;
+    background-color: #27272a;
+    border-radius: 9999px;
+    cursor: pointer;
+  }
+  
+  .volume-thumb {
+    width: 0.75rem;
+    height: 0.75rem;
+    background-color: #4ade80;
+    border-radius: 50%;
+    outline: none;
+    margin-top: -0.25rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .volume-thumb:hover {
+    background-color: #34d399;
+  }
+  
+  .volume-track {
+    height: 100%;
+    border-radius: 9999px;
+    background: linear-gradient(to right, #4ade80, #38bdf8);
+  }
+  
+  /* Equalizer panel */
+  .equalizer-panel {
+    width: 100%;
+    background-color: #1c1c1c;
+    border-top: 1px solid #2c2c2c;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+    border-radius: 0.25rem;
+    animation: slideDown 0.3s ease;
+  }
+  
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .equalizer-title {
+    font-size: 0.875rem;
+    color: #d4d4d8;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+  
+  .sound-profiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .profile-button {
+    background-color: #27272a;
+    color: #d4d4d8;
+    border: none;
+    border-radius: 0.25rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .profile-button:hover {
+    background-color: #3f3f46;
+    color: #ffffff;
+  }
+  
+  .profile-button.active {
+    background-color: #6366f1;
+    color: #ffffff;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .player-left-controls {
+      margin-left: 0;
+    }
+    
+    .play-button {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+    
+    .equalizer-button, .mute-button {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+    
+    .volume-slider {
+      max-width: 4rem;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .player-container {
+      padding: 0.5rem;
+    }
+    
+    .timer, .total-time {
+      font-size: 0.75rem;
+    }
+    
+    .sound-profiles {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }

@@ -37,28 +37,32 @@ export default function PlaylistModel ({username, onClick}: PlaylistModelProps):
 
     return (
         <div>
-            <div className="relative max-w-md w-full bg-blue-600 rounded-lg shadow-lg p-8">
-                <div className="absolute top-0 right-0 m-2 text-red-700 text-lg font-bold focus:outline-none">
-                    <button onClick={onClick}>
-                        <IoMdClose size={25}/>
+            <div className="relative max-w-md w-full bg-[#1e1e1e] border border-[#533cb8] rounded-lg shadow-xl p-6">
+                <h2 className="text-white text-xl font-bold mb-4 text-center">Create Playlist</h2>
+                <div className="absolute top-2 right-2">
+                    <button 
+                        onClick={onClick} 
+                        className="text-white bg-red-500 rounded-full w-6 h-6 flex items-center justify-center transition-colors hover:bg-red-600 focus:outline-none"
+                    >
+                        <IoMdClose size={18}/>
                     </button>  
                 </div>
                 <input 
                     type="text" 
                     placeholder="Enter a playlist name" 
                     onChange={handleNameChange} 
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
+                    className="w-full bg-[#262626] border border-[#333] rounded-lg px-3 py-2 mb-5 text-white focus:outline-none focus:border-[#7c4dff] transition-all hover:border-gray-500"
                 />
                 <button 
-                    className={playlistname === '' ? "w-full bg-slate-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-not-allowed" : "w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
+                    className={playlistname === '' ? 
+                        "w-full bg-gray-600 text-white font-bold py-3 px-4 rounded-lg focus:outline-none cursor-not-allowed" : 
+                        "w-full bg-[#7c4dff] hover:bg-[#6a3aff] transition-colors text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"}
                     disabled={playlistname === ''}
                     onClick={handleClick}
                 >
                     Create Playlist
                 </button>
             </div>
-            
         </div>
-
     )
-} 
+}
