@@ -1,78 +1,57 @@
 "use client";
 
-import { useEffect, useState, type JSX } from "react";
+import { useState, type JSX } from "react";
 import { toast } from "react-toastify";
 import { BounceLoader } from "react-spinners";
 import { SlEye } from "react-icons/sl";
 import toast_style from "../_components/ToastStyle";
 import 'react-toastify/dist/ReactToastify.css';
-import bcrypt from "bcryptjs";
 import Link from "next/link";
-import Image from "next/image";
-import { addUserToDB, signUpServer } from "./actions";
+import { SubmitHandler, useForm } from "react-hook-form";
+
+type SignupInfo = {
+    email: string;
+    password: string;
+    username: string;
+    confpass: string;
+}
 
 export default function CreateUser(): JSX.Element {
-    const [email, setEmail] = useState<string>("");
-    const [pass, setPass] = useState<string>("");
-    const [confpass, setConfpass] = useState<string>("");
-    const [username, setUsername] = useState<string>("");
-    const [passEqual, setPassEqual] = useState<boolean>(false);
+    const { register, handleSubmit, watch } = useForm<SignupInfo>()
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [showPass, setShowPass] = useState<boolean>(false);
     const [showConfPass, setShowConfPass] = useState<boolean>(false);
     const [msg, setMsg] = useState<boolean>(false);
-
-    const handleUsernameChange = (event: React.ChangeEvent<HTMLInputElement>) => setUsername(event.target.value);
-    const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
-    const handlePassChange = (event: React.ChangeEvent<HTMLInputElement>) => setPass(event.target.value);
-    const handleConfPassChange = (event: React.ChangeEvent<HTMLInputElement>) => setConfpass(event.target.value);
-
-    useEffect(() => {
-        setPassEqual(pass !== "" && confpass !== "" && pass === confpass);
-    }, [pass, confpass]);
-
-    const handleClick = async () => {
-        if (!passEqual) {
-            toast.error("Passwords do not match! 😞");
-            return;
-        }
-        if (pass.length < 6) {
-            toast.error("The password should be a minimum of 6 characters long! 😞");
+    
+    const handleClick: SubmitHandler<SignupInfo> = (data) => {
+        if (data.password !== data.confpass) {
+            toast.error("Passwords do not match!", toast_style);
             return;
         }
         setIsLoading(true);
-
-        const { data, error: errorOne } = await signUpServer(email, pass);
-
-        if (errorOne) {
-            toast.error(errorOne.message, toast_style);
-            setIsLoading(false);
-            return;
-        } 
-
-        if (data.user && data.user.id) {
-            bcrypt.hash(pass, 10, async function (err: Error | null, hash: string) {
-                if (err) {
-                    toast.error(err.message);
-                    setIsLoading(false);
-                }
-
-                if (data.user && data.user.id) {
-                    const { error } = await addUserToDB(data.user.id, email, hash, username);
-
-                    if (error) {
-                        toast.error(error.message);
-                        setIsLoading(false);
-                    }
-                }
-                
+        fetch("/api/signupUser", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+        })
+        .then((res) => res.json())
+        .then((data) => {
+            if (data.error) {
+                toast.error(data.error, toast_style);
                 setIsLoading(false);
+            } else if (data.message) {
+                toast.success("Account created successfully! 😎", toast_style);
                 setMsg(true);
-            });
-        } else {
-            toast.error("An error occurred, please try again later!");
+                setIsLoading(false);
+            }
+        })
+        .catch((err) => {
+            toast.error(err.message, toast_style);
             setIsLoading(false);
-        }
+        })
+        
     };
 
     if (isLoading) {
@@ -101,25 +80,23 @@ export default function CreateUser(): JSX.Element {
             <div className="max-w-4xl w-full bg-blue-600 rounded-lg shadow-lg text-white p-8 flex">
                 <div className="w-1/2 p-4 border-r-4 border-white">
                     <h2 className="text-2xl font-bold mb-4">Create Account</h2>
+                    <form onSubmit={handleSubmit(handleClick)}>
                     <input
                         className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
-                        onChange={handleUsernameChange}
-                        id="username"
+                        {...register("username", { required: true })}
                         type="text"
                         placeholder="Enter your username"
                     />
                     <input
                         className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
-                        onChange={handleEmailChange}
-                        id="email"
+                        {...register("email", { required: true })}
                         type="email"
                         placeholder="Enter your email address"
                     />
                     <div className="relative w-full">
                         <input
                             className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
-                            onChange={handlePassChange}
-                            id="password"
+                            {...register("password", { required: true })}
                             type={showPass ? "text" : "password"}
                             placeholder="Enter your password"
                             minLength={6}
@@ -130,22 +107,22 @@ export default function CreateUser(): JSX.Element {
                     <div className="relative w-full">
                         <input
                             className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-4 text-white focus:outline-none focus:border-blue-500"
-                            onChange={handleConfPassChange}
-                            id="confirmpassword"
+                            {...register("confpass", { required: true })}
                             type={showConfPass ? "text" : "password"}
                             placeholder="Confirm your password"
                             minLength={6}
                             maxLength={15}
                         />
-                        <button className="absolute top-0 right-0 mt-2 mr-2" onClick={() => setShowConfPass(!showConfPass)}><SlEye size={25} className="mb-4 mr-2 ml-2" color="white" /></button>
+                        <button className="absolute top-0 right-0 mt-2 mr-2" type="button" onClick={() => setShowConfPass(!showConfPass)}><SlEye size={25} className="mb-4 mr-2 ml-2" color="white" /></button>
                     </div>
                     <button
-                        disabled={!username || !email || !pass || !confpass}
-                        onClick={handleClick}
-                        className={(!username || !email || !pass || !confpass) ? "w-full bg-slate-500 hover:cursor-not-allowed text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" : "w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
+                        type="submit"
+                        // disabled={!username || !email || !pass || !confpass}
+                        className={(true) ? "w-full bg-slate-500 hover:cursor-not-allowed text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" : "w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"}
                     >
                         Sign Up
                     </button>
+                    </form>
                     <Link href='/login'>
                         <button
                             className="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
@@ -155,7 +132,7 @@ export default function CreateUser(): JSX.Element {
                     </Link>
                 </div>
                 <div className="w-1/2 p-4 flex flex-col justify-center items-center text-center">
-                <Image src="" alt="Logo" className="rounded-lg" width={250} height={250} priority={true}/>
+                <img alt="Logo" className="rounded-lg" width={250} height={250}/>
                     <h2 className="texl-xl">😍 The only music application you'll ever need for your late night vibing sessions 😍</h2>
                     <div className="border-white border-t-2"></div>
                     <p className="text-xl">🤘 Vibe On! 🤘</p>
