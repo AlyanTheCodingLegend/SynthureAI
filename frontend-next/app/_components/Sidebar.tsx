@@ -99,6 +99,7 @@ export default function Sidebar(): JSX.Element {
               src={pfpPath || "../profile.png"}
               alt="Profile"
               className="pfp"
+              style={{ zIndex: 0 }}
             />
             <span className="username-label">{username}</span>
             <button className="toggle-btn" onClick={toggleSidebar}>
@@ -133,20 +134,20 @@ export default function Sidebar(): JSX.Element {
               Start Collaborative Session
             </div>
             <div className="sidebar-button join-session-block">
-  <CgMediaLive size={20} className="icon" />
-  <div className="join-session-content">
-    <div className="join-text">Join Collab Session</div>
-    <div className="join-input-row">
-      <input
-        type="number"
-        placeholder="Session ID"
-        onChange={(e) => setTempSessionID(Number(e.target.value))}
-        className="session-input"
-      />
-      <button onClick={joinSession} className="join-btn">Join</button>
-    </div>
-  </div>
-</div>
+            <CgMediaLive size={20} className="icon" />
+            <div className="join-session-content">
+              <div className="join-text">Join Collab Session</div>
+              <div className="join-input-row">
+                <input
+                  type="number"
+                  placeholder="Session ID"
+                  onChange={(e) => setTempSessionID(Number(e.target.value))}
+                  className="session-input"
+                />
+                <button onClick={joinSession} className="join-btn">Join</button>
+              </div>
+            </div>
+          </div>
 
           </div>
 

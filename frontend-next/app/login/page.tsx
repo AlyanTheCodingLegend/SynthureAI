@@ -91,12 +91,13 @@ export default function AuthUser(): JSX.Element {
                     
                     {/* Form content */}
                     <div>
+                        <form onSubmit={handleSubmit(handleClick)} className="mb-5">
                         <div className="mb-5">
                             <label className="block mb-2 text-[#CCCCCC] text-sm">Username or Email</label>
                             <div className="transition-transform duration-300 hover:translate-y-[-2px]">
                                 <input
                                     className="w-full py-3 px-4 rounded-[10px] bg-[rgba(60,60,60,0.5)] border border-[rgba(255,255,255,0.1)] text-white text-sm focus:outline-none focus:border-[#9146FF] focus:shadow-[0_0_0_2px_rgba(145,70,255,0.3)]"
-                                    onChange={handleEmailChange}
+                                    {...register("email", { required: true })}
                                     id="email"
                                     type="email"
                                     placeholder="Enter your email address"
@@ -109,12 +110,13 @@ export default function AuthUser(): JSX.Element {
                             <div className="relative transition-transform duration-300 hover:translate-y-[-2px]">
                                 <input
                                     className="w-full py-3 px-4 rounded-[10px] bg-[rgba(60,60,60,0.5)] border border-[rgba(255,255,255,0.1)] text-white text-sm focus:outline-none focus:border-[#9146FF] focus:shadow-[0_0_0_2px_rgba(145,70,255,0.3)]"
-                                    onChange={handlePassChange}
+                                    {...register("password", { required: true })}
                                     id="password"
                                     type={showPass ? "text" : "password"}
                                     placeholder="Enter your password"
                                 />
                                 <button 
+                                    type="button"
                                     className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-[rgba(60,60,60,0.8)] border border-[rgba(255,255,255,0.3)] rounded-full w-6 h-6 flex justify-center items-center transition-all duration-300 hover:bg-[rgba(145,70,255,0.3)]"
                                     onClick={() => setShowPass(!showPass)}
                                 >
@@ -122,28 +124,19 @@ export default function AuthUser(): JSX.Element {
                                 </button>
                             </div>
                         </div>
-                        
-                        <div className="text-right mb-5">
-                            <a href="#" className="text-[#9146FF] text-sm no-underline hover:underline">Forgot password?</a>
-                        </div>
-                        
+                     
                         <button
-                            onClick={handleClick}
-                            disabled={disabled}
+                            type="submit"
+                            disabled={!watch("email") || !watch("password")}
                             className={`w-full py-4 px-4 rounded-[25px] font-bold transition-all duration-300 ${
-                                disabled 
+                                !watch("email") || !watch("password")
                                 ? "bg-slate-500 text-white cursor-not-allowed" 
                                 : "bg-[#9146FF] text-white hover:bg-[#7d32e8] hover:transform hover:translate-y-[-2px] hover:shadow-[0_5px_15px_rgba(145,70,255,0.4)]"
                             }`}
                         >
                             Log In
                         </button>
-                        
-                        <Link href="/signup">
-                            <button className="mt-4 w-full py-4 px-4 rounded-[25px] bg-[rgba(145,70,255,0.2)] text-white font-bold transition-all duration-300 hover:bg-[rgba(145,70,255,0.3)]">
-                                Sign Up Instead
-                            </button>
-                        </Link>
+                        </form>
                     </div>
                     
                     <div className="text-center mt-6 text-[#CCCCCC] text-sm">

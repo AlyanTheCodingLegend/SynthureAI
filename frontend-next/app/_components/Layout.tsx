@@ -117,7 +117,7 @@ export default function Layout(): JSX.Element {
                                     {filteredSongs.map((song, index) => (
                                         <li key={index} className="py-2 px-4 hover:bg-zinc-800 rounded-md">
                                             <div className="flex items-center">
-                                                <img src={song.image_path || "/api/placeholder/48/48"} alt={song.song_name} className="w-10 h-10 rounded-md mr-3" />
+                                                <img src={song.image_path || "/api/placeholder/48/48"} alt={song.song_name} className="w-10 h-10 rounded-md mr-3 z-0" />
                                                 <div className={`${(songPlaying===song.id) ? "text-white" : "text-gray-300"} flex-1`}>  
                                                     <h3 className="font-medium">{song.song_name}</h3>
                                                     <p className="text-sm text-gray-400">{song.artist_name}</p>
@@ -171,9 +171,9 @@ export default function Layout(): JSX.Element {
                                 >
                                     <div className="mb-4 bg-zinc-800 rounded-md aspect-square flex items-center justify-center">
                                         <img 
-                                            src="/api/placeholder/400/400" 
+                                            src={playlist.cover_url} 
                                             alt={playlist.playlist_name} 
-                                            className="w-full h-full rounded-md" 
+                                            className="w-full h-full rounded-md z-0" 
                                         />
                                     </div>
                                     <h3 className="font-semibold">{playlist.playlist_name}</h3>
@@ -216,7 +216,7 @@ export default function Layout(): JSX.Element {
                                         <img 
                                             src={mySongsData.images[index] || "/api/placeholder/280/280"} 
                                             alt={songName} 
-                                            className="w-full h-[180px] object-cover" 
+                                            className="w-full h-[180px] object-cover -z-10" 
                                         />
                                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
                                             {songPlaying === mySongsData.indexes[index] ? 
@@ -254,7 +254,7 @@ export default function Layout(): JSX.Element {
                             className="absolute top-2 right-2 text-white text-xl font-bold"
                             onClick={() => setShowUploadModal(false)}
                         >
-                            ×
+                            X
                         </button>
                         
                         <h2 className="text-white text-xl mb-4">Upload Song</h2>

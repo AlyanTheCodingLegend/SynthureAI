@@ -4,10 +4,26 @@ import { toast } from "react-toastify"
 import supabase from "../_components/ClientInstance"
 import toast_style from "../_components/ToastStyle"
 
-export const createPlaylist = async (username: string, playlistname: string) => {
-    const {data, error} = await supabase.from('playlist_information').insert({created_by: username, playlist_name: playlistname}).select("*")
+const supabaseUrl = process.env.SUPABASE_URL
+
+export const createPlaylist = async (username: string, formData: FormData) => {
+    const playlistname = formData.get('playlist_name') as string
+    const file = formData.get('cover_image') as File
+
+    const {data: fileData, error: fileError} = await supabase.storage.from('images').upload(`${username}/playlist_covers/${playlistname}.${file.type.replace('image/', '')}`, file, {
+        cacheControl: '60',
+        upsert: true
+    })
+
+    if (fileError) {
+        toast.error(fileError.message, toast_style)
+        return null
+    }
+
+    const {data, error} = await supabase.from('playlist_information').insert({created_by: username, playlist_name: playlistname, cover_url: `${supabaseUrl}/storage/v1/object/public/images/${username}/playlist_covers/${playlistname}.${file.type.replace('image/', '')}`}).select("*")
     if (error) {
         toast.error(error.message, toast_style)
+        return null
     }
 
     return data

@@ -143,7 +143,7 @@ export default function ShowPlaylistModel(): JSX.Element {
                         songnames.map((songname, songindex) => (
                             <div key={songindex} className="song-item flex items-center bg-[#1A1A1A] rounded-xl overflow-hidden transition-all duration-300 border border-[#2A2A2A] relative hover:bg-[#222222] hover:border-[rgba(147,51,234,0.3)] hover:shadow-lg hover:scale-[1.01]">
                                 <div className="song-thumbnail w-[100px] h-[100px] bg-[#2A2A2A] flex items-center justify-center text-[#777] text-xs leading-tight text-center">
-                                    <img src={images[songindex]} alt={songname} className="w-full h-full object-cover" />
+                                    <img src={images[songindex]} alt={songname} className="w-full h-full object-cover z-0" />
                                 </div>
                                 <div className="song-info flex-1 px-5">
                                     <h3 className="song-title text-[22px] font-semibold mb-1.5 text-white">{songname}</h3>

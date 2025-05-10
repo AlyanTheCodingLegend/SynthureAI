@@ -9,4 +9,5 @@ export type Song = {
 export type Playlist = {
     playlist_id: number;
     playlist_name: string;
+    cover_url: string;
 }
