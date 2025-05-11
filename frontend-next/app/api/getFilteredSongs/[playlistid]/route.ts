@@ -8,7 +8,7 @@ type ContextType = {
 }
 
 export async function POST(request: Request, context: ContextType) {
-    const playlistid = (await context.params).playlistid
+    const playlistid = Number((await context.params).playlistid)
     const { array } = await request.json()
 
     const songIDs = JSON.parse(array)

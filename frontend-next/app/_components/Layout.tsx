@@ -9,12 +9,13 @@ import { BeatLoader } from "react-spinners";
 import { FaRegCirclePause, FaRegCirclePlay } from "react-icons/fa6";
 import useSongs from "../_hooks/useSongs";
 import usePlaylists from "../_hooks/usePlaylists";
-import useSongsFromPlaylist from "../_hooks/useSongsFromPlaylist"; // Added import for useSongsFromPlaylist
+import useSongsFromPlaylist from "../_hooks/useSongsFromPlaylist"; 
 import type { Playlist, Song } from "../_types/types";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../_states/store";
 import { setOpenPlaylist, setPlaylistID, setSongArray } from "../_states/songArraySlice";
 import { useParams } from "next/navigation";
+import { SearchIcon } from "lucide-react";
 
 export default function Layout(): JSX.Element {
     const [playlists, setPlaylists] = useState<Array<Playlist>>([])
@@ -58,14 +59,34 @@ export default function Layout(): JSX.Element {
         }
     }, [playlistData, playlistError, songData, songError, mySongsError])
 
-    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSongName(e.target.value)
-
-        if (e.target.value === "") {
+    const handleSearch = async () => {
+        if (songName === "") {
             setFilteredSongs([])
-        } else {
-            const filtered = songs.filter(song => song.song_name.toLowerCase().includes(e.target.value.toLowerCase()))
+            return
+        }
+
+        const filtered = songs.filter(song => song.song_name.toLowerCase().includes(songName.toLowerCase()))
+
+        if (filtered.length > 0) {
             setFilteredSongs(filtered)
+        } else {
+            toast.info("No songs found, fetching from YouTube...", toast_style)
+            await handleFetchSong()
+        }
+    }
+
+    const handleFetchSong = async () => {
+        try {
+            const response = await fetch(`/api/fetchSong?string=${songName}&username=${username}`);
+            const data = await response.json()
+            if (data.error) {
+                toast.error(data.error, toast_style)
+                return
+            }
+            setFilteredSongs(data.song)
+            toast.success("Song fetched successfully!", toast_style) 
+        } catch (error) {
+            toast.error("Error fetching song", toast_style)
         }
     }
 
@@ -95,18 +116,16 @@ export default function Layout(): JSX.Element {
             <div className="text-white px-8 py-6 h-full">
                 {/* Top search section */}
                 <div className="flex justify-between items-center mb-4">
-                    <div className="relative w-64">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <svg className="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                    <div className="relative w-80">
+                        <div className="absolute hover:cursor-pointer inset-y-0 left-0 flex items-center pl-3">
+                            <SearchIcon onClick={handleSearch} className="hover:cursor-pointer" />
                         </div>
                         <input 
                             id="songname"
                             value={songName}
-                            onChange={handleSearch}
+                            onChange={(e)=> setSongName(e.target.value)}
                             type="text" 
-                            placeholder="Search for songs"
+                            placeholder="Search for any song! We will fetch it!"
                             className="pl-10 pr-4 py-2 w-full rounded-full bg-zinc-800 border-none text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
                         />
                         
