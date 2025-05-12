@@ -74,9 +74,9 @@ export default function ShowPlaylistModel(): JSX.Element {
     }
 
     const handlePlay = (songindex: number) => {
-        if (playPlaylistID!==playlistid) {
+        if (playPlaylistID !== playlistid) {
             dispatch(setPlayPlaylistID(playlistid));
-            if (isUniversallyPlaying===false) {
+            if (isUniversallyPlaying === false) {
                 dispatch(setSongArray(backupSongs))
                 dispatch(setIsUniversallyPlaying(true))
             }
@@ -89,7 +89,7 @@ export default function ShowPlaylistModel(): JSX.Element {
     }
 
     const handleAddSongs = () => {
-        if (playlistid===Number(process.env.NEXT_PUBLIC_MYSONGS_ID)) {
+        if (playlistid === Number(process.env.NEXT_PUBLIC_MYSONGS_ID)) {
             toast.warning("This is an automated playlist, no need to add songs to it!", toast_style)
         } else {    
             router.push(`/${username}/${playlistid}/addsongs`)
@@ -97,60 +97,100 @@ export default function ShowPlaylistModel(): JSX.Element {
     }
 
     const handleDeletePlaylist = () => {
-        if (playlistid===Number(process.env.NEXT_PUBLIC_MYSONGS_ID)) {
+        if (playlistid === Number(process.env.NEXT_PUBLIC_MYSONGS_ID)) {
             toast.warning("This is an automated playlist, you can't delete it!", toast_style)
         } else {
             deletePlaylist()
         }    
     }
 
-    if (songnames===null) {
+    if (songnames === null) {
         return (
-            <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-gradient-to-b from-black to-slate-700 w-screen min-h-screen overflow-x-hidden flex items-center justify-center`}>
-                <BeatLoader size={30} color="purple"/>
+            <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-[#0F0F0F] w-screen min-h-screen overflow-x-hidden flex items-center justify-center`}>
+                <BeatLoader size={30} color="#9333EA"/>
             </div>
         )
     }
 
     return (
-        <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-gradient-to-b from-black to-slate-700 w-screen min-h-screen overflow-x-hidden no-scrollbar`}>
-            <div className="flex flex-row justify-end mt-4">
-                <div className="flex flex-row w-2/3">
-                    <div className="ml-4 text-4xl mb-1.5 text-white">{name}</div>
-                </div> 
-                <div className="w-1/3 flex flex-row justify-end items-center text-gray-400">
-                    <Link href={`/${username}`}><div className="mr-2 mt-2 flex justify-end hover:text-white hover:cursor-pointer" onClick={handleGoBack}><IoMdArrowBack size={40}/></div></Link>
-                        <div className="mt-2 mr-2 hover:text-white hover:cursor-pointer" onClick={handleAddSongs}><FaPlus size={25}/></div>
-                        <div className="mt-2 mr-2 hover:text-white hover:cursor-pointer" onClick={handleDeletePlaylist}><MdDeleteForever size={30}/></div>
-                </div>
-            </div>  
-            <div className="text-white text-2xl h-full -mt-1.5">
-                <div className="mt-1 border-gray-400 border-t-2 mb-16"></div>
-                <div  className="flex flex-col justify-center items-center">
-                {songnames.length!==0 ? songnames.map((songname, songindex)=> (
-                    <div key={songindex} className="relative group ml-4 mb-10 w-5/6">
-                    <div className={(index===songindex && playPlaylistID===playlistid) ? "absolute -inset-0.5 bg-gradient-to-r from-green-700 to-green-400 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" : "absolute -inset-0.5 bg-gradient-to-r from-blue-700 to-purple-700 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"}></div>
-                    <div className="relative bg-black rounded-lg flex flex-row items-center text-gray-400 hover:text-white hover:cursor-pointer">
-                        <div className="flex flex-row justify-start items-center h-24 w-4/5">
-                            <img src={images[songindex]} className="h-full w-1/4 rounded-xl ml-2 pt-2 pb-2" alt="song cover" />
-                            <div className="flex flex-col flex-wrap ml-4">
-                                <div className="text-xl">{songname}</div>
-                                <div className="text-sm">By: {artists[songindex]}</div>
-                            </div>
-                        </div>
-                        <div className={(index===songindex && playPlaylistID===playlistid)? "flex flex-row justify-end text-white mr-4" : "flex flex-row justify-end text-green-500 hover:text-white mr-4"} onClick={() => handlePlay(songindex)}>
-                            {(index===songindex && playPlaylistID===playlistid)? <FaRegCirclePause size={30}/> : <FaRegCirclePlay size={30} />}
-                        </div>
-                        <div className="flex flex-row justify-end text-green-500 hover:text-white" onClick={() => removeFromPlaylist(songindex)}>
-                            <RiDeleteBin6Line size={30} />
-                        </div>
+        <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-[#0F0F0F] w-screen min-h-screen overflow-x-hidden no-scrollbar p-5`}>
+            <div className="container max-w-[1000px] mx-auto">
+                <div className="header flex justify-between items-center mb-6">
+                    <h1 className="text-[36px] font-bold text-white">{name || "My Songs"}</h1>
+                    <div className="actions flex gap-4 bg-[rgba(26,26,26,0.7)] backdrop-blur-md p-2 px-4 rounded-xl border border-[rgba(255,255,255,0.05)]">
+                        <Link href={`/${username}`}>
+                            <button className="action-btn relative overflow-hidden w-10 h-10 flex items-center justify-center text-[18px] bg-transparent border-none text-white transition-all hover:text-[#9333EA]" onClick={handleGoBack}>
+                                <IoMdArrowBack />
+                            </button>
+                        </Link>
+                        <button 
+                            className="action-btn relative overflow-hidden w-10 h-10 flex items-center justify-center text-[18px] bg-transparent border-none text-white transition-all hover:text-[#9333EA]" 
+                            onClick={handleAddSongs}
+                        >
+                            <FaPlus />
+                        </button>
+                        <button 
+                            className="action-btn delete relative overflow-hidden w-10 h-10 flex items-center justify-center text-[18px] bg-transparent border-none text-white transition-all hover:text-[#E53E3E]" 
+                            onClick={handleDeletePlaylist}
+                        >
+                            <MdDeleteForever />
+                        </button>
                     </div>
                 </div>
-                )) : (
-                    <div className="ml-4 text-lg">No songs in this playlist! Add some to start the vibe 😎</div>
-                )}
+                
+                <div className="songs-list flex flex-col gap-3">
+                    {songnames && songnames.length > 0 ? (
+                        songnames.map((songname, songindex) => (
+                            <div key={songindex} className="song-item flex items-center bg-[#1A1A1A] rounded-xl overflow-hidden transition-all duration-300 border border-[#2A2A2A] relative hover:bg-[#222222] hover:border-[rgba(147,51,234,0.3)] hover:shadow-lg hover:scale-[1.01]">
+                                <div className="song-thumbnail w-[100px] h-[100px] bg-[#2A2A2A] flex items-center justify-center text-[#777] text-xs leading-tight text-center">
+                                    <img src={images[songindex]} alt={songname} className="w-full h-full object-cover z-0" />
+                                </div>
+                                <div className="song-info flex-1 px-5">
+                                    <h3 className="song-title text-[22px] font-semibold mb-1.5 text-white">{songname}</h3>
+                                    <p className="song-artist text-[16px] text-[#A0AEC0] m-0">By: {artists[songindex]}</p>
+                                </div>
+                                
+                                <div className="wave-visualizer hidden md:flex items-end h-[30px] gap-[3px] mr-5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                                    {(index === songindex && playPlaylistID === playlistid) && (
+                                        <>
+                                            <div className="wave-bar w-[3px] bg-[#9333EA] rounded-[1px] h-[30%] animate-[wave_0.5s_infinite_alternate]"></div>
+                                            <div className="wave-bar w-[3px] bg-[#9333EA] rounded-[1px] h-[60%] animate-[wave_0.7s_infinite_alternate]"></div>
+                                            <div className="wave-bar w-[3px] bg-[#9333EA] rounded-[1px] h-[45%] animate-[wave_0.6s_infinite_alternate]"></div>
+                                            <div className="wave-bar w-[3px] bg-[#9333EA] rounded-[1px] h-[80%] animate-[wave_0.5s_infinite_alternate]"></div>
+                                            <div className="wave-bar w-[3px] bg-[#9333EA] rounded-[1px] h-[40%] animate-[wave_0.7s_infinite_alternate]"></div>
+                                        </>
+                                    )}
+                                </div>
+                                
+                                <div className="song-controls flex gap-4 pr-5">
+                                    <button 
+                                        className={`control-btn play w-[54px] h-[54px] rounded-full flex items-center justify-center border-none cursor-pointer transition-all duration-200 text-[20px] ${(index === songindex && playPlaylistID === playlistid) ? 'bg-[#7e22ce]' : 'bg-[#9333EA]'} text-white hover:bg-[#7e22ce] hover:scale-[1.05] hover:shadow-[0_0_12px_rgba(147,51,234,0.5)]`} 
+                                        onClick={() => handlePlay(songindex)}
+                                    >
+                                        {(index === songindex && playPlaylistID === playlistid) ? <FaRegCirclePause /> : <FaRegCirclePlay />}
+                                    </button>
+                                    <button 
+                                        className="control-btn delete w-[54px] h-[54px] rounded-full flex items-center justify-center border-none cursor-pointer transition-all duration-200 text-[20px] bg-[rgba(26,26,26,0.7)] text-white backdrop-blur-sm border border-[rgba(255,255,255,0.05)] hover:bg-[rgba(229,62,62,0.15)] hover:text-[#E53E3E] hover:border-[rgba(229,62,62,0.3)]" 
+                                        onClick={() => removeFromPlaylist(songindex)}
+                                    >
+                                        <RiDeleteBin6Line />
+                                    </button>
+                                </div>
+                                
+                                <div className="song-progress h-[3px] w-full bg-[#2A2A2A] absolute bottom-0 left-0 right-0">
+                                    {(index === songindex && playPlaylistID === playlistid) && (
+                                        <div className="absolute h-full bg-[#9333EA] transition-[width] duration-300" style={{ width: '65%' }}></div>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-10 text-white text-lg">
+                            No songs in this playlist! Add some to start the vibe 😎
+                        </div>
+                    )}
                 </div>
-            </div>    
+            </div>
         </div>
     )
 }

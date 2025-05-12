@@ -57,7 +57,7 @@ export default function AddSongModel(): JSX.Element {
             <div className="flex flex-col flex-wrap h-screen justify-start items-center">
             {songs.length!==0 ? ((songs.map((song, index) => (
                 <div key={index} className="flex flex-row items-center w-2/3 h-1/6 bg-blue-600 rounded-lg mb-5 text-white">
-                    <img src={song.image_path} className="h-2/3 w-1/5 rounded-lg ml-2" alt="song cover art"/>
+                    <img src={song.image_path} className="h-2/3 w-1/5 rounded-lg ml-2 z-0" alt="song cover art"/>
                     <div className="flex flex-col flex-wrap ml-4">
                         <div className="text-xl">{song.song_name}</div>
                         <div className="text-sm">By: {song.artist_name}</div>
