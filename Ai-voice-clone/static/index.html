@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Transformation App</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        select, input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        select {
+            cursor: pointer;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .player-container {
+            margin-top: 20px;
+        }
+        
+        audio {
+            width: 100%;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 5px;
+        }
+        
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .loading {
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        .comparison-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .audio-card {
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .audio-card h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Voice Transformation App</h1>
+        
+        <div class="form-group">
+            <label for="modelSelect">Choose Artist Voice:</label>
+            <select id="modelSelect">
+                <option value="" disabled selected>Select an artist</option>
+                <!-- Models will be loaded dynamically -->
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="audioFile">Upload Vocal Audio File:</label>
+            <input type="file" id="audioFile" accept="audio/*">
+        </div>
+        
+        <button id="transformBtn" disabled>Transform Vocals</button>
+        
+        <div id="loadingIndicator" class="loading" style="display: none;">
+            <p>Processing your audio... This may take a moment.</p>
+        </div>
+        
+        <div id="status" class="status" style="display: none;"></div>
+        
+        <div id="result" class="result" style="display: none;">
+            <h2>Results</h2>
+            
+            <div class="comparison-container">
+                <div class="audio-card">
+                    <h3>Original Audio</h3>
+                    <audio id="originalAudio" controls></audio>
+                </div>
+                
+                <div class="audio-card">
+                    <h3>Transformed Audio</h3>
+                    <audio id="transformedAudio" controls></audio>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elements
+        const modelSelect = document.getElementById('modelSelect');
+        const audioFile = document.getElementById('audioFile');
+        const transformBtn = document.getElementById('transformBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const statusElement = document.getElementById('status');
+        const resultElement = document.getElementById('result');
+        const originalAudio = document.getElementById('originalAudio');
+        const transformedAudio = document.getElementById('transformedAudio');
+        
+        // API URL - change this to match your backend
+        const API_URL = 'http://localhost:8000';
+        
+        // Load available models
+        async function loadModels() {
+            try {
+                const response = await fetch(`${API_URL}/models`);
+                const data = await response.json();
+                
+                // Add models to select dropdown
+                data.models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.name;
+                    option.textContent = model.display_name;
+                    modelSelect.appendChild(option);
+                });
+            } catch (error) {
+                showStatus('Failed to load models. Please ensure the API is running.', false);
+            }
+        }
+        
+        // Check if form is valid
+        function checkFormValidity() {
+            transformBtn.disabled = !(modelSelect.value && audioFile.files.length > 0);
+        }
+        
+        // Show status message
+        function showStatus(message, isSuccess) {
+            statusElement.textContent = message;
+            statusElement.className = isSuccess ? 'status success' : 'status error';
+            statusElement.style.display = 'block';
+        }
+        
+        // Transform audio
+        async function transformAudio() {
+            const file = audioFile.files[0];
+            const model = modelSelect.value;
+            
+            if (!file || !model) return;
+            
+            // Create FormData for the API request
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('model_name', model);
+            
+            try {
+                // Show loading indicator
+                loadingIndicator.style.display = 'block';
+                statusElement.style.display = 'none';
+                resultElement.style.display = 'none';
+                
+                // Make API request
+                const response = await fetch(`${API_URL}/transform`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show result
+                    showStatus('Audio successfully transformed!', true);
+                    
+                    // Set original audio
+                    originalAudio.src = URL.createObjectURL(file);
+                    
+                    // Set transformed audio from base64
+                    const byteCharacters = atob(data.audio_base64);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: 'audio/wav' });
+                    
+                    transformedAudio.src = URL.createObjectURL(blob);
+                    
+                    // Show result section
+                    resultElement.style.display = 'block';
+                } else {
+                    showStatus(data.message || 'Failed to transform audio.', false);
+                }
+            } catch (error) {
+                showStatus('Error: ' + (error.message || 'Failed to connect to the server.'), false);
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+        
+        // Event listeners
+        window.addEventListener('load', loadModels);
+        modelSelect.addEventListener('change', checkFormValidity);
+        audioFile.addEventListener('change', checkFormValidity);
+        transformBtn.addEventListener('click', transformAudio);
+    </script>
+</body>
+</html>
