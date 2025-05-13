@@ -11,3 +11,9 @@ export type Playlist = {
     playlist_name: string;
     cover_url: string;
 }
+
+export type Model = {
+    name: string;
+    display_name: string;
+    description: string;
+}

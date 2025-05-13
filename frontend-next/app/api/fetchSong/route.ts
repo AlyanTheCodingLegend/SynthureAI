@@ -3,7 +3,8 @@ import { createYouTubeSearchURL } from "@/app/_utils/ytUrl";
 import { NextRequest, NextResponse } from "next/server";
 import supabase from "@/app/_components/ClientInstance";
 
-const supabaseUrl= process.env.SUPABASE_URL || '';
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const backendUrl = process.env.SONG_FETCH_API_URL || '';
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     const ytString = createYouTubeSearchURL(string);
 
-    const response = await fetch(`http://localhost:5000/search?url=${ytString}`)
+    const response = await fetch(`${backendUrl}/search?url=${ytString}`)
     if (!response.ok) {
         return NextResponse.json({ error: "Failed to fetch data from YouTube" }, { status: 500 });
     }
