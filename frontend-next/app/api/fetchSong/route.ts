@@ -19,8 +19,6 @@ export async function GET(request: NextRequest) {
 
     const ytString = createYouTubeSearchURL(string);
 
-    console.log(ytString)
-
     const response = await fetch(`http://localhost:5000/search?url=${ytString}`)
     if (!response.ok) {
         return NextResponse.json({ error: "Failed to fetch data from YouTube" }, { status: 500 });

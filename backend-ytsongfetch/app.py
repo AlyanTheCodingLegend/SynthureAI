@@ -20,8 +20,6 @@ chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--enable-unsafe-swiftshader")
 
-driver = webdriver.Chrome(options=chrome_options)
-
 app = Flask(__name__)
 
 @app.route('/search', methods=['GET'])
@@ -31,10 +29,9 @@ def search_youtube():
     if not url:
         return jsonify({"error": "No url provided"}), 400
     
-    print(url)
-    
     # Encode the search string for YouTube
     try:
+        driver = webdriver.Chrome(options=chrome_options)
         # Setup headless Chrome browser
         driver.get(url)
         
@@ -113,32 +110,6 @@ def search_youtube():
     except Exception as e:
         if 'driver' in locals():
             driver.quit()
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/thumbnail/<video_id>', methods=['GET'])
-def get_thumbnail(video_id):
-    """Route to return the actual image file"""
-    try:
-        # Download the thumbnail image
-        thumbnail_url = f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
-        response = requests.get(thumbnail_url, stream=True)
-        
-        if response.status_code != 200:
-            return jsonify({"error": "Could not download thumbnail"}), 500
-        
-        # Create a temporary file for the image
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
-        temp_filename = temp_file.name
-        
-        # Write the image to the temporary file
-        with open(temp_filename, 'wb') as f:
-            for chunk in response.iter_content(1024):
-                f.write(chunk)
-        
-        # Return the file
-        return send_file(temp_filename, mimetype='image/jpeg')
-        
-    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
