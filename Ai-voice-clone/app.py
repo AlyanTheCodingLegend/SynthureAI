@@ -33,9 +33,12 @@ from pytubefix.cli import on_progress
 # Add new imports for audio processing
 import librosa
 import soundfile as sf
-from spleeter.separator import Separator
 import numpy as np
 from pydub import AudioSegment
+# Import demucs instead of spleeter
+import torch
+from demucs.pretrained import get_model
+from demucs.audio import AudioFile, save_audio
 
 load_dotenv()
 
@@ -66,8 +69,13 @@ async def lifespan(app: FastAPI):
     os.makedirs(TEMP_DIR, exist_ok=True)
     os.makedirs(MODELS_DIR, exist_ok=True)
     
-    # Initialize Spleeter separator for vocal/instrumental separation
-    app.state.separator = Separator('spleeter:2stems')
+    # Initialize Demucs model for vocal/instrumental separation
+    print("Loading Demucs model...")
+    app.state.demucs_model = get_model('htdemucs')
+    app.state.demucs_model.eval()
+    if torch.cuda.is_available():
+        app.state.demucs_model.cuda()
+    print("Demucs model loaded")
     
     # Test Supabase connection
     try:
@@ -260,7 +268,7 @@ async def download_song_from_url(song_url: str) -> str:
 
 async def separate_vocals_and_instrumental(audio_path: str) -> Tuple[str, str]:
     """
-    Separate vocals and instrumental from audio file
+    Separate vocals and instrumental from audio file using Demucs
     Returns: (vocals_path, instrumental_path)
     """
     try:
@@ -268,14 +276,48 @@ async def separate_vocals_and_instrumental(audio_path: str) -> Tuple[str, str]:
         separation_dir = os.path.join(TEMP_DIR, f"separation_{uuid.uuid4().hex}")
         os.makedirs(separation_dir, exist_ok=True)
         
-        # Use Spleeter to separate vocals and instrumental
-        separator = app.state.separator
-        separator.separate_to_file(audio_path, separation_dir, codec='wav')
+        # Load audio using Demucs AudioFile
+        wav = AudioFile(audio_path).read(
+            streams=0,  # Load as mono
+            samplerate=44100,  # Standard samplerate
+            channels=2  # Output will be stereo
+        )
         
-        # Get the separated paths
+        # Add a batch dimension
+        wav = wav.unsqueeze(0)
+        
+        # Move to GPU if available
+        if torch.cuda.is_available():
+            wav = wav.cuda()
+        
+        # Apply separation model
+        with torch.no_grad():
+            demucs_model = app.state.demucs_model
+            sources = demucs_model(wav)
+        
+        # Demucs output is [batch, sources, channels, time]
+        # sources order is typically ['drums', 'bass', 'other', 'vocals']
+        sources = sources.cpu()
+        sources_list = app.state.demucs_model.sources
+        
+        # Get the vocals and accompaniment
+        vocals_idx = sources_list.index('vocals')
+        vocals = sources[0, vocals_idx]
+        
+        # Create accompaniment by summing all sources except vocals
+        accompaniment = torch.zeros_like(vocals)
+        for i, source_name in enumerate(sources_list):
+            if source_name != 'vocals':
+                accompaniment += sources[0, i]
+        
+        # Save separated audio
         base_filename = os.path.splitext(os.path.basename(audio_path))[0]
-        vocals_path = os.path.join(separation_dir, base_filename, "vocals.wav")
-        instrumental_path = os.path.join(separation_dir, base_filename, "accompaniment.wav")
+        vocals_path = os.path.join(separation_dir, f"{base_filename}_vocals.wav")
+        instrumental_path = os.path.join(separation_dir, f"{base_filename}_accompaniment.wav")
+        
+        # Save audio files
+        save_audio(vocals, vocals_path, samplerate=44100)
+        save_audio(accompaniment, instrumental_path, samplerate=44100)
         
         # Ensure files exist
         if not os.path.exists(vocals_path) or not os.path.exists(instrumental_path):
