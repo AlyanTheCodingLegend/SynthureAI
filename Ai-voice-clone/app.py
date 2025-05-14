@@ -26,6 +26,16 @@ from pytubefix import YouTube
 from pytubefix.cli import on_progress
 import re
 import time
+import spleeter
+from spleeter.separator import Separator
+import contextlib
+import librosa
+import soundfile as sf
+from pydub import AudioSegment
+import numpy as np
+import asyncio
+import traceback
+from functools import wraps
 
 load_dotenv()
 
@@ -137,10 +147,34 @@ for model in ModelName:
 TEMP_DIR = os.path.join(os.getcwd(), "temp")
 os.makedirs(TEMP_DIR, exist_ok=True)
 
+# Create directory for separated audio components
+SEPARATED_DIR = os.path.join(TEMP_DIR, "separated")
+os.makedirs(SEPARATED_DIR, exist_ok=True)
+
+# Initialize Spleeter separator
+SEPARATOR = Separator('spleeter:2stems')
+
 class SongTransformRequest(BaseModel):
     song_url: str
     username: str
     artist: ModelName
+
+def async_transaction(func):
+    """Decorator for handling transaction management in async functions"""
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        try:
+            # Start transaction context
+            print(f"Starting transaction for {func.__name__}")
+            result = await func(*args, **kwargs)
+            print(f"Transaction successful for {func.__name__}")
+            return result
+        except Exception as e:
+            print(f"Transaction failed for {func.__name__}: {str(e)}")
+            print(traceback.format_exc())
+            # Cleanup any resources if needed
+            raise e
+    return wrapper
 
 def download_model_files(model_name: ModelName):
     """Download model and config files from Hugging Face if not already present"""
@@ -194,6 +228,37 @@ async def download_song_from_url(song_url: str) -> str:
         print(f"Error downloading song: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to download song: {str(e)}")
 
+async def separate_vocals_and_background(audio_path: str) -> dict:
+    """Separate vocals and background music using Spleeter"""
+    try:
+        # Generate a unique ID for this separation
+        separation_id = uuid.uuid4().hex
+        output_dir = os.path.join(SEPARATED_DIR, separation_id)
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Separate audio
+        SEPARATOR.separate_to_file(audio_path, output_dir)
+        
+        # Get the base filename
+        base_filename = os.path.splitext(os.path.basename(audio_path))[0]
+        
+        # Get paths to separated files
+        vocals_path = os.path.join(output_dir, base_filename, "vocals.wav")
+        accompaniment_path = os.path.join(output_dir, base_filename, "accompaniment.wav")
+        
+        # Check if files exist
+        if not os.path.exists(vocals_path) or not os.path.exists(accompaniment_path):
+            raise HTTPException(status_code=500, detail="Failed to separate audio components")
+        
+        return {
+            "vocals_path": vocals_path,
+            "accompaniment_path": accompaniment_path,
+            "separation_id": separation_id
+        }
+    except Exception as e:
+        print(f"Error separating audio: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to separate audio: {str(e)}")
+
 async def process_audio(audio_path: str, model_name: ModelName):
     """Process audio file with the specified model"""
     model_info = MODEL_REPOS[model_name]
@@ -236,6 +301,48 @@ async def process_audio(audio_path: str, model_name: ModelName):
         print(f"Error running command: {e.stderr}")
         raise HTTPException(status_code=500, detail=f"Processing failed: {e.stderr}")
 
+async def merge_vocals_with_background(transformed_vocals_path: str, background_path: str) -> str:
+    """Merge transformed vocals with original background music"""
+    try:
+        # Generate output filename
+        output_filename = f"merged_{uuid.uuid4().hex}.wav"
+        output_path = os.path.join(TEMP_DIR, output_filename)
+        
+        # Load audio files
+        vocals, vocals_sr = librosa.load(transformed_vocals_path, sr=None)
+        background, bg_sr = librosa.load(background_path, sr=None)
+        
+        # Ensure same sample rate
+        if vocals_sr != bg_sr:
+            background = librosa.resample(background, orig_sr=bg_sr, target_sr=vocals_sr)
+        
+        # Ensure same length
+        if len(vocals) > len(background):
+            # Pad background with zeros
+            background = np.pad(background, (0, len(vocals) - len(background)))
+        elif len(background) > len(vocals):
+            # Trim background to match vocals length
+            background = background[:len(vocals)]
+        
+        # Mix vocals with background (adjust volume levels as needed)
+        vocals_volume = 1.0  # Adjust as needed
+        bg_volume = 0.5      # Adjust as needed
+        mixed = (vocals * vocals_volume) + (background * bg_volume)
+        
+        # Normalize to prevent clipping
+        max_val = np.max(np.abs(mixed))
+        if max_val > 1.0:
+            mixed = mixed / max_val * 0.95
+        
+        # Write to file
+        sf.write(output_path, mixed, vocals_sr)
+        
+        return output_path
+    except Exception as e:
+        print(f"Error merging audio: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to merge audio: {str(e)}")
+
+@async_transaction
 async def upload_to_supabase(file_path: str, artist: str) -> str:
     """Upload transformed audio to Supabase storage and return the URL"""
     try:
@@ -261,6 +368,7 @@ async def upload_to_supabase(file_path: str, artist: str) -> str:
         print(f"Error uploading to Supabase: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to upload to Supabase: {str(e)}")
 
+@async_transaction
 async def store_song_info_in_db(
     artist_name: str,
     image_path: str,
@@ -317,14 +425,19 @@ class TransformResponse(BaseModel):
     song_details: Optional[dict] = None
 
 @app.post("/transform", response_model=TransformResponse)
+@async_transaction
 async def transform_audio_file(
     file: UploadFile = File(...), 
     model_name: ModelName = Form(...),
-    username: str = Form(...)
+    username: str = Form(...),
+    separate_bg: bool = Form(True)
 ):
     """Transform uploaded audio file with the specified model"""
     # Save uploaded file temporarily
-    temp_audio_path = os.path.join(TEMP_DIR, f"input_{file.filename}")
+    temp_audio_path = os.path.join(TEMP_DIR, f"input_{uuid.uuid4().hex}_{file.filename}")
+    
+    # Keep track of temporary files to clean up
+    temp_files = [temp_audio_path]
     
     try:
         # Save uploaded file
@@ -332,8 +445,24 @@ async def transform_audio_file(
             content = await file.read()
             temp_file.write(content)
         
-        # Process the audio
-        output_path = await process_audio(temp_audio_path, model_name)
+        if separate_bg:
+            # Separate vocals and background
+            separated = await separate_vocals_and_background(temp_audio_path)
+            vocals_path = separated["vocals_path"]
+            background_path = separated["accompaniment_path"]
+            temp_files.extend([vocals_path, background_path])
+            
+            # Process the vocals
+            transformed_vocals_path = await process_audio(vocals_path, model_name)
+            temp_files.append(transformed_vocals_path)
+            
+            # Merge transformed vocals with background
+            output_path = await merge_vocals_with_background(transformed_vocals_path, background_path)
+            temp_files.append(output_path)
+        else:
+            # Process the whole audio without separation
+            output_path = await process_audio(temp_audio_path, model_name)
+            temp_files.append(output_path)
         
         # Upload to Supabase storage
         song_path = await upload_to_supabase(output_path, model_name.value)
@@ -379,18 +508,38 @@ async def transform_audio_file(
         )
     finally:
         # Clean up temporary files
-        if os.path.exists(temp_audio_path):
-            os.remove(temp_audio_path)
+        for temp_file in temp_files:
+            if os.path.exists(temp_file):
+                try:
+                    os.remove(temp_file)
+                except Exception as e:
+                    print(f"Error removing temp file {temp_file}: {e}")
 
 @app.post("/transform-from-url")
+@async_transaction
 async def transform_from_url(request: SongTransformRequest):
     """Download song from URL, transform it with the specified model, and store it in the database"""
+    # Keep track of temporary files to clean up
+    temp_files = []
+    
     try:
         # Download song from URL
         temp_audio_path = await download_song_from_url(request.song_url)
+        temp_files.append(temp_audio_path)
         
-        # Process the audio
-        output_path = await process_audio(temp_audio_path, request.artist)
+        # Separate vocals and background
+        separated = await separate_vocals_and_background(temp_audio_path)
+        vocals_path = separated["vocals_path"]
+        background_path = separated["accompaniment_path"]
+        temp_files.extend([vocals_path, background_path])
+        
+        # Process the vocals
+        transformed_vocals_path = await process_audio(vocals_path, request.artist)
+        temp_files.append(transformed_vocals_path)
+        
+        # Merge transformed vocals with background
+        output_path = await merge_vocals_with_background(transformed_vocals_path, background_path)
+        temp_files.append(output_path)
         
         # Upload transformed song to Supabase storage
         song_path = await upload_to_supabase(output_path, request.artist.value)
@@ -433,16 +582,12 @@ async def transform_from_url(request: SongTransformRequest):
         }
     finally:
         # Clean up temporary files
-        if os.path.exists(temp_audio_path):
-            try:
-                os.remove(temp_audio_path)
-            except:
-                pass
-        if os.path.exists(output_path):
-            try:
-                os.remove(output_path)
-            except:
-                pass
+        for temp_file in temp_files:
+            if os.path.exists(temp_file):
+                try:
+                    os.remove(temp_file)
+                except Exception as e:
+                    print(f"Error removing temp file {temp_file}: {e}")
 
 class SearchResponse(BaseModel):
     thumbnail_url: str
@@ -451,6 +596,7 @@ class SearchResponse(BaseModel):
     song_name: str
 
 @app.get("/search", response_model=SearchResponse)
+@async_transaction
 async def search_youtube(url: Optional[str] = Query(None)):
     if not url:
         raise HTTPException(status_code=400, detail="No url provided")
@@ -545,6 +691,7 @@ async def startup_event():
     # Create necessary directories
     os.makedirs(TEMP_DIR, exist_ok=True)
     os.makedirs(MODELS_DIR, exist_ok=True)
+    os.makedirs(SEPARATED_DIR, exist_ok=True)
     
     # Test Supabase connection
     try:
@@ -561,6 +708,7 @@ async def shutdown_event():
     if os.path.exists(TEMP_DIR):
         shutil.rmtree(TEMP_DIR)
         os.makedirs(TEMP_DIR, exist_ok=True)
+        os.makedirs(SEPARATED_DIR, exist_ok=True)
 
 # For direct execution
 if __name__ == "__main__":
