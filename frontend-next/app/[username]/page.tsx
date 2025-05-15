@@ -33,7 +33,7 @@ export default function Home(): JSX.Element | undefined {
                 setVerified(true)
             }
         }
-    }, [data, error])    
+    }, [data, error, dispatch, router])    
         
     if (signOut) {
         return (

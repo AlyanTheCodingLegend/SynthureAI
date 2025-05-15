@@ -204,7 +204,7 @@ export default function ProfilePage(): JSX.Element {
                                     <img 
                                         src={newPfpPath} 
                                         alt="Profile" 
-                                        className="absolute inset-0 w-16 h-16 object-cover rounded-full"
+                                        className="absolute inset-0 w-16 h-16 object-cover rounded-full z-0"
                                     />
                                 ) : (
                                     <div className="bg-purple-600 rounded-full w-16 h-16 flex items-center justify-center text-2xl font-bold">

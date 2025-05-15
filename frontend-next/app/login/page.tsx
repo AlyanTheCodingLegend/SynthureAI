@@ -1,90 +1,51 @@
 "use client";
 
-import { useEffect, useState, type JSX } from "react";
+import { useState, type JSX } from "react";
 import { toast } from "react-toastify";
 import { BounceLoader } from "react-spinners";
 import { SlEye } from "react-icons/sl";
 import toast_style from "../_components/ToastStyle";
 import 'react-toastify/dist/ReactToastify.css';
-import useUsername from "../_hooks/useUsername";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { signInServer } from "./actions";
+import { SubmitHandler, useForm } from "react-hook-form";
+
+type LoginInfo = {
+    email: string;
+    password: string;
+}
 
 export default function AuthUser(): JSX.Element {
-    const [email, setEmail] = useState<string>("")
-    const [pass, setPass] = useState<string>("")
-    const [verEmail, setVerEmail] = useState<string>("")
-    const [username, setUsername] = useState<string>("")
-    const [gotoprof, setGotoprof] = useState<boolean>(false)
-    const [disabled, setDisabled] = useState<boolean>(true)
+    const { register, handleSubmit, watch } = useForm<LoginInfo>()
     const [showPass, setShowPass] = useState<boolean>(false)
     const [isLoading, setIsLoading] = useState<boolean>(false)
 
     const router = useRouter()
 
-    const {data, error} = useUsername(verEmail)
-
-    useEffect(() => {
-        if (error) {
-            toast.error(error, toast_style)
-        } else if (data) {
-            setUsername(data)
-            setGotoprof(true)
-        }
-        setIsLoading(false)
-    }, [data, error])
-
-    const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setEmail(event.target.value)
-    }
-
-    const handlePassChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setPass(event.target.value)
-    }
-
-    useEffect(() => {
-        if (email==="" || pass==="") {
-            setDisabled(true)
-        }
-        else {
-            setDisabled(false)
-        }
-    }, [email, pass])
-
-    const handleClick = async () => {
+    const handleClick: SubmitHandler<LoginInfo> = (data) => {
         setIsLoading(true)
-
-        const { data, error } = await signInServer(email, pass)
-
-        if (error) {
-            toast.error(error.message, toast_style)
-            setIsLoading(false)
-            return
-        } 
-        else {
-            const {user,session} = data
-            if (user && session) {
-                if (user.role==="authenticated" && user.email) {
-                    setVerEmail(user.email)
-                } else {
-                    toast.error("Please verify your account via email first!")
-                    setIsLoading(false)
-                }
-            } else {
-                toast.error("An error occurred, please try again later!", toast_style)
+        fetch("/api/loginUser", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+        })
+        .then((res) => res.json())
+        .then((data) => {
+            if (data.error) {
+                toast.error(data.error, toast_style)
                 setIsLoading(false)
+            } else {
+                toast.success("Logged in successfully! 😎", toast_style)
+                router.push(`/${data.username}`)
             }
-        }
+        })
+        .catch((err) => {
+            toast.error(err.message, toast_style)
+            setIsLoading(false)
+        })
     }
-
-    useEffect(() => {
-        if (gotoprof && username) {
-            router.push(`/${username}`);
-        }
-    // eslint-disable-next-line    
-    }, [gotoprof, username]);
 
     if (isLoading) {
         return (
@@ -130,12 +91,13 @@ export default function AuthUser(): JSX.Element {
                     
                     {/* Form content */}
                     <div>
+                        <form onSubmit={handleSubmit(handleClick)} className="mb-5">
                         <div className="mb-5">
                             <label className="block mb-2 text-[#CCCCCC] text-sm">Username or Email</label>
                             <div className="transition-transform duration-300 hover:translate-y-[-2px]">
                                 <input
                                     className="w-full py-3 px-4 rounded-[10px] bg-[rgba(60,60,60,0.5)] border border-[rgba(255,255,255,0.1)] text-white text-sm focus:outline-none focus:border-[#9146FF] focus:shadow-[0_0_0_2px_rgba(145,70,255,0.3)]"
-                                    onChange={handleEmailChange}
+                                    {...register("email", { required: true })}
                                     id="email"
                                     type="email"
                                     placeholder="Enter your email address"
@@ -148,12 +110,13 @@ export default function AuthUser(): JSX.Element {
                             <div className="relative transition-transform duration-300 hover:translate-y-[-2px]">
                                 <input
                                     className="w-full py-3 px-4 rounded-[10px] bg-[rgba(60,60,60,0.5)] border border-[rgba(255,255,255,0.1)] text-white text-sm focus:outline-none focus:border-[#9146FF] focus:shadow-[0_0_0_2px_rgba(145,70,255,0.3)]"
-                                    onChange={handlePassChange}
+                                    {...register("password", { required: true })}
                                     id="password"
                                     type={showPass ? "text" : "password"}
                                     placeholder="Enter your password"
                                 />
                                 <button 
+                                    type="button"
                                     className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-[rgba(60,60,60,0.8)] border border-[rgba(255,255,255,0.3)] rounded-full w-6 h-6 flex justify-center items-center transition-all duration-300 hover:bg-[rgba(145,70,255,0.3)]"
                                     onClick={() => setShowPass(!showPass)}
                                 >
@@ -161,28 +124,19 @@ export default function AuthUser(): JSX.Element {
                                 </button>
                             </div>
                         </div>
-                        
-                        <div className="text-right mb-5">
-                            <a href="#" className="text-[#9146FF] text-sm no-underline hover:underline">Forgot password?</a>
-                        </div>
-                        
+                     
                         <button
-                            onClick={handleClick}
-                            disabled={disabled}
+                            type="submit"
+                            disabled={!watch("email") || !watch("password")}
                             className={`w-full py-4 px-4 rounded-[25px] font-bold transition-all duration-300 ${
-                                disabled 
+                                !watch("email") || !watch("password")
                                 ? "bg-slate-500 text-white cursor-not-allowed" 
                                 : "bg-[#9146FF] text-white hover:bg-[#7d32e8] hover:transform hover:translate-y-[-2px] hover:shadow-[0_5px_15px_rgba(145,70,255,0.4)]"
                             }`}
                         >
                             Log In
                         </button>
-                        
-                        <Link href="/signup">
-                            <button className="mt-4 w-full py-4 px-4 rounded-[25px] bg-[rgba(145,70,255,0.2)] text-white font-bold transition-all duration-300 hover:bg-[rgba(145,70,255,0.3)]">
-                                Sign Up Instead
-                            </button>
-                        </Link>
+                        </form>
                     </div>
                     
                     <div className="text-center mt-6 text-[#CCCCCC] text-sm">

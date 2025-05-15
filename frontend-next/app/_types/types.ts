@@ -9,4 +9,11 @@ export type Song = {
 export type Playlist = {
     playlist_id: number;
     playlist_name: string;
+    cover_url: string;
+}
+
+export type Model = {
+    name: string;
+    display_name: string;
+    description: string;
 }

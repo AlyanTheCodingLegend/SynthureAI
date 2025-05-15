@@ -36,7 +36,7 @@ export const deleteUserFolders = async (username: string) => {
 }
 
 export const handleSubmit = async (username: string, pfp: File[]) => {
-    const {error} = await supabase.storage.from('images').upload(`${username}/pfp.${pfp[0]?.type.replace('image/', '')}`, pfp[0], { cacheControl: '3600', upsert: true, contentType: pfp[0] ? pfp[0].type: "image/jpeg"})
+    const {error} = await supabase.storage.from('images').upload(`${username}/pfp.${pfp[0]?.type.replace('image/', '')}`, pfp[0], { cacheControl: '60', upsert: true, contentType: pfp[0] ? pfp[0].type: "image/jpeg"})
     if (error) {
       toast.error(error.message, toast_style)
     } else {

@@ -15,6 +15,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../_states/store";
 import { setOpenPlaylist, setPlaylistID, setSongArray } from "../_states/songArraySlice";
 import { useParams } from "next/navigation";
+import { SearchIcon } from "lucide-react";
 
 export default function Layout(): JSX.Element {
     const [playlists, setPlaylists] = useState<Array<Playlist>>([])
@@ -58,14 +59,34 @@ export default function Layout(): JSX.Element {
         }
     }, [playlistData, playlistError, songData, songError, mySongsError])
 
-    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSongName(e.target.value)
-
-        if (e.target.value === "") {
+    const handleSearch = async () => {
+        if (songName === "") {
             setFilteredSongs([])
-        } else {
-            const filtered = songs.filter(song => song.song_name.toLowerCase().includes(e.target.value.toLowerCase()))
+            return
+        }
+
+        const filtered = songs.filter(song => song.song_name.toLowerCase().includes(songName.toLowerCase()))
+
+        if (filtered.length > 0) {
             setFilteredSongs(filtered)
+        } else {
+            toast.info("No songs found, fetching from YouTube...", toast_style)
+            await handleFetchSong()
+        }
+    }
+
+    const handleFetchSong = async () => {
+        try {
+            const response = await fetch(`/api/fetchSong?string=${songName}&username=${username}`);
+            const data = await response.json()
+            if (data.error) {
+                toast.error(data.error, toast_style)
+                return
+            }
+            setFilteredSongs(data.song)
+            toast.success("Song fetched successfully!", toast_style) 
+        } catch (error) {
+            toast.error("Error fetching song", toast_style)
         }
     }
 
@@ -95,18 +116,16 @@ export default function Layout(): JSX.Element {
             <div className="text-white px-8 py-6 h-full">
                 {/* Top search section */}
                 <div className="flex justify-between items-center mb-4">
-                    <div className="relative w-3/4">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <svg className="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                    <div className="relative w-80">
+                        <div className="absolute hover:cursor-pointer inset-y-0 left-0 flex items-center pl-3">
+                            <SearchIcon onClick={handleSearch} className="hover:cursor-pointer" />
                         </div>
                         <input 
                             id="songname"
                             value={songName}
-                            onChange={handleSearch}
+                            onChange={(e)=> setSongName(e.target.value)}
                             type="text" 
-                            placeholder="Search for songs"
+                            placeholder="Search for any song! We will fetch it!"
                             className="pl-10 pr-4 py-2 w-full rounded-full bg-zinc-800 border-none text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
                         />
                         
@@ -117,7 +136,7 @@ export default function Layout(): JSX.Element {
                                     {filteredSongs.map((song, index) => (
                                         <li key={index} className="py-2 px-4 hover:bg-zinc-800 rounded-md">
                                             <div className="flex items-center">
-                                                <img src={song.image_path || "/api/placeholder/48/48"} alt={song.song_name} className="w-10 h-10 rounded-md mr-3" />
+                                                <img src={song.image_path || "/api/placeholder/48/48"} alt={song.song_name} className="w-10 h-10 rounded-md mr-3 z-0" />
                                                 <div className={`${(songPlaying===song.id) ? "text-white" : "text-gray-300"} flex-1`}>  
                                                     <h3 className="font-medium">{song.song_name}</h3>
                                                     <p className="text-sm text-gray-400">{song.artist_name}</p>
@@ -161,9 +180,9 @@ export default function Layout(): JSX.Element {
                                 >
                                     <div className="mb-4 bg-zinc-800 rounded-md aspect-square flex items-center justify-center">
                                         <img 
-                                            src="/api/placeholder/400/400" 
+                                            src={playlist.cover_url} 
                                             alt={playlist.playlist_name} 
-                                            className="w-full h-full rounded-md" 
+                                            className="w-full h-full rounded-md z-0" 
                                         />
                                     </div>
                                     <h3 className="font-semibold">{playlist.playlist_name}</h3>
@@ -206,7 +225,7 @@ export default function Layout(): JSX.Element {
                                         <img 
                                             src={mySongsData.images[index] || "/api/placeholder/280/280"} 
                                             alt={songName} 
-                                            className="w-full h-[180px] object-cover" 
+                                            className="w-full h-[180px] object-cover -z-10" 
                                         />
                                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
                                             {songPlaying === mySongsData.indexes[index] ? 
@@ -244,7 +263,7 @@ export default function Layout(): JSX.Element {
                             className="absolute top-2 right-2 text-white text-xl font-bold"
                             onClick={() => setShowUploadModal(false)}
                         >
-                            ×
+                            X
                         </button>
                         
                         <h2 className="text-white text-xl mb-4">Upload Song</h2>
