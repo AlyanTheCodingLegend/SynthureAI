@@ -9,7 +9,7 @@ import { BeatLoader } from "react-spinners";
 import { FaRegCirclePause, FaRegCirclePlay } from "react-icons/fa6";
 import useSongs from "../_hooks/useSongs";
 import usePlaylists from "../_hooks/usePlaylists";
-import useSongsFromPlaylist from "../_hooks/useSongsFromPlaylist"; // Added import for useSongsFromPlaylist
+import useSongsFromPlaylist from "../_hooks/useSongsFromPlaylist"; 
 import type { Playlist, Song } from "../_types/types";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../_states/store";
@@ -95,7 +95,7 @@ export default function Layout(): JSX.Element {
             <div className="text-white px-8 py-6 h-full">
                 {/* Top search section */}
                 <div className="flex justify-between items-center mb-4">
-                    <div className="relative w-64">
+                    <div className="relative w-3/4">
                         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                             <svg className="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -135,17 +135,7 @@ export default function Layout(): JSX.Element {
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center gap-3">
-                        <button 
-                            className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-6 rounded-full font-medium"
-                            onClick={() => setShowUploadModal(true)}
-                        >
-                            Upload Music
-                        </button>
-                        <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-semibold">
-                            {username.substring(0, 2).toUpperCase()}
-                        </div>
-                    </div>
+                   
                 </div>
 
                 {/* Welcome message */}
