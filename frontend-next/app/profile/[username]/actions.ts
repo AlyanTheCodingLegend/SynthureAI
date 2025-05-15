@@ -45,6 +45,7 @@ export const handleSubmit = async (username: string, pfp: File[]) => {
         toast.error(errorOne.message, toast_style)
       } else {
         toast.success('Profile Photo successfully updated!', toast_style)
+        window.location.reload();
       }
     }
 }
