@@ -113,7 +113,7 @@ export default function Layout(): JSX.Element {
 
     return (
         <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-black w-screen min-h-screen overflow-x-hidden no-scrollbar`}>
-            <div className="text-white px-8 py-6 h-full">
+<div className="text-white px-8 py-6 overflow-y-auto" style={{ paddingBottom: "100px", minHeight: "100vh" }}>
                 {/* Top search section */}
                 <div className="flex justify-between items-center mb-4">
                     <div className="relative w-80">
