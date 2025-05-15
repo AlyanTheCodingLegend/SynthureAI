@@ -26,6 +26,11 @@ from pytubefix import YouTube
 from pytubefix.cli import on_progress
 import re
 import time
+import torch
+import numpy as np
+import soundfile as sf
+from scipy.io import wavfile
+from scipy import signal
 
 load_dotenv()
 
@@ -137,6 +142,10 @@ for model in ModelName:
 TEMP_DIR = os.path.join(os.getcwd(), "temp")
 os.makedirs(TEMP_DIR, exist_ok=True)
 
+# Create directory for separated audio
+SEPARATED_DIR = os.path.join(os.getcwd(), "separated")
+os.makedirs(SEPARATED_DIR, exist_ok=True)
+
 class SongTransformRequest(BaseModel):
     song_url: str
     username: str
@@ -194,8 +203,57 @@ async def download_song_from_url(song_url: str) -> str:
         print(f"Error downloading song: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to download song: {str(e)}")
 
-async def process_audio(audio_path: str, model_name: ModelName):
-    """Process audio file with the specified model"""
+async def separate_audio_with_demucs(audio_path: str):
+    """Separate audio into vocals and accompaniment using Demucs"""
+    try:
+        print(f"Separating audio: {audio_path}")
+        
+        # Create a unique ID for this separation task
+        task_id = uuid.uuid4().hex
+        output_dir = os.path.join(SEPARATED_DIR, task_id)
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Run Demucs command
+        cmd = [
+            "demucs", 
+            "--two-stems=vocals", 
+            "-n", "htdemucs",  # Use the htdemucs model which is specialized for voice separation
+            "-o", output_dir,
+            audio_path
+        ]
+        
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        
+        print(f"Demucs output: {result.stdout}")
+        
+        # Get the base name of the original file
+        base_name = os.path.splitext(os.path.basename(audio_path))[0]
+        
+        # Paths to separated files
+        # Demucs creates folders with structure: <output_dir>/htdemucs/<filename>/vocals.wav and no_vocals.wav
+        vocals_path = os.path.join(output_dir, "htdemucs", base_name, "vocals.wav")
+        accompaniment_path = os.path.join(output_dir, "htdemucs", base_name, "no_vocals.wav")
+        
+        if not os.path.exists(vocals_path) or not os.path.exists(accompaniment_path):
+            print(f"Expected files not found. Directory content: {os.listdir(os.path.join(output_dir, 'htdemucs', base_name))}")
+            raise HTTPException(status_code=500, detail="Failed to separate audio: Output files not found")
+        
+        return {
+            "vocals_path": vocals_path,
+            "accompaniment_path": accompaniment_path,
+            "task_id": task_id
+        }
+    except Exception as e:
+        print(f"Error separating audio: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to separate audio: {str(e)}")
+
+async def process_audio(vocals_path: str, model_name: ModelName):
+    """Process vocals file with the specified model"""
     model_info = MODEL_REPOS[model_name]
     model_dir = os.path.join(MODELS_DIR, model_name.value)
     
@@ -203,7 +261,7 @@ async def process_audio(audio_path: str, model_name: ModelName):
     paths = download_model_files(model_name)
     
     # Create a random filename for output to avoid conflicts
-    output_filename = f"{os.path.splitext(os.path.basename(audio_path))[0]}.out.wav"
+    output_filename = f"{os.path.splitext(os.path.basename(vocals_path))[0]}.transformed.wav"
     output_path = os.path.join(TEMP_DIR, output_filename)
     
     # Remove output file if it exists
@@ -213,7 +271,7 @@ async def process_audio(audio_path: str, model_name: ModelName):
     # Run the SVC inference command
     cmd = [
         "svc", "infer", 
-        audio_path,
+        vocals_path,
         "-m", paths["model_path"],
         "-c", paths["config_path"],
         "-o", output_path
@@ -235,6 +293,61 @@ async def process_audio(audio_path: str, model_name: ModelName):
     except subprocess.CalledProcessError as e:
         print(f"Error running command: {e.stderr}")
         raise HTTPException(status_code=500, detail=f"Processing failed: {e.stderr}")
+
+async def mix_audio(transformed_vocals_path: str, accompaniment_path: str):
+    """Mix transformed vocals with the original accompaniment"""
+    try:
+        # Create output filename
+        output_filename = f"mixed_{uuid.uuid4().hex}.wav"
+        output_path = os.path.join(TEMP_DIR, output_filename)
+        
+        # Read the audio files
+        vocals_sr, vocals_data = wavfile.read(transformed_vocals_path)
+        accomp_sr, accomp_data = wavfile.read(accompaniment_path)
+        
+        # Ensure the same sample rate
+        if vocals_sr != accomp_sr:
+            # Resample accompaniment to match vocals sample rate
+            accomp_duration = len(accomp_data) / accomp_sr
+            target_length = int(accomp_duration * vocals_sr)
+            accomp_data = signal.resample(accomp_data, target_length)
+        
+        # Convert to mono if necessary
+        if len(vocals_data.shape) > 1 and vocals_data.shape[1] > 1:
+            vocals_data = np.mean(vocals_data, axis=1).astype(vocals_data.dtype)
+            
+        if len(accomp_data.shape) > 1 and accomp_data.shape[1] > 1:
+            accomp_data = np.mean(accomp_data, axis=1).astype(accomp_data.dtype)
+        
+        # Match lengths (use the shorter of the two)
+        min_length = min(len(vocals_data), len(accomp_data))
+        vocals_data = vocals_data[:min_length]
+        accomp_data = accomp_data[:min_length]
+        
+        # Convert to float for mixing
+        vocals_float = vocals_data.astype(np.float32) / np.iinfo(vocals_data.dtype).max
+        accomp_float = accomp_data.astype(np.float32) / np.iinfo(accomp_data.dtype).max
+        
+        # Mix with appropriate levels (you may need to adjust these)
+        vocals_level = 1.0  # Adjust vocal level if needed
+        accomp_level = 0.8  # Adjust accompaniment level if needed
+        
+        mixed = vocals_float * vocals_level + accomp_float * accomp_level
+        
+        # Normalize to prevent clipping
+        if np.max(np.abs(mixed)) > 1.0:
+            mixed = mixed / np.max(np.abs(mixed))
+            
+        # Save mixed audio
+        sf.write(output_path, mixed, vocals_sr)
+        
+        if not os.path.exists(output_path):
+            raise HTTPException(status_code=500, detail="Failed to generate mixed audio file")
+            
+        return output_path
+    except Exception as e:
+        print(f"Error mixing audio: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to mix audio: {str(e)}")
 
 async def upload_to_supabase(file_path: str, artist: str) -> str:
     """Upload transformed audio to Supabase storage and return the URL"""
@@ -324,7 +437,12 @@ async def transform_audio_file(
 ):
     """Transform uploaded audio file with the specified model"""
     # Save uploaded file temporarily
-    temp_audio_path = os.path.join(TEMP_DIR, f"input_{file.filename}")
+    temp_audio_path = os.path.join(TEMP_DIR, f"input_{uuid.uuid4().hex}_{file.filename}")
+    
+    # Initialize paths for cleanup
+    separation_result = None
+    transformed_vocals_path = None
+    mixed_output_path = None
     
     try:
         # Save uploaded file
@@ -332,11 +450,19 @@ async def transform_audio_file(
             content = await file.read()
             temp_file.write(content)
         
-        # Process the audio
-        output_path = await process_audio(temp_audio_path, model_name)
+        # Step 1: Separate vocals and accompaniment
+        separation_result = await separate_audio_with_demucs(temp_audio_path)
+        vocals_path = separation_result["vocals_path"]
+        accompaniment_path = separation_result["accompaniment_path"]
         
-        # Upload to Supabase storage
-        song_path = await upload_to_supabase(output_path, model_name.value)
+        # Step 2: Process the vocals
+        transformed_vocals_path = await process_audio(vocals_path, model_name)
+        
+        # Step 3: Mix transformed vocals with original accompaniment
+        mixed_output_path = await mix_audio(transformed_vocals_path, accompaniment_path)
+        
+        # Step 4: Upload to Supabase storage
+        song_path = await upload_to_supabase(mixed_output_path, model_name.value)
         
         # Generate song name
         original_name = os.path.splitext(file.filename)[0]
@@ -355,7 +481,7 @@ async def transform_audio_file(
         )
         
         # Encode the audio to base64 for response
-        with open(output_path, "rb") as audio_file:
+        with open(mixed_output_path, "rb") as audio_file:
             audio_data = audio_file.read()
             audio_base64 = base64.b64encode(audio_data).decode('utf-8')
         
@@ -379,21 +505,54 @@ async def transform_audio_file(
         )
     finally:
         # Clean up temporary files
-        if os.path.exists(temp_audio_path):
-            os.remove(temp_audio_path)
+        cleanup_files = [
+            temp_audio_path,
+            transformed_vocals_path,
+            mixed_output_path
+        ]
+        
+        for file_path in cleanup_files:
+            if file_path and os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    print(f"Error cleaning up file {file_path}: {e}")
+                    
+        # Clean up separation directory if applicable
+        if separation_result and "task_id" in separation_result:
+            separation_dir = os.path.join(SEPARATED_DIR, separation_result["task_id"])
+            if os.path.exists(separation_dir):
+                try:
+                    shutil.rmtree(separation_dir)
+                except Exception as e:
+                    print(f"Error cleaning up separation directory {separation_dir}: {e}")
 
 @app.post("/transform-from-url")
 async def transform_from_url(request: SongTransformRequest):
     """Download song from URL, transform it with the specified model, and store it in the database"""
+    # Initialize paths for cleanup
+    temp_audio_path = None
+    separation_result = None
+    transformed_vocals_path = None
+    mixed_output_path = None
+    
     try:
-        # Download song from URL
+        # Step 1: Download song from URL
         temp_audio_path = await download_song_from_url(request.song_url)
         
-        # Process the audio
-        output_path = await process_audio(temp_audio_path, request.artist)
+        # Step 2: Separate vocals and accompaniment
+        separation_result = await separate_audio_with_demucs(temp_audio_path)
+        vocals_path = separation_result["vocals_path"]
+        accompaniment_path = separation_result["accompaniment_path"]
         
-        # Upload transformed song to Supabase storage
-        song_path = await upload_to_supabase(output_path, request.artist.value)
+        # Step 3: Process the vocals
+        transformed_vocals_path = await process_audio(vocals_path, request.artist)
+        
+        # Step 4: Mix transformed vocals with original accompaniment
+        mixed_output_path = await mix_audio(transformed_vocals_path, accompaniment_path)
+        
+        # Step 5: Upload to Supabase storage
+        song_path = await upload_to_supabase(mixed_output_path, request.artist.value)
         
         # Generate song name
         # Extract song name from URL or use a generic name
@@ -433,16 +592,27 @@ async def transform_from_url(request: SongTransformRequest):
         }
     finally:
         # Clean up temporary files
-        if os.path.exists(temp_audio_path):
-            try:
-                os.remove(temp_audio_path)
-            except:
-                pass
-        if os.path.exists(output_path):
-            try:
-                os.remove(output_path)
-            except:
-                pass
+        cleanup_files = [
+            temp_audio_path,
+            transformed_vocals_path,
+            mixed_output_path
+        ]
+        
+        for file_path in cleanup_files:
+            if file_path and os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    print(f"Error cleaning up file {file_path}: {e}")
+                    
+        # Clean up separation directory if applicable
+        if separation_result and "task_id" in separation_result:
+            separation_dir = os.path.join(SEPARATED_DIR, separation_result["task_id"])
+            if os.path.exists(separation_dir):
+                try:
+                    shutil.rmtree(separation_dir)
+                except Exception as e:
+                    print(f"Error cleaning up separation directory {separation_dir}: {e}")
 
 class SearchResponse(BaseModel):
     thumbnail_url: str
@@ -545,6 +715,7 @@ async def startup_event():
     # Create necessary directories
     os.makedirs(TEMP_DIR, exist_ok=True)
     os.makedirs(MODELS_DIR, exist_ok=True)
+    os.makedirs(SEPARATED_DIR, exist_ok=True)
     
     # Test Supabase connection
     try:
@@ -552,16 +723,30 @@ async def startup_event():
         print("Supabase connection successful")
     except Exception as e:
         print(f"Warning: Supabase connection failed: {e}")
+    
+    # Check if Demucs is installed
+    try:
+        demucs_version = subprocess.run(
+            ["demucs", "--version"], 
+            capture_output=True, 
+            text=True, 
+            check=True
+        )
+        print(f"Demucs version: {demucs_version.stdout.strip()}")
+    except Exception as e:
+        print(f"Warning: Demucs is not properly installed: {e}")
+        print("Please install Demucs with: pip install demucs")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Execute on application shutdown"""
     print("Shutting down Voice Transformation API")
     # Clean up temporary files
-    if os.path.exists(TEMP_DIR):
-        shutil.rmtree(TEMP_DIR)
-        os.makedirs(TEMP_DIR, exist_ok=True)
-
+    for cleanup_dir in [TEMP_DIR, SEPARATED_DIR]:
+        if os.path.exists(cleanup_dir):
+            shutil.rmtree(cleanup_dir)
+            os.makedirs(cleanup_dir, exist_ok=True)
+            
 # For direct execution
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
