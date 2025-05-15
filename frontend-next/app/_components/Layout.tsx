@@ -154,17 +154,7 @@ export default function Layout(): JSX.Element {
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center gap-3">
-                        <button 
-                            className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-6 rounded-full font-medium"
-                            onClick={() => setShowUploadModal(true)}
-                        >
-                            Upload Music
-                        </button>
-                        <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-semibold">
-                            {username.substring(0, 2).toUpperCase()}
-                        </div>
-                    </div>
+                   
                 </div>
 
                 {/* Welcome message */}
