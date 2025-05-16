@@ -119,15 +119,15 @@ MODEL_REPOS = {
     }
 }
 
-# Replace placeholder image URLs with actual images
+
 # These are just examples, replace with actual URLs as needed
 ARTIST_IMAGES = {
     "drake": "https://i.scdn.co/image/ab6761610000e5eb4293385d324db8558179afd9",
-    "weeknd": "https://i.scdn.co/image/ab6761610000e5eb8e89e1f7bf47835c6c6c733f",
-    "kanye": "https://i.scdn.co/image/ab6761610000e5eb867008652397ef6f18736a51",
-    "michael_jackson": "https://i.scdn.co/image/ab6761610000e5ebb45f44a8668d479e6b2ffa6d",
+    "weeknd": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/The_Weeknd_Cannes_2023.png/500px-The_Weeknd_Cannes_2023.png",
+    "kanye": "https://ca-times.brightspotcdn.com/dims4/default/c3b977c/2147483647/strip/true/crop/2000x1405+0+0/resize/1200x843!/quality/75/?url=https%3A%2F%2Fcalifornia-times-brightspot.s3.amazonaws.com%2Fc9%2Fa9%2F68435d41cf690e0c019e87278361%2F1f764b198a42470189b99b4084be6cf0",
+    "michael_jackson": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Michael_Jackson_1983_%283x4_cropped%29_%28contrast%29.jpg/500px-Michael_Jackson_1983_%283x4_cropped%29_%28contrast%29.jpg",
     "rihanna": "https://i.scdn.co/image/ab6761610000e5eb99e4fca7c0b7cb166d915789",
-    "juice": "https://i.scdn.co/image/ab6761610000e5eba00b11c129b27a88fc72f36b"
+    "juice": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Juice_WRLD_-_Les_Ardentes_2019_%28cropped_2%29.jpg/500px-Juice_WRLD_-_Les_Ardentes_2019_%28cropped_2%29.jpg"
 }
 
 # Ensure models directory exists
@@ -381,33 +381,36 @@ async def store_song_info_in_db(
     song_path: str,
     username: str
 ):
-    """Store song information in the Supabase database"""
+    """Store song information in the Supabase database using the stored procedure"""
     try:
-        # Prepare data for insertion
-        song_data = {
-            "artist_name": artist_name,
-            "image_path": image_path,
-            "is_AI_gen": True,
-            "song_name": song_name,
-            "song_path": song_path,
-            "uploaded_by": username,
-            "is_YT_fetched": False,
-            "created_at": datetime.now().isoformat()
-        }
-        
-        # Insert data into the database
-        response = supabase.table("song_information").insert(song_data).execute()
+        # Call the stored procedure
+        response = supabase.rpc(
+            "store_transformed_song",
+            {
+                "p_artist_name": artist_name,
+                "p_image_path": image_path,
+                "p_song_name": song_name,
+                "p_song_path": song_path,
+                "p_username": username
+            }
+        ).execute()
         
         # Check for errors
         if hasattr(response, 'error') and response.error:
             print(f"DB insertion error: {response.error}")
             raise HTTPException(status_code=500, detail=f"Database insertion failed: {response.error}")
         
+        # Check for error in the returned JSON
+        if response.data and isinstance(response.data, dict) and 'error' in response.data:
+            error_msg = response.data.get('error', 'Unknown database error')
+            print(f"Stored procedure error: {error_msg}")
+            raise HTTPException(status_code=500, detail=f"Database insertion failed: {error_msg}")
+        
         return response.data
     except Exception as e:
         print(f"Error storing data in DB: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to store song information: {str(e)}")
-
+    
 @app.get("/models")
 async def list_models():
     """List available voice models"""
