@@ -31,6 +31,7 @@ export default function ProfilePage(): JSX.Element {
     const {data: pfpData, error: pfpError} = usePfp(username);
     const {data: playlistData, error: playlistError} = usePlaylists(username);
     
+    
     useEffect(() => {
       if (pfpError) {
           toast.error(pfpError, toast_style);

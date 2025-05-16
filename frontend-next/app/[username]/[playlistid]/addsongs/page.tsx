@@ -14,60 +14,79 @@ import { Song } from "@/app/_types/types";
 import { addToPlaylist } from "./actions";
 
 export default function AddSongModel(): JSX.Element {
-    const [songs, setSongs] = useState<Array<Song> | null>(null)
+    const [songs, setSongs] = useState<Array<Song> | null>(null);
 
-    const paramData = useParams<{username: string, playlistid: string}>()
-    const username = paramData.username || ""
-    const playlistid = paramData.playlistid || ""
+    const paramData = useParams<{ username: string; playlistid: string }>();
+    const username = paramData.username || "";
+    const playlistid = paramData.playlistid || "";
 
-    const {data: songData, error: songError} = useFilteredSongs(username, playlistid)
-    
+    const { data: songData, error: songError } = useFilteredSongs(username, playlistid);
+
     useEffect(() => {
         if (songError) {
-            toast.error(songError.message, toast_style)
+            toast.error(songError.message, toast_style);
         } else if (songData) {
-            setSongs(songData)
+            setSongs(songData);
         }
-    }, [songData, songError])    
-    
+    }, [songData, songError]);
+
     const handleClick = async (song: Song) => {
-        let added = await addToPlaylist(parseInt(playlistid), song.id)
+        const added = await addToPlaylist(parseInt(playlistid), song.id);
         if (added) {
-            setSongs(prevSongs => (prevSongs ?? []).filter(s => s.id !== song.id))    
+            setSongs((prev) => (prev ?? []).filter((s) => s.id !== song.id));
         }
-    }
+    };
 
     if (!songs) {
         return (
-            <div className='flex w-screen h-screen justify-center bg-gradient-to-b from-black to-blue-600 items-center my-auto'>
-                <BeatLoader size={30} color="purple"/>
-            </div> 
-        )
+            <div className="flex w-screen h-screen justify-center items-center bg-gradient-to-b from-black to-[#1a1a1a]">
+                <BeatLoader size={30} color="purple" />
+            </div>
+        );
     }
 
     return (
-        <div className="no-scrollbar min-w-screen min-h-screen overflow-hidden bg-gradient-to-b from-black to-blue-600 shadow-lg p-8">
-            <div className="absolute flex flex-col top-0 right-0 m-2 text-red-700 hover:text-red-500 text-lg font-bold focus:outline-none">
+        <div className="min-h-screen w-screen px-4 py-8 bg-gradient-to-b from-black to-[#1a1a1a] text-white no-scrollbar">
+            <div className="absolute top-4 right-4 z-50">
                 <Link href={`/${username}`}>
-                    <IoMdClose size={40}/>
-                </Link>    
+                    <IoMdClose size={36} className="text-red-500 hover:text-red-400 transition duration-200" />
+                </Link>
             </div>
-            <div className="text-white text-4xl text-center">Add your uploaded songs to this playlist</div>
-            <div className="mt-2 border-white border-t-2 mb-10"></div>
-            <div className="flex flex-col flex-wrap h-screen justify-start items-center">
-            {songs.length!==0 ? ((songs.map((song, index) => (
-                <div key={index} className="flex flex-row items-center w-2/3 h-1/6 bg-blue-600 rounded-lg mb-5 text-white">
-                    <img src={song.image_path} className="h-2/3 w-1/5 rounded-lg ml-2 z-0" alt="song cover art"/>
-                    <div className="flex flex-col flex-wrap ml-4">
-                        <div className="text-xl">{song.song_name}</div>
-                        <div className="text-sm">By: {song.artist_name}</div>
-                    </div>
-                    <div className="flex flex-row text-green-500 hover:text-white ml-auto mr-4 cursor-pointer" onClick={()=>handleClick(song)}><FaPlus size={30}/></div>
+
+            <h1 className="text-3xl md:text-4xl font-bold text-center mb-6">Add your uploaded songs to this playlist</h1>
+            <hr className="border-t border-purple-500 mb-10 w-3/4 mx-auto" />
+
+            {songs.length !== 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+                    {songs.map((song, index) => (
+                        <div
+                            key={index}
+                            className="flex items-center bg-zinc-900 p-4 rounded-lg hover:bg-zinc-800 transition duration-300 border border-zinc-700 shadow-md"
+                        >
+                            <img
+                                src={song.image_path}
+                                alt="cover"
+                                className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                            />
+                            <div className="flex flex-col ml-4 flex-grow overflow-hidden">
+                                <h3 className="text-lg font-semibold truncate">{song.song_name}</h3>
+                                <p className="text-sm text-gray-400 truncate">By: {song.artist_name}</p>
+                            </div>
+                            <button
+                                onClick={() => handleClick(song)}
+                                className="ml-auto text-green-400 hover:text-white transition"
+                                title="Add to Playlist"
+                            >
+                                <FaPlus size={24} />
+                            </button>
+                        </div>
+                    ))}
                 </div>
-            )))) : (
-                <div className="text-white text-lg">No songs to add, try uploading some to add them to this playlist!</div>
+            ) : (
+                <div className="text-center mt-10 text-lg text-gray-300">
+                    No songs to add. Try uploading some to add them to this playlist!
+                </div>
             )}
-            </div>
         </div>
-    )
+    );
 }

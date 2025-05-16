@@ -113,7 +113,7 @@ export default function Layout(): JSX.Element {
 
     return (
         <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} bg-black w-screen min-h-screen overflow-x-hidden no-scrollbar`}>
-            <div className="text-white px-8 py-6 h-full">
+<div className="text-white px-8 py-6 overflow-y-auto" style={{ paddingBottom: "100px", minHeight: "100vh" }}>
                 {/* Top search section */}
                 <div className="flex justify-between items-center mb-4">
                     <div className="relative w-80">
@@ -154,17 +154,7 @@ export default function Layout(): JSX.Element {
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center gap-3">
-                        <button 
-                            className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-6 rounded-full font-medium"
-                            onClick={() => setShowUploadModal(true)}
-                        >
-                            Upload Music
-                        </button>
-                        <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-semibold">
-                            {username.substring(0, 2).toUpperCase()}
-                        </div>
-                    </div>
+                   
                 </div>
 
                 {/* Welcome message */}

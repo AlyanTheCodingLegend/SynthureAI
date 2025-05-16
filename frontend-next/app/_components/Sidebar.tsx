@@ -151,17 +151,6 @@ export default function Sidebar(): JSX.Element {
 
           </div>
 
-          <div className="sidebar-section">
-            <h3 className="sidebar-title">Beta Feature</h3>
-            <div
-              className="spotify-button"
-              onClick={() => toast.info("This feature is currently in development", toast_style)}
-            >
-              <LiaSpotify size={20} className="icon" />
-              Login with Spotify®
-            </div>
-          </div>
-
           <div className="sidebar-button" onClick={handleSignOut}>
             <PiSignOut size={20} className="icon" />
             Sign Out
