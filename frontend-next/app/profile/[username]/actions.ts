@@ -42,8 +42,7 @@ export const handleSubmit = async (username: string, pfp: File[]) => {
       if (errorOne) {
         return errorOne
       } else {
-        toast.success('Profile Photo successfully updated!', toast_style)
-        window.location.reload();
+        return null
       }
     }
 }
