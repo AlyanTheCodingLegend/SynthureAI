@@ -1,8 +1,6 @@
 "use server";
 
-import { toast } from "react-toastify"
 import supabase from "../_components/ClientInstance"
-import toast_style from "../_components/ToastStyle"
 
 const supabaseUrl = process.env.SUPABASE_URL
 
@@ -16,13 +14,11 @@ export const createPlaylist = async (username: string, formData: FormData) => {
     })
 
     if (fileError) {
-        toast.error(fileError.message, toast_style)
         return null
     }
 
     const {data, error} = await supabase.from('playlist_information').insert({created_by: username, playlist_name: playlistname, cover_url: `${supabaseUrl}/storage/v1/object/public/images/${username}/playlist_covers/${playlistname}.${file.type.replace('image/', '')}`}).select("*")
     if (error) {
-        toast.error(error.message, toast_style)
         return null
     }
 
@@ -32,7 +28,6 @@ export const createPlaylist = async (username: string, formData: FormData) => {
 export const signOutServer = async (): Promise<boolean> => {
     const {error} = await supabase.auth.signOut()
     if (error) {
-        toast.error(error.message, toast_style)
         return false
     } else {
         return true
@@ -56,7 +51,6 @@ export const handleArtistRowUpdate = async (songID: number, artistName: string) 
         }
     } catch (error: unknown) {
         if  (error instanceof Error) {
-            toast.error(error.message, toast_style);
         }    
     }
 }

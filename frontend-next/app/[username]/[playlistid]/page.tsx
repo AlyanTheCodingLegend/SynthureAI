@@ -50,35 +50,66 @@ export default function ShowPlaylistModel(): JSX.Element {
 
   const { data, error } = useSongsFromPlaylist(playlistid, username);
 
-  useEffect(() => {
-    if (error) {
-      toast.error(error, toast_style);
-    } else if (data) {
-      setName(data.name);
-      setSongnames(data.songnames);
-      setImages(data.images);
-      setArtists(data.artists);
-      setIndexes(data.indexes);
-      setBackupSongs(data.backupsongs);
+    useEffect(() => {
+        if (error) {
+            toast.error(error, toast_style)
+        } else if (data) {
+            setName(data.name)
+            if (data.songnames) {
+                setSongnames(data.songnames)
+                setImages(data.images)
+                setArtists(data.artists)
+                setIndexes(data.indexes)
+                setBackupSongs(data.backupsongs)
+            } else {
+                setSongnames([])
+                setImages([])
+                setArtists([])
+                setIndexes([])
+            }
+        }
+    }, [data, error])    
+      
+    const removeFromPlaylist = async (songindex: number) => {
+        if (playlistid === Number(process.env.NEXT_PUBLIC_MYSONGS_ID)) {
+            toast.info("Deleting the song from your account", toast_style)
+            const response = await fetch("/api/deleteSong", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    songId: indexes[songindex],
+                    username: username,
+                }),
+            })
+            if (!response.ok) {
+                const error = await response.json()
+                toast.error(error.error, toast_style)
+                return
+            }
+            const data = await response.json()
+            window.location.reload()
+            toast.success(data.message, toast_style)
+            return
+        }
+        let removed = await removeFromPlaylistServer(playlistid, indexes[songindex])
+        if (removed) {
+            if (songnames) {
+                setSongnames(prevSongs => (prevSongs ?? []).filter(s => s !== songnames[songindex]))
+                setImages(prevImages => prevImages.filter(s => s !== images[songindex]))
+                setArtists(prevArtists => prevArtists.filter(s => s !== artists[songindex]))
+                setIndexes(prevIndexes => prevIndexes.filter(s => s !== indexes[songindex]))
+            }  
+        }
     }
-  }, [data, error]);
 
-  const removeFromPlaylist = async (songindex: number) => {
-    let removed = await removeFromPlaylistServer(playlistid, indexes[songindex]);
-    if (removed) {
-      if (songnames) {
-        setSongnames((prev) => prev?.filter((_, i) => i !== songindex) || []);
-        setImages((prev) => prev.filter((_, i) => i !== songindex));
-        setArtists((prev) => prev.filter((_, i) => i !== songindex));
-        setIndexes((prev) => prev.filter((_, i) => i !== songindex));
-      }
+    const deletePlaylist = async () => {
+        let deleted = await deletePlaylistServer(playlistid)
+        if (deleted) {
+            dispatch(setOpenPlaylist(false))
+        }
     }
-  };
-
-  const deletePlaylist = async () => {
-    const deleted = await deletePlaylistServer(playlistid);
-    if (deleted) dispatch(setOpenPlaylist(false));
-  };
 
   const handlePlay = (songindex: number) => {
     if (playPlaylistID !== playlistid) {

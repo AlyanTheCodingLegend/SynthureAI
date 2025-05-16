@@ -1,8 +1,6 @@
 "use server";
 
 import supabase from "@/app/_components/ClientInstance";
-import toast_style from "@/app/_components/ToastStyle";
-import { toast } from "react-toastify";
 
 const supabaseUrl = process.env.SUPABASE_URL
 
@@ -38,14 +36,13 @@ export const deleteUserFolders = async (username: string) => {
 export const handleSubmit = async (username: string, pfp: File[]) => {
     const {error} = await supabase.storage.from('images').upload(`${username}/pfp.${pfp[0]?.type.replace('image/', '')}`, pfp[0], { cacheControl: '60', upsert: true, contentType: pfp[0] ? pfp[0].type: "image/jpeg"})
     if (error) {
-      toast.error(error.message, toast_style)
+      return error
     } else {
       const {error: errorOne} = await supabase.from('user_information').update({pfp_path: `${supabaseUrl}/storage/v1/object/public/images/${username}/pfp.${pfp[0]?.type.replace('image/','')}`}).eq('username', username)
       if (errorOne) {
-        toast.error(errorOne.message, toast_style)
+        return errorOne
       } else {
-        toast.success('Profile Photo successfully updated!', toast_style)
-        window.location.reload();
+        return null
       }
     }
 }
