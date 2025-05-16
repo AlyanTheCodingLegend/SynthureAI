@@ -8,23 +8,25 @@ type ContextType = {
 }
 
 export async function GET(request: Request, context: ContextType) {
-    const playlistid = (await context.params).playlistid
+    const playlistid = Number((await context.params).playlistid)
+
+    let playlistName = ''
+    let songArray=[]
+    let songNameArray=[]
+    let imageArray=[]
+    let indexArray=[]
+    let artistArray=[]
+    let songDataArray=[]
 
     try {    
-        let songArray=[]
-        let songNameArray=[]
-        let imageArray=[]
-        let indexArray=[]
-        let artistArray=[]
-        let songDataArray=[]
-
-
         const {data: playlistData, error: playlistError} = await supabase.from('playlist_information').select('playlist_name').eq('playlist_id', playlistid)
 
         if (playlistError) throw playlistError
 
+        playlistName = playlistData[0].playlist_name
+
         const {data: dataP, error: errorP2} = await supabase.from('playlistsong_information').select('song_id').eq('playlist_id', playlistid)
-        
+
         if (errorP2) throw errorP2
        
         if (dataP.length!==0) {
@@ -32,6 +34,9 @@ export async function GET(request: Request, context: ContextType) {
             for (let i=0;i<dataP.length;i++) {
                 songDataArray.push(dataP[i].song_id)
             }
+
+            console.log("alyan", songDataArray)
+
             const {data: songData, error: songError} = await supabase.from('song_information').select('*').in('id', songDataArray)
             if (songError) throw songError
             for (let j=0;j<songData.length;j++) {
@@ -59,5 +64,5 @@ export async function GET(request: Request, context: ContextType) {
         }    
     }
 
-    return NextResponse.json({data: null, error: 'No songs found'})
+    return NextResponse.json({data: {name: playlistName}, error: null })
 }

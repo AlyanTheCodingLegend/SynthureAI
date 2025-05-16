@@ -66,7 +66,17 @@ export default function ProfilePage(): JSX.Element {
     const handleClickFour = async () => {
       setPopup(true);
     }
-    
+
+    const handleFinalSubmit = async () => {
+      const error = await handleSubmit(username, pfp)
+      if (error) {
+        toast.error("Pfp could not be updated!", toast_style);
+      } else {
+        toast.success("Profile picture updated successfully!", toast_style);
+        router.push(`/${username}`);
+      }
+    }
+
     const handlePassSubmit = async () => {
       setIsLoading(true);
 
@@ -216,7 +226,7 @@ export default function ProfilePage(): JSX.Element {
                     </div>
                     
                     <button 
-                        onClick={() => handleSubmit(username, pfp)} 
+                        onClick={handleFinalSubmit} 
                         disabled={!pfp.length} 
                         className="bg-purple-600 text-white py-2 px-12 rounded-full w-full max-w-xs mb-4 hover:bg-purple-700 transition duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed"
                     >

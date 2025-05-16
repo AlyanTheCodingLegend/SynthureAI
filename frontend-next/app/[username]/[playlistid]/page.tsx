@@ -46,15 +46,44 @@ export default function ShowPlaylistModel(): JSX.Element {
             toast.error(error, toast_style)
         } else if (data) {
             setName(data.name)
-            setSongnames(data.songnames)
-            setImages(data.images)
-            setArtists(data.artists)
-            setIndexes(data.indexes)
-            setBackupSongs(data.backupsongs)
+            if (data.songnames) {
+                setSongnames(data.songnames)
+                setImages(data.images)
+                setArtists(data.artists)
+                setIndexes(data.indexes)
+                setBackupSongs(data.backupsongs)
+            } else {
+                setSongnames([])
+                setImages([])
+                setArtists([])
+                setIndexes([])
+            }
         }
     }, [data, error])    
       
     const removeFromPlaylist = async (songindex: number) => {
+        if (playlistid === Number(process.env.NEXT_PUBLIC_MYSONGS_ID)) {
+            toast.info("Deleting the song from your account", toast_style)
+            const response = await fetch("/api/deleteSong", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    songId: indexes[songindex],
+                    username: username,
+                }),
+            })
+            if (!response.ok) {
+                const error = await response.json()
+                toast.error(error.error, toast_style)
+                return
+            }
+            const data = await response.json()
+            window.location.reload()
+            toast.success(data.message, toast_style)
+            return
+        }
         let removed = await removeFromPlaylistServer(playlistid, indexes[songindex])
         if (removed) {
             if (songnames) {
