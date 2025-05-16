@@ -173,7 +173,7 @@ export default function ShowPlaylistModel(): JSX.Element {
         <div className="flex flex-col gap-3 pb-[100px]">
           {songnames.length > 0 ? (
             songnames.map((songname, i) => (
-              <div key={i} className="flex items-center justify-between bg-[#1A1A1A] rounded-xl overflow-hidden border border-[#2A2A2A] hover:bg-[#222222] hover:border-[rgba(147,51,234,0.3)] hover:shadow-lg hover:scale-[1.01] transition-all duration-300">
+              <div key={i} className={`flex items-center justify-between bg-[#1A1A1A] rounded-xl overflow-hidden border border-[#2A2A2A] hover:bg-[#222222] hover:border-[rgba(147,51,234,0.3)] hover:shadow-lg hover:scale-[1.01] transition-all duration-300 ${index === i && playPlaylistID === playlistid ? 'border-[rgba(147,51,234,0.3)] border-4 shadow-lg scale-[1.02]' : ''}`}>
                 <div className="w-[100px] h-[100px] bg-[#2A2A2A] flex-shrink-0">
                   <img src={images[i]} alt={songname} className="w-full h-full object-cover" />
                 </div>
@@ -191,7 +191,7 @@ export default function ShowPlaylistModel(): JSX.Element {
                       ))}
                     </div>
                   )}
-                  <button onClick={() => handlePlay(i)} className={`w-[54px] h-[54px] flex items-center justify-center rounded-full text-[20px] text-white ${index === i && playPlaylistID === playlistid ? 'bg-[#7e22ce]' : 'bg-[#9333EA]'} hover:scale-[1.05] transition-all`}>
+                  <button onClick={() => handlePlay(i)} className={`w-[54px] h-[54px] flex items-center justify-center rounded-full text-[20px] text-white ${index === i && playPlaylistID === playlistid ? 'bg-[#7e22ce] ' : 'bg-[#9333EA]'} hover:scale-[1.05] transition-all`}>
                     {(index === i && playPlaylistID === playlistid) ? <FaRegCirclePause /> : <FaRegCirclePlay />}
                   </button>
                   <button onClick={() => removeFromPlaylist(i)} className="w-[54px] h-[54px] flex items-center justify-center rounded-full bg-[rgba(26,26,26,0.7)] text-white border border-[rgba(255,255,255,0.05)] hover:text-[#E53E3E] hover:border-[rgba(229,62,62,0.3)]">
