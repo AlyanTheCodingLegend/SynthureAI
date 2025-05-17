@@ -9,8 +9,6 @@ import { PiPlaylistDuotone, PiSignOut } from "react-icons/pi";
 import { LuUpload } from "react-icons/lu";
 import { CgMediaLive } from "react-icons/cg";
 import { RiRobot2Line } from "react-icons/ri";
-import { LiaSpotify } from "react-icons/lia";
-import { ImLab } from "react-icons/im";
 import { toast } from "react-toastify";
 import { signOutServer } from "../_actions/_actions";
 import PlaylistModel from "./PlaylistModel";
@@ -43,6 +41,7 @@ export default function Sidebar(): JSX.Element {
   const isOpen = useSelector((state: RootState) => state.songs.isOpen);
   const socket = useSelector((state: RootState) => state.songs.socket);
   const userID = useSelector((state: RootState) => state.songs.userID);
+  const sessionID = useSelector((state: RootState) => state.songs.sessionID);
 
   const { data: pfpData } = usePfp(username);
 
@@ -62,11 +61,15 @@ export default function Sidebar(): JSX.Element {
   };
 
   const startSession = () => {
-    dispatch(setIsAdmin(true));
-    const id = generateSessionID();
-    dispatch(setSessionID(id));
-    const socket = new WebSocket("ws://localhost:5000");
-    dispatch(setSocket(socket));
+    if (sessionID === -1) {
+      dispatch(setIsAdmin(true));
+      const id = generateSessionID();
+      dispatch(setSessionID(id));
+      const socket = new WebSocket("ws://localhost:5000");
+      dispatch(setSocket(socket));
+    } else {
+      toast.error("Session already active", toast_style);
+    }
   };
 
   const joinSession = () => {
@@ -131,7 +134,7 @@ export default function Sidebar(): JSX.Element {
             </div>
             <div className="sidebar-button" onClick={startSession}>
               <CgMediaLive size={20} className="icon" />
-              Start Collaborative Session
+              {(sessionID === -1) ? "Start Collaborative Session" : "Session Active: " + sessionID}
             </div>
             <div className="sidebar-button join-session-block">
             <CgMediaLive size={20} className="icon" />

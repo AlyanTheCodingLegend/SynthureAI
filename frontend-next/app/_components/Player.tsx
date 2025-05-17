@@ -1,7 +1,7 @@
 "use client";
 
 import { Howl } from 'howler';
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, useState, type JSX, useRef } from 'react';
 import ReactSlider from 'react-slider';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaPlay, FaPause, FaForwardStep, FaBackwardStep } from "react-icons/fa6";
@@ -29,6 +29,10 @@ export default function Player (): JSX.Element {
     const [disabled, setDisabled] = useState<boolean>(false)
     const [showEqualizer, setShowEqualizer] = useState<boolean>(false)
     const [soundProfile, setSoundProfile] = useState<string>("normal")
+    const [isCreatingSong, setIsCreatingSong] = useState<boolean>(false)
+    
+    const songRef = useRef<Howl | null>(null);
+    const lastIndexRef = useRef<number>(-1);
     
     const songs = useSelector((state: RootState) => state.songs.songs)
     const isOpen = useSelector((state: RootState) => state.songs.isOpen)
@@ -42,8 +46,9 @@ export default function Player (): JSX.Element {
 
     const dispatch = useDispatch<AppDispatch>()
 
+    // Update time display
     useEffect(() => {
-        if (isPlaying) {
+        if (isPlaying || progress > 0) {
             setMins(Math.trunc(progress/60))
             setSecs(Math.trunc(progress-(mins*60)))
             setTMins(Math.trunc(duration/60))
@@ -52,8 +57,27 @@ export default function Player (): JSX.Element {
     // eslint-disable-next-line    
     }, [progress, isPlaying, duration])    
  
+    // Keep a reference to the song for closures
     useEffect(() => {
-        if (songs.length>0) {
+        songRef.current = song;
+    }, [song]);
+
+    useEffect(() => {
+        console.log("songs changing", songs);
+    }, [songs]);
+    
+    // Create a new song when index changes
+    useEffect(() => {
+        if (songs.length > 0 && index >= 0 && index < songs.length && !isCreatingSong && index !== lastIndexRef.current) {
+            console.log(`Creating new song for index ${index}, last index was ${lastIndexRef.current}`);
+            lastIndexRef.current = index;
+            setIsCreatingSong(true);
+            
+            // Unload previous song to prevent memory leaks
+            if (song) {
+                song.unload();
+            }
+            
             const newSong = new Howl({
                 src: [songs[index]],
                 format: ["mp3"],
@@ -61,348 +85,628 @@ export default function Player (): JSX.Element {
                 loop: repeat,
                 onplay: () => {
                     setIsPlaying(true);
-                    if (socket!==null && isAdmin) {
-                        socket?.send(JSON.stringify({ type: "play", sessionID: sessionID }))
+                    if (socket !== null && isAdmin) {
+                        socket?.send(JSON.stringify({ 
+                            type: "play", 
+                            sessionID: sessionID,
+                            index: index,
+                            progress: song?.seek() || 0
+                        }));
                     }    
                 },
                 onpause: () => {
                     setIsPlaying(false);
-                    if (socket!==null && isAdmin) {
-                        socket?.send(JSON.stringify({ type: "pause", sessionID: sessionID }))
+                    if (socket !== null && isAdmin) {
+                        socket?.send(JSON.stringify({ 
+                            type: "pause", 
+                            sessionID: sessionID,
+                            progress: song?.seek() || 0
+                        }));
                     }
                 },
                 onload: () => {
                     dispatch(setDuration(newSong.duration()));
                     setDisabled(false);
-                    if (socket!==null && isAdmin) {
-                        socket?.send(JSON.stringify({ type: "nextsong", sessionID: sessionID, index: index }))
+                    setIsCreatingSong(false);
+                    
+                    if (socket !== null && isAdmin) {
+                        socket?.send(JSON.stringify({ 
+                            type: "nextsong", 
+                            sessionID: sessionID, 
+                            index: index 
+                        }));
                     } 
+                },
+                onloaderror: (id, error) => {
+                    console.error("Error loading song:", error);
+                    setIsCreatingSong(false);
+                    setDisabled(false);
+                    toast.error("Failed to load song");
                 },
                 onend: () => {
                     setIsPlaying(false);
                     dispatch(setProgress(0));
                     if (randomize) {
-                        randomizeSong(0,songs.length-1)
+                        randomizeSong(0, songs.length-1);
                     } else {
-                        if (index<songs.length-1) {
-                            dispatch(setIndex(index+1))
+                        if (index < songs.length-1) {
+                            dispatch(setIndex(index+1));
                         }
                         else {
-                            dispatch(setIndex(0))
+                            dispatch(setIndex(0));
                         }
                     } 
                 }
-            })
-            setSong(newSong)
+            });
             
-            return () => {
-                try {
-                    if (newSong.playing()) {
-                        newSong.stop(); // Ensure the song is stopped before unloading
-                    }
-                    newSong.unload(); // Unload the song to free up resources
-                } catch (error: unknown) {
-                    if (error instanceof Error) {
-                        toast.error(error.message, toast_style);
-                    }    
-                }
-            }
+            setSong(newSong);
         }
     // eslint-disable-next-line
-    }, [songs, index])
+    }, [songs, index]);
 
+    // Handle playback actions
     const handleClick = () => {
+        if (!song) {
+            console.log("No song loaded yet");
+            return;
+        }
+        
         if (isPlaying) {
-            song?.pause()  
+            song.pause();
         }
         else {
-            song?.play()  
+            song.play();  
         }
-    }
+    };
 
+    // Progress tracking
     useEffect(() => {
         const interval = setInterval(() => {
             if (song && isPlaying) {
-                dispatch(setProgress(song.seek() || 0));
+                const currentPos = song.seek() || 0;
+                dispatch(setProgress(currentPos));
             }
         }, 100);
 
         return () => clearInterval(interval);
-    }, [song, isPlaying]);
+    }, [song, isPlaying, dispatch]);
  
+    // Seeking
     const handleSeek = (position: number) => {
+        if (!song) {
+            console.log("Cannot seek: no song loaded");
+            return;
+        }
        
-        if (position<=duration) {
-            if (song) {
-                song.seek(position)
-            }    
-            dispatch(setProgress(position))
-            if (socket!==null && isAdmin) {
-                socket?.send(JSON.stringify({ type: "seek", sessionID: sessionID, time: position }))
+        if (position <= duration) {
+            song.seek(position);
+            dispatch(setProgress(position));
+            
+            if (socket !== null && isAdmin) {
+                socket?.send(JSON.stringify({ 
+                    type: "seek", 
+                    sessionID: sessionID, 
+                    time: position 
+                }));
             }
         }
-    }
+    };
 
+    // Volume control
     const handleVolumeSeek = (vol: number) => {
         if (song) {
-            song.volume(vol)
+            song.volume(vol);
         }    
-        setVolume(vol)
-    }
+        setVolume(vol);
+    };
 
+    // Mute toggle
     const handleVolumeMute = () => {
         if (!isMuted) {
-            setPrevVol(volume)
+            setPrevVol(volume);
             if (song) {
-                song.volume(0)
+                song.volume(0);
             }    
-            setVolume(0)
+            setVolume(0);
         } else {
             if (song) {
-                song.volume(prevVol)
+                song.volume(prevVol);
             }    
-            setVolume(prevVol)
+            setVolume(prevVol);
         }
-        setIsMuted(!isMuted)
-    }
+        setIsMuted(!isMuted);
+    };
 
+    // Sound profile change
     const handleSoundProfileChange = (profile: string) => {
         setSoundProfile(profile);
         toast.info(`Sound profile changed to ${profile}`, toast_style);
         // In a real implementation, this would apply audio effects
-        // For now, we're just changing the state
-    }
+    };
 
+    // Auto-play song once loaded/created
     useEffect(() => {
-        if (song) {
-            song.play()
+        if (song && duration > 0 && !disabled && isPlaying) {
+            console.log("Auto-playing song after load");
+            song.play();
         }      
     // eslint-disable-next-line   
-    }, [duration])
+    }, [duration, song, disabled]);
 
+    // Socket connection and message handling
     useEffect(() => {
-        if (socket) {
-            socket.onopen = () => {
-                socket.send(JSON.stringify({ type: "join", sessionID: sessionID, userID: userID, isAdmin: isAdmin }))
-            }
-            
-            socket.onmessage = (event) => {
-                handleMessage(event.data)
-            }
+        if (!socket) return;
+        
+        const onOpen = () => {
+            console.log("WebSocket connected");
+            socket.send(JSON.stringify({ 
+                type: "join", 
+                sessionID: sessionID, 
+                userID: userID, 
+                isAdmin: isAdmin 
+            }));
+        };
+        
+        const onMessage = (event: MessageEvent) => {
+            handleMessage(event.data);
+        };
+        
+        const onClose = () => {
+            console.log("WebSocket disconnected");
+            dispatch(setSessionID(-1));
+            dispatch(setIsAdmin(false));
+            dispatch(setSocket(null));
+            toast.info("Disconnected from session");
+        };
+        
+        const onError = (error: Event) => {
+            console.error("WebSocket error:", error);
+            toast.error("Connection error occurred!");
+        };
+        
+        // Assign all the handlers
+        socket.onopen = onOpen;
+        socket.onmessage = onMessage;
+        socket.onclose = onClose;
+        socket.onerror = onError;
+        
+        // Clean up on component unmount
+        return () => {
+            socket.onopen = null;
+            socket.onmessage = null;
+            socket.onclose = null;
+            socket.onerror = null;
+        };
+    }, [socket, sessionID, userID, isAdmin, dispatch]);    
 
-            socket.onclose = () => {
-                dispatch(setSessionID(-1))
-                dispatch(setIsAdmin(false))
-                dispatch(setSocket(null))
-            }
-
-            socket.onerror = (error) => {
-                toast.error("Oops, an error occured!")
-            }
-        }    
-    }, [socket])    
-
+    // Socket message handler
     const handleMessage = (data: string) => {
-        const message = JSON.parse(data);
+        try {
+            const message = JSON.parse(data);
+            console.log("Received message:", message.type);
 
-        // Implement your message handling logic here
-        switch (message.type) {
-            case 'sync':
-                if (message.songs) {
-                    dispatch(setSongs(message.songs))
-                }
-                if (message.index) {
-                    dispatch(setIndex(message.index))
-                }
-                if (message.duration) {
-                    dispatch(setDuration(message.duration))
-                }
-                if (message.progress) {
-                    dispatch(setProgress(message.progress))
-                }
-                break;
-            case 'nextsong':
-                if (message.index) {
-                    dispatch(setIndex(message.index))
-                }
-                break;    
-            case 'play':
-                if (song) {
-                    song.play();
-                }
-                break;
-            case 'pause':
-                if (song) {
-                    song.pause();
-                }
-                break;
-            case 'seek':
-                handleSeek(message.time);
-                break;
-            case 'joinsuccess':
-                toast.success(message.message)
-                break;
-            case 'joinerror':
-                socket?.close()
-                toast.error(message.message)
-                break;
-            case 'leavesuccess':
-                toast.success(message.message)
-                socket?.close()
-                break;
-            case 'leaveerror':
-                toast.error(message.message)
-                break;            
-            default:
-                console.log("Unknown message type: ", message.type);
-                break;
+            switch (message.type) {
+                case "sync":
+                    console.log("Sync received:", message);
+                    if (message.songs && message.songs.length > 0) {
+                        dispatch(setSongs(message.songs));
+                    }
+                    
+                    if (message.index !== undefined) {
+                        dispatch(setIndex(message.index));
+                    }
+                    
+                    if (message.duration) {
+                        dispatch(setDuration(message.duration));
+                    }
+                    
+                    if (message.progress !== undefined) {
+                        dispatch(setProgress(message.progress));
+                        
+                        // Update the current song position if it exists
+                        if (song) {
+                            song.seek(message.progress);
+                        }
+                    }
+                    
+                    // Apply play state if specified
+                    if (message.isPlaying !== undefined) {
+                        if (message.isPlaying && song) {
+                            song.play();
+                        } else if (!message.isPlaying && song) {
+                            song.pause();
+                        }
+                    }
+                    break;
+                    
+                case "nextsong":
+                    console.log("Next song received:", message.index);
+                    if (message.index !== undefined) {
+                        dispatch(setIndex(message.index));
+                    }
+                    break;
+                    
+                case "play":
+                    console.log("Play command received");
+                    if (song) {
+                        song.play();
+                    } else {
+                        console.warn("Received play command but song is null");
+
+                        console.log(songs.length, index, isCreatingSong);
+                        
+                        // If we have songs but no song object, try to create one
+                        if (songs.length > 0 && index >= 0 && index < songs.length && !isCreatingSong) {
+                            console.log("Creating song on play command");
+                            createSong(index);
+                        }
+                    }
+                    break;
+                    
+                case "pause":
+                    console.log("Pause command received");
+                    if (song) {
+                        song.pause();
+                    }
+                    
+                    // Update progress if provided
+                    if (message.progress !== undefined) {
+                        dispatch(setProgress(message.progress));
+                    }
+                    break;
+                    
+                case "seek":
+                    console.log("Seek command received:", message.time);
+                    handleSeek(message.time);
+                    break;
+                    
+                case "syncRequest":
+                    console.log("Sync request received from user:", message.userID);
+                    if (isAdmin) {
+                        sendFullSync(message.userID);
+                    }
+                    break;
+                    
+                case "requestCurrentState":
+                    console.log("State request received");
+                    if (isAdmin) {
+                        sendFullSync();
+                    }
+                    break;
+                    
+                case "adminPromoted":
+                    console.log("Promoted to admin!");
+                    dispatch(setIsAdmin(true));
+                    toast.success(message.message);
+                    break;
+                    
+                case "userDisconnected":
+                    console.log("User disconnected:", message.userID);
+                    if (message.wasAdmin) {
+                        toast.info("Admin disconnected");
+                    }
+                    break;
+                    
+                case "joinsuccess":
+                    console.log("Join success:", message.message);
+                    toast.success(message.message);
+                    
+                    // If not admin, request a sync
+                    if (!isAdmin) {
+                        requestSync();
+                    }
+                    break;
+                    
+                case "joinerror":
+                    console.log("Join error:", message.message);
+                    if (socket) socket.close();
+                    toast.error(message.message);
+                    break;
+                    
+                case "leavesuccess":
+                    console.log("Leave success:", message.message);
+                    toast.success(message.message);
+                    if (socket) socket.close();
+                    break;
+                    
+                case "leaveerror":
+                    console.log("Leave error:", message.message);
+                    toast.error(message.message);
+                    break;
+                    
+                case "error":
+                    console.error("Server error:", message.message);
+                    toast.error(message.message);
+                    break;
+                    
+                default:
+                    console.warn("Unknown message type:", message.type);
+                    break;
+            }
+        } catch (error) {
+            console.error("Error parsing message:", error);
         }
-    }
+    };
 
+    // Helper to create a song explicitly
+    const createSong = (songIndex: number) => {
+        if (songs.length === 0 || songIndex < 0 || songIndex >= songs.length || isCreatingSong) {
+            return;
+        }
+        
+        setIsCreatingSong(true);
+        
+        // Unload previous song to prevent memory leaks
+        if (song) {
+            song.unload();
+        }
+        
+        console.log(`Explicitly creating song for index ${songIndex}`);
+        const newSong = new Howl({
+            src: [songs[songIndex]],
+            format: ["mp3"],
+            volume: volume,
+            loop: repeat,
+            onplay: () => {
+                setIsPlaying(true);
+            },
+            onpause: () => {
+                setIsPlaying(false);
+            },
+            onload: () => {
+                dispatch(setDuration(newSong.duration()));
+                setDisabled(false);
+                setIsCreatingSong(false);
+                
+                // Auto-play if requested
+                if (isPlaying) {
+                    newSong.play();
+                }
+            },
+            onloaderror: (id, error) => {
+                console.error("Error loading song:", error);
+                setIsCreatingSong(false);
+                setDisabled(false);
+                toast.error("Failed to load song");
+            },
+            onend: () => {
+                setIsPlaying(false);
+                dispatch(setProgress(0));
+                if (randomize) {
+                    randomizeSong(0, songs.length-1);
+                } else {
+                    if (songIndex < songs.length-1) {
+                        dispatch(setIndex(songIndex+1));
+                    }
+                    else {
+                        dispatch(setIndex(0));
+                    }
+                } 
+            }
+        });
+        
+        setSong(newSong);
+    };
+
+    // Request sync from admin
+    const requestSync = () => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            console.log("Requesting sync from admin");
+            socket.send(JSON.stringify({ 
+                type: "requestSync", 
+                sessionID: sessionID, 
+                userID: userID 
+            }));
+        }
+    };
+
+    // Send full sync to all users or specific user
+    const sendFullSync = (targetUserID?: string) => {
+        if (!isAdmin || !socket || socket.readyState !== WebSocket.OPEN) {
+            return;
+        }
+        
+        console.log("Sending full sync", targetUserID ? `to user ${targetUserID}` : "to all users");
+        
+        const syncMessage = {
+            type: "sync",
+            sessionID: sessionID,
+            userID: userID,
+            targetUserID: targetUserID, // Only used if sending to specific user
+            songs: songs,
+            index: index,
+            duration: duration,
+            progress: song ? song.seek() || progress : progress,
+            isPlaying: isPlaying
+        };
+        
+        socket.send(JSON.stringify(syncMessage));
+    };
+
+    // Play next song
     const handlePlayNextSong = () => {
-        setDisabled(true)
+        if (disabled) return;
+        
+        setDisabled(true);
         if (song) {
-            song.pause()
-            song.unload()
+            song.pause();
+            song.unload();
         }
-        if (index<songs.length-1) {
-            dispatch(setIndex(index+1))
-        } else{
-            dispatch(setIndex(0))
-        }
-    }
-
-    const handlePlayPrevSong = () => {
-        setDisabled(true)
-        if (song) {
-            song.pause()
-            song.unload()
-        }
-        if (index>=1) {
-            dispatch(setIndex(index-1))
+        
+        if (index < songs.length-1) {
+            dispatch(setIndex(index+1));
         } else {
-            dispatch(setIndex(songs.length-1))
+            dispatch(setIndex(0));
         }
-    }
+    };
 
+    // Play previous song
+    const handlePlayPrevSong = () => {
+        if (disabled) return;
+        
+        setDisabled(true);
+        if (song) {
+            song.pause();
+            song.unload();
+        }
+        
+        if (index >= 1) {
+            dispatch(setIndex(index-1));
+        } else {
+            dispatch(setIndex(songs.length-1));
+        }
+    };
+
+    // Sync session button handler
+    const syncSession = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        if (isAdmin) {
+            sendFullSync();
+        } else {
+            requestSync();
+        }
+    };
+
+    // Random song selection
     const randomizeSong = (min: number, max: number) => {
-        min = Math.ceil(min)
-        max = Math.ceil(max)
-        dispatch(setIndex(Math.floor(Math.random()*(max-min+1)) + min))
-    }
+        min = Math.ceil(min);
+        max = Math.ceil(max);
+        dispatch(setIndex(Math.floor(Math.random() * (max - min + 1)) + min));
+    };
 
+    // Update mute state based on volume
     useEffect(() => {
-        if (isMuted && volume!==0) {
-            setIsMuted(false)
+        if (isMuted && volume !== 0) {
+            setIsMuted(false);
         }
-        if (volume===0) {
-            setIsMuted(true)
+        if (volume === 0) {
+            setIsMuted(true);
         }
     // eslint-disable-next-line    
-    }, [volume])
+    }, [volume]);
 
     return (
         <>
-        {song && (
-            <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} player-container`}>
-                <div className='player-content'>
-                    <div className="progress-container">
-                        <div className="timer">
-                            {mins}:{secs < 10 ? "0" + secs : secs}
-                        </div>
-                        <ReactSlider
-                            className="progress-slider"
-                            onAfterChange={handleSeek}
-                            value={progress}
-                            min={0}
-                            max={duration}
-                            thumbClassName="progress-thumb"
-                            trackClassName="progress-track"
-                        />
-                        <div className='total-time'>
-                            {Tmins}:{Tsecs < 10 ? "0" + Tsecs : Tsecs}
-                        </div>
-                    </div>
-
-                    <div className='controls-container'>
-                        <div className='player-left-controls'>   
-                            <div className={randomize ? 'shuffle-active' : 'shuffle-inactive'} onClick={() => setRandomize(!randomize)}>
-                                <FaRandom size={18} />
-                            </div>
-                            <div className={repeat ? 'repeat-active' : 'repeat-inactive'} onClick={() => setRepeat(!repeat)}>
-                                <MdOutlineLoop size={20} />
-                            </div>
-                        </div>     
-                        <div className='player-main-controls'>
-                            <button disabled={(socket!==null && !isAdmin)} className="prev-button" onClick={handlePlayPrevSong}>
-                                <FaBackwardStep size={16}/>
-                            </button>
-                            <button
-                                disabled={(socket!==null && !isAdmin)}
-                                onClick={handleClick}
-                                className={disabled ? "play-button disabled" : "play-button"}
-                            >
-                                {isPlaying ? <FaPause size={18} /> : <FaPlay size={18} className="play-icon" />}
-                            </button>
-                            <button disabled={(socket!==null && !isAdmin)} className="next-button" onClick={handlePlayNextSong}>
-                                <FaForwardStep size={16}/>
-                            </button>
-                        </div>
-                        <div className="player-right-controls">
-                            <button className="equalizer-button" onClick={() => setShowEqualizer(!showEqualizer)}>
-                                <FaSlidersH size={16} />
-                            </button>
-                            <button className="mute-button" onClick={handleVolumeMute}>
-                                {isMuted ? <FaVolumeMute size={14} /> : <FaVolumeUp size={14} />}
-                            </button>
-                            <ReactSlider
-                                className="volume-slider"
-                                value={volume}
-                                onChange={handleVolumeSeek}
-                                min={0}
-                                max={1}
-                                step={0.01}
-                                thumbClassName="volume-thumb"
-                                trackClassName="volume-track"
-                            />
-                        </div>
-                    </div>
-                    
-                    {showEqualizer && (
-                        <div className="equalizer-panel">
-                            <div className="equalizer-title">Sound Profiles</div>
-                            <div className="sound-profiles">
-                                <button 
-                                    className={`profile-button ${soundProfile === 'normal' ? 'active' : ''}`}
-                                    onClick={() => handleSoundProfileChange('normal')}>
-                                    Normal
-                                </button>
-                                <button 
-                                    className={`profile-button ${soundProfile === 'bass' ? 'active' : ''}`}
-                                    onClick={() => handleSoundProfileChange('bass')}>
-                                    Bass Boost
-                                </button>
-                                <button 
-                                    className={`profile-button ${soundProfile === 'vocals' ? 'active' : ''}`}
-                                    onClick={() => handleSoundProfileChange('vocals')}>
-                                    Vocal Boost
-                                </button>
-                                <button 
-                                    className={`profile-button ${soundProfile === 'rock' ? 'active' : ''}`}
-                                    onClick={() => handleSoundProfileChange('rock')}>
-                                    Rock
-                                </button>
-                                <button 
-                                    className={`profile-button ${soundProfile === 'electronic' ? 'active' : ''}`}
-                                    onClick={() => handleSoundProfileChange('electronic')}>
-                                    Electronic
-                                </button>
-                            </div>
-                        </div>
-                    )}
+        <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} player-container`}>
+            <div className='player-content'>
+                <button className="bg-white p-2 rounded" onClick={syncSession}>
+                    {isAdmin ? "Sync All" : "Request Sync"}
+                </button>
+                
+                <div className="debug-info text-sm text-gray-600 mt-1 mb-2">
+                    {songs.length > 0 ? `Song ${index+1}/${songs.length}` : "No songs loaded"}
+                    {song ? "" : " - No active song object"}
+                    {isCreatingSong ? " - Creating song..." : ""}
                 </div>
+                
+                <div className="progress-container">
+                    <div className="timer">
+                        {mins}:{secs < 10 ? "0" + secs : secs}
+                    </div>
+                    <ReactSlider
+                        className="progress-slider"
+                        onAfterChange={handleSeek}
+                        value={progress}
+                        min={0}
+                        max={duration || 100} // Prevent division by zero
+                        thumbClassName="progress-thumb"
+                        trackClassName="progress-track"
+                        disabled={!song || disabled || songs.length === 0 || isCreatingSong || (socket !== null && !isAdmin && sessionID!==-1)}
+                    />
+                    <div className='total-time'>
+                        {Tmins}:{Tsecs < 10 ? "0" + Tsecs : Tsecs}
+                    </div>
+                </div>
+
+                <div className='controls-container'>
+                    <div className='player-left-controls'>   
+                        <div className={randomize ? 'shuffle-active' : 'shuffle-inactive'} onClick={() => setRandomize(!randomize)}>
+                            <FaRandom size={18} />
+                        </div>
+                        <div className={repeat ? 'repeat-active' : 'repeat-inactive'} onClick={() => {
+                            setRepeat(!repeat);
+                            if (song) song.loop(!repeat);
+                        }}>
+                            <MdOutlineLoop size={20} />
+                        </div>
+                    </div>     
+                    <div className='player-main-controls'>
+                        <button 
+                            disabled={(socket !== null && !isAdmin) || disabled || songs.length === 0} 
+                            className="prev-button" 
+                            onClick={handlePlayPrevSong}
+                        >
+                            <FaBackwardStep size={16}/>
+                        </button>
+                        <button
+                            disabled={(socket !== null && !isAdmin) || disabled || songs.length === 0}
+                            onClick={handleClick}
+                            className={disabled ? "play-button disabled" : "play-button"}
+                        >
+                            {isPlaying ? <FaPause size={18} /> : <FaPlay size={18} className="play-icon" />}
+                        </button>
+                        <button 
+                            disabled={(socket !== null && !isAdmin) || disabled || songs.length === 0} 
+                            className="next-button" 
+                            onClick={handlePlayNextSong}
+                        >
+                            <FaForwardStep size={16}/>
+                        </button>
+                    </div>
+                    <div className="player-right-controls">
+                        <button className="equalizer-button" onClick={() => setShowEqualizer(!showEqualizer)}>
+                            <FaSlidersH size={16} />
+                        </button>
+                        <button className="mute-button" onClick={handleVolumeMute}>
+                            {isMuted ? <FaVolumeMute size={14} /> : <FaVolumeUp size={14} />}
+                        </button>
+                        <ReactSlider
+                            className="volume-slider"
+                            value={volume}
+                            onChange={handleVolumeSeek}
+                            min={0}
+                            max={1}
+                            step={0.01}
+                            thumbClassName="volume-thumb"
+                            trackClassName="volume-track"
+                        />
+                    </div>
+                </div>
+                
+                {showEqualizer && (
+                    <div className="equalizer-panel">
+                        <div className="equalizer-title">Sound Profiles</div>
+                        <div className="sound-profiles">
+                            <button 
+                                className={`profile-button ${soundProfile === 'normal' ? 'active' : ''}`}
+                                onClick={() => handleSoundProfileChange('normal')}>
+                                Normal
+                            </button>
+                            <button 
+                                className={`profile-button ${soundProfile === 'bass' ? 'active' : ''}`}
+                                onClick={() => handleSoundProfileChange('bass')}>
+                                Bass Boost
+                            </button>
+                            <button 
+                                className={`profile-button ${soundProfile === 'vocals' ? 'active' : ''}`}
+                                onClick={() => handleSoundProfileChange('vocals')}>
+                                Vocal Boost
+                            </button>
+                            <button 
+                                className={`profile-button ${soundProfile === 'rock' ? 'active' : ''}`}
+                                onClick={() => handleSoundProfileChange('rock')}>
+                                Rock
+                            </button>
+                            <button 
+                                className={`profile-button ${soundProfile === 'electronic' ? 'active' : ''}`}
+                                onClick={() => handleSoundProfileChange('electronic')}>
+                                Electronic
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
-        )}
-    </>
+        </div>
+        </>
     )
 }
