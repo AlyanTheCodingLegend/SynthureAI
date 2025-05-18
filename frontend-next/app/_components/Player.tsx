@@ -587,6 +587,7 @@ export default function Player (): JSX.Element {
 
     return (
         <>
+        {(songs && songs.length > 0 && song) && (
         <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} player-container`}>
             <div className='player-content'>
                 <button className="bg-white p-2 rounded" onClick={syncSession}>
@@ -707,6 +708,7 @@ export default function Player (): JSX.Element {
                 )}
             </div>
         </div>
+        )}
         </>
     )
 }

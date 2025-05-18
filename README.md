@@ -1,36 +1,58 @@
-# SynthureAI - An AI-based music application
+# SynthureAI
 
-The only full-stack web app you'll ever need to listen to your favourite music tracks!
+An innovative application that uses AI to transform songs into the voices of popular artists, create playlists, and enable real-time collaborative music sessions.
 
 ## Features
 
-- Listen to your local mp3 files
-- Listen to your Spotify playlists by linking your premium account
-- Create and listen to AI-generated songs on-the-go
-- Create playlists for your local mp3 files
-- Customise your profile by adding a profile picture
+- **AI Voice Transformation**: Convert any song to sound like it's sung by Rihanna, Drake, The Weeknd, Kanye West, Juice WRLD, or Michael Jackson using advanced SoVITS AI models
+- **Web Scraping**: Automatically search and download songs from YouTube using BeautifulSoup and Selenium
+- **Local File Support**: Upload and transform your own MP3 files
+- **Playlist Management**: Organize your transformed songs into custom playlists
+- **User Profiles**: Personalize your experience with custom profile pictures
+- **Collaborative Jamming**: Join real-time music sessions with other users via WebSockets
 
-## Technologies Used
+## Prerequisites
 
-- React
-- Javascript
-- Tailwind CSS
-- Supabase
+- Python 3.10.x
+- Node.js and npm
+- Modern web browser
 
-### How to use the app?
+## Installation
 
-Easy!
+The project consists of three main components that need to be set up separately:
 
-First, start by creating your own profile on the app \(don't forget to add your profile picture ;\)\)
+### 1. AI Voice Transformation and YT Scraper server in FastAPI
 
-Next, click on Add songs if you want to upload your local mp3 files to our app!
+```bash
+# Navigate to the AI engine directory from the project root
+cd ./Ai-voice-clone/
 
-If you want to import your spotify playlists, you can also do that by clicking on the `Login with Spotify` button in the sidebar and logging in!
+# Install Python dependencies
+pip install -r requirements.txt
+```
 
-Finally, if you want to create AI-generated songs, you can do so by clicking on the `Create AI-generated Songs` button in the sidebar!
+### 2. Websocket Server Backend
 
-That's it!
+```bash
+# Navigate to the backend directory from the project root
+cd ./Backend/
 
-`Vibe On!!!` 
+# Install Node.js dependencies
+npm install
 
+# Start the backend server
+npm run start
+```
 
+### 3. NextJS Frontend in ReactJS + Backend with DB queries
+
+```bash
+# Navigate to the frontend directory from the project root
+cd ./frontend-next/
+
+# Install Node.js dependencies
+npm install
+
+# Start the development server
+npm run dev
+```
