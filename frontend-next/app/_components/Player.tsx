@@ -590,16 +590,7 @@ export default function Player (): JSX.Element {
         {(songs && songs.length > 0 && song) && (
         <div className={`${isOpen ? "ml-[250px] max-w-custom" : "ml-[50px] max-w-custom2"} player-container`}>
             <div className='player-content'>
-                <button className="bg-white p-2 rounded" onClick={syncSession}>
-                    {isAdmin ? "Sync All" : "Request Sync"}
-                </button>
-                
-                <div className="debug-info text-sm text-gray-600 mt-1 mb-2">
-                    {songs.length > 0 ? `Song ${index+1}/${songs.length}` : "No songs loaded"}
-                    {song ? "" : " - No active song object"}
-                    {isCreatingSong ? " - Creating song..." : ""}
-                </div>
-                
+                                
                 <div className="progress-container">
                     <div className="timer">
                         {mins}:{secs < 10 ? "0" + secs : secs}
@@ -630,6 +621,14 @@ export default function Player (): JSX.Element {
                         }}>
                             <MdOutlineLoop size={20} />
                         </div>
+                        <button className="bg-white p-2 rounded" disabled={!socket} onClick={syncSession}>
+                            {isAdmin ? "Sync All" : "Request Sync"}
+                        </button>
+                        <div className="debug-info text-sm text-gray-600 ml-2 mt-1 mb-2 w-[180px]">
+                            {songs.length > 0 ? `Song ${index+1}/${songs.length}` : "No songs loaded"}
+                            {song ? "" : " - No active song object"}
+                            {isCreatingSong ? " - Creating song..." : ""}
+                        </div>
                     </div>     
                     <div className='player-main-controls'>
                         <button 
@@ -640,9 +639,9 @@ export default function Player (): JSX.Element {
                             <FaBackwardStep size={16}/>
                         </button>
                         <button
-                            disabled={(socket !== null && !isAdmin) || disabled || songs.length === 0}
+                            disabled={(socket !== null && !isAdmin) || disabled || songs.length === 0 || isCreatingSong}
                             onClick={handleClick}
-                            className={disabled ? "play-button disabled" : "play-button"}
+                            className={((socket !== null && !isAdmin) || disabled || songs.length === 0 || isCreatingSong) ? "play-button disabled" : "play-button"}
                         >
                             {isPlaying ? <FaPause size={18} /> : <FaPlay size={18} className="play-icon" />}
                         </button>
