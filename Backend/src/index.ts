@@ -1,6 +1,11 @@
 import { WebSocket } from 'ws';
 import http from 'http';
 import { SessionManager } from './SessionManager';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const port = process.env.PORT || 5000;
 
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -15,6 +20,6 @@ wss.on('connection', function connection(ws) {
   sessionManager.addHandler(ws);
 });
 
-server.listen(5000, () => {
-  console.log('Server started on http://localhost:5000');
+server.listen(port, () => {
+  console.log(`Server started on http://localhost:${port}`);
 });

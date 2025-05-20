@@ -28,6 +28,8 @@ import {
 } from "../_states/songArraySlice";
 import "../_styles/Sidebar.css";
 
+const websocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "ws://localhost:5000";
+
 export default function Sidebar(): JSX.Element {
   const [isPlaylistModalOpen, setPlaylistModalOpen] = useState(false);
   const [isUploadModelOpen, setUploadModelOpen] = useState(false);
@@ -39,8 +41,6 @@ export default function Sidebar(): JSX.Element {
   const dispatch = useDispatch<AppDispatch>();
 
   const isOpen = useSelector((state: RootState) => state.songs.isOpen);
-  const socket = useSelector((state: RootState) => state.songs.socket);
-  const userID = useSelector((state: RootState) => state.songs.userID);
   const sessionID = useSelector((state: RootState) => state.songs.sessionID);
 
   const { data: pfpData } = usePfp(username);
@@ -65,7 +65,7 @@ export default function Sidebar(): JSX.Element {
       dispatch(setIsAdmin(true));
       const id = generateSessionID();
       dispatch(setSessionID(id));
-      const socket = new WebSocket("ws://localhost:5000");
+      const socket = new WebSocket(websocketUrl);
       dispatch(setSocket(socket));
     } else {
       toast.error("Session already active", toast_style);
@@ -76,7 +76,7 @@ export default function Sidebar(): JSX.Element {
     if (tempSessionID !== -1) {
       dispatch(setIsAdmin(false));
       dispatch(setSessionID(tempSessionID));
-      const socket = new WebSocket("ws://localhost:5000");
+      const socket = new WebSocket(websocketUrl);
       dispatch(setSocket(socket));
     } else {
       toast.error("Please enter a valid session ID", toast_style);
